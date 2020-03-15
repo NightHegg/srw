@@ -1,5 +1,4 @@
 #pragma once
-#include "pch.h"
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -22,9 +21,9 @@ public:
 	bool UsingMethodSchwarz;
 	Vector()
 	{
-		this->iV = 0;	
+		this->iV = 0;
 		this->V = nullptr;
-		SchwarzNodes =vector<int> ();
+		SchwarzNodes = vector<int>();
 		LeftBoundary = RightBoundary = 0;
 		UsingMethodSchwarz = false;
 	}
@@ -35,7 +34,7 @@ public:
 
 		NullVector();
 
-		SchwarzNodes = vector<int> ();
+		SchwarzNodes = vector<int>();
 		LeftBoundary = 0;
 		RightBoundary = iV - 1;
 		UsingMethodSchwarz = false;
@@ -56,7 +55,7 @@ public:
 		this->iV = i;
 		V = new double[iV];
 		LeftBoundary = 0;
-		RightBoundary = iV-1;
+		RightBoundary = iV - 1;
 		UsingMethodSchwarz = false;
 	}
 	Vector(const Vector& N)
@@ -84,7 +83,7 @@ public:
 	{
 		for (int i = 0; i < iV; i++)
 		{
-			printf("%g %d\n", V[i],i);
+			printf("%g %d\n", V[i], i);
 		}
 	}
 	double &operator [] (int _i)
@@ -114,11 +113,11 @@ public:
 			CoefVariants.push_back(0.1*i);
 		}
 		double Length_Subdomain{ V[iV / Amount_Subdomains] - V[0] };
-		for (vector<double>::iterator it=CoefVariants.begin();it!=CoefVariants.end();++it)
+		for (vector<double>::iterator it = CoefVariants.begin();it != CoefVariants.end();++it)
 		{
 			for (int i = 1; i < iV / Amount_Subdomains; i++)
 			{
-				if (fabs(V[i]- V[0]-*it * Length_Subdomain)<1e-15)
+				if (fabs(V[i] - V[0] - *it * Length_Subdomain) < 1e-15)
 				{
 					CoefSuitable.push_back(*it);
 				}
@@ -126,23 +125,23 @@ public:
 		}
 		if (CoefSuitable.size() > 1)
 		{
-			printf("пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n");
+			printf("На выбор имеется несколько коэффициентов для относительного захлёста:\n");
 			for (vector<double>::iterator it = CoefSuitable.begin();it != CoefSuitable.end();++it)
 			{
 				printf("%.1f\n", *it);
 			}
-			printf("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:\n");
+			printf("Выберите один из коэффициентов:\n");
 			scanf_s("%d", &UserChoice);
 			printf("\n");
 			CoefChosen = CoefSuitable.at(UserChoice - 1);
 		}
-		else if(CoefSuitable.size()==1)
+		else if (CoefSuitable.size() == 1)
 		{
 			CoefChosen = CoefSuitable.front();
 		}
 		else
 		{
-			printf("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 0.1 пїЅпїЅ 0.4 пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!\n");
+			printf("Коэффициенты от 0.1 до 0.4 не подходят!\n");
 			system("PAUSE");
 		}
 		SchwarzNodes.push_back(0);
@@ -153,7 +152,7 @@ public:
 			TestValue2 = V[Center_Subdomain] + CoefChosen * Length_Subdomain;
 			for (int j = 0;j < iV;j++)
 			{
-				if (fabs(V[j]-TestValue1)<1e-15 || fabs(V[j] - TestValue2) < 1e-15)
+				if (fabs(V[j] - TestValue1) < 1e-15 || fabs(V[j] - TestValue2) < 1e-15)
 				{
 					SchwarzNodes.push_back(j);
 				}
@@ -185,7 +184,7 @@ public:
 		Vector A(AmountElements);
 		for (int i = 0; i < A.iV; i++)
 		{
-			A.V[i] = V[i + LeftB];	
+			A.V[i] = V[i + LeftB];
 		}
 		A.LeftBoundary = LeftB;
 		A.RightBoundary = RightB;
@@ -207,10 +206,10 @@ public:
 	}
 	double ConvergenceM(Vector &A)
 	{
-		double max=0.0;
+		double max = 0.0;
 		for (int i = 0;i < iV;i++)
 		{
-			if ((abs(this->V[i]-A.V[i]))>max)
+			if ((abs(this->V[i] - A.V[i])) > max)
 			{
 				max = (abs(this->V[i] - A.V[i]));
 			}
@@ -224,7 +223,7 @@ public:
 		double sum{ 0.0 };
 		for (int i = 0;i < iV;i++)
 		{
-			sum += pow((V[i] - A.V[i])/V[i], 2)*h*1.0/Length*1.0;
+			sum += pow((V[i] - A.V[i]) / V[i], 2)*h*1.0 / Length * 1.0;
 		}
 		return sqrt(sum);
 	}
@@ -260,12 +259,12 @@ public:
 		N[1] = (_Node - this->r.V[iBE]) / h;
 		return N[i];
 	}
-	double Derivative_BE(int i,double _Node)
+	double Derivative_BE(int i, double _Node)
 	{
 		double Value1, Value2;
 		Value1 = Get_N(i, _Node);
-		Value2 = Get_N(i, _Node+h);
-		return (Value2-Value1) / this->h;
+		Value2 = Get_N(i, _Node + h);
+		return (Value2 - Value1) / this->h;
 	}
 };
 
@@ -293,7 +292,7 @@ public:
 			M[i] = new double[jM];
 
 		NullMatrix();
-	}					
+	}
 	void NullMatrix()
 	{
 		for (int i = 0; i < iM; i++)
@@ -347,7 +346,7 @@ public:
 			}
 		}
 	}
-	friend Matrix operator * (const Matrix& N,const Matrix& L)
+	friend Matrix operator * (const Matrix& N, const Matrix& L)
 	{
 		Matrix P(N.iM, L.jM);
 		for (int i = 0; i < N.iM; i++)
@@ -363,7 +362,7 @@ public:
 		}
 		return P;
 	}
-	friend Matrix operator * (const Matrix& N,const double val)
+	friend Matrix operator * (const Matrix& N, const double val)
 	{
 		Matrix P(N.iM, N.jM);
 		for (int i = 0; i < N.iM; i++)
@@ -392,17 +391,17 @@ public:
 	{
 		return M[i];
 	}
-	void ConstructFullB(BasicElements& BE,double _Node)
+	void ConstructFullB(BasicElements& BE, double _Node)
 	{
-		ConstructMatrix(2,2);
+		ConstructMatrix(2, 2);
 		/*M[0][0] = -1 / BE.h;
 		M[0][1]= 1 / BE.h;
 		M[1][0] = (BE.r[BE.iBE + 1] - _Node) / (BE.h*_Node);
 		M[1][1] = (_Node- BE.r[BE.iBE]) / (BE.h*_Node);*/
 		for (int j = 0; j < jM; j++)
 		{
-			M[0][j] = BE.Derivative_BE(j,_Node);
-			M[1][j] = BE.Get_N(j,_Node) / _Node;
+			M[0][j] = BE.Derivative_BE(j, _Node);
+			M[1][j] = BE.Get_N(j, _Node) / _Node;
 		}
 
 	}

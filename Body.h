@@ -1,17 +1,17 @@
 #pragma once
 #include <vector>
-#include "Classes.h"
-#include "Solutions.h"
-#include "Additional_Functions.h"
+#include "classes.h"
+#include "solutions.h"
+#include "additional_functions.h"
 
 using namespace std;
 
 
 void Solve(int N, int Amount_Subdomains)
 {
-	double Buffer_Value{ 0 }; //CHANGE
+	double Buffer_Value{ 0 };
 	vector<double> Temporary_Buffer;
-	ifstream ifs("F:\\YandexDisk\\University\\SRW\\NIR\\NIR\\dataFiles\\mainData.dat"); //dsdsdsds
+	ifstream ifs("F:\\YandexDisk\\University\\SRW\\NIR\\NIR\\dataFiles\\mainData.dat");
 	while (!ifs.eof())
 	{
 		ifs >> Buffer_Value;
@@ -28,26 +28,26 @@ void Solve(int N, int Amount_Subdomains)
 
 	printf("%f\n", a);
 
-	int DimTask = 1; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ dsdsd, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - 1 (1D), 2 (2D)
-	int AmNodes = 2; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ 2D пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-	int EpsDimArray = 2*DimTask; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (1D) - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-	int SigmaDimArray= 2*DimTask; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (1D) - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	int DimTask = 1; // Размерность задачи, варианты - 1 (1D), 2 (2D)
+	int AmNodes = 2; // Количество узлов для 2D варианта
+	int EpsDimArray = 2 * DimTask; //Количество деформаций, в базовом варианте (1D) - радиальное и окружное напряжения
+	int SigmaDimArray = 2 * DimTask; //Количество напряжений, в базовом варианте (1D) - радиальное и окружное напряжения
 
 	double myu = E / (2 * (1 + nyu));
 	double lambda = (nyu*E) / ((1 + nyu)*(1 - 2 * nyu)*1.0);
-	double K1 = lambda + 2 * myu; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Sigma
-	double K2 = lambda; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Sigma
+	double K1 = lambda + 2 * myu; //Коэффицент для получение Sigma
+	double K2 = lambda; //Коэффицент для получение Sigma
 	Vector rr(N + 1);
-	double h = (b - a) / (N*1.0); //пїЅпїЅпїЅ
-	rr[0] = a; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
-	for (int i = 1; i < N + 1; i++) //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	double h = (b - a) / (N*1.0); //Шаг
+	rr[0] = a; //начальное условие для массива радиусов 
+	for (int i = 1; i < N + 1; i++) //Создание массива радиусов
 		rr[i] = rr[i - 1] + h;
 	Vector y(N + 1);
 	Vector yPrevious(N + 1);
 	y.FillVector(-1e-6);
 	Matrix D(SigmaDimArray, EpsDimArray);
 
-	for (int i = 0; i < D.iM; i++) // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ D
+	for (int i = 0; i < D.iM; i++) // Задаём элементы обычной матрицы D
 	{
 		for (int j = 0; j < D.jM; j++)
 		{
@@ -61,7 +61,7 @@ void Solve(int N, int Amount_Subdomains)
 	Matrix Eps(EpsDimArray, N);
 	Matrix Sigma(SigmaDimArray, N);
 	int SchwarzSteps;
-	if (Amount_Subdomains<2)
+	if (Amount_Subdomains < 2)
 	{
 		SchwarzSteps = 1;
 		Progonka_Solution(SchwarzSteps, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
@@ -79,7 +79,7 @@ void Solve(int N, int Amount_Subdomains)
 		y.UsingMethodSchwarz = true;
 		do
 		{
-			printf("Eps=%g\n", y.ConvergenceL2(yPrevious,rr));
+			printf("Eps=%g\n", y.ConvergenceL2(yPrevious, rr));
 			yPrevious = y;
 			y.FillVector(0);
 			for (int i = 0; i < Amount_Subdomains; i++)
@@ -87,9 +87,9 @@ void Solve(int N, int Amount_Subdomains)
 				Progonka_Solution(i, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
 			}
 			Counter++;
-		} while (y.ConvergenceL2(yPrevious,rr) > 1e-6);
+		} while (y.ConvergenceL2(yPrevious, rr) > 1e-6);
 	}
-	printf("\nпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: %g\nпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: %d\n\n", y.ConvergenceL2(yPrevious,rr),Counter);
+	printf("\nКритерий останова: %g\nКоличество итераций: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
 	y.Show();
 	Get_Eps(rr, y, Eps);
 	Get_Sigma(D, Eps, Sigma);

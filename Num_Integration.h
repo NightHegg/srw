@@ -1,3 +1,4 @@
+#pragma once
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -13,7 +14,7 @@ void Create_Function(double Node, BasicElements& BasicElement, Matrix& D, Matrix
 	B.ConstructFullB(BasicElement, Node);
 	B.Transpose(BT);
 	BTD = BT * D;
-	ResM=BTD*B;
+	ResM = BTD * B;
 	ResM = ResM * Node;
 }
 
@@ -24,7 +25,7 @@ void Create_Function(double Node, BasicElements& BasicElement, Matrix& D, Matrix
 	int iB = Array_Dimensions[0][0];
 	int jB = Array_Dimensions[0][1];
 
-	double **B = new double*[iB]; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ B
+	double **B = new double*[iB]; //Матрица B
 	for (int i = 0; i < iB; i++)
 		B[i] = new double[jB];
 
@@ -36,7 +37,7 @@ void Create_Function(double Node, BasicElements& BasicElement, Matrix& D, Matrix
 	}
 	else
 	{
-		cout << "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ: " << Type_Function << endl;
+		cout << "Неправильно введён тип функции: " << Type_Function << endl;
 		exit(0);
 	}
 	for (int i = 0; i < iB; i++)
@@ -54,9 +55,9 @@ void Numerical_Integration(int Step, Vector& rr, Matrix& D, BasicElements& Eleme
 
 	if (Type_Integration == "Riemann_Type")
 	{
-		Node[0] = (rr[Step]+rr[Step+1])/2.0;
+		Node[0] = (rr[Step] + rr[Step + 1]) / 2.0;
 		Create_Function(Node[0], ElementB, D, ResMat);
-		ResMat = ResMat * h; //пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		ResMat = ResMat * h; //Метод Римана - алгоритм
 	}
 	/*else
 	if (Type_Integration == "Trapezoidal_Type")
@@ -82,7 +83,7 @@ void Numerical_Integration(int Step, Vector& rr, Matrix& D, BasicElements& Eleme
 
 		Sum_Matrix(Matrix_1, Matrix_2, Final_Matrix, i, j);
 		Multiplying_Matrix(Final_Matrix, h / 2.0, i, j);
-		
+
 	}
 	else
 	if (Type_Integration == "Gauss_3_Type")
@@ -136,8 +137,8 @@ void Numerical_Integration(int Step, Vector& rr, Matrix& D, BasicElements& Eleme
 		Multiplying_Matrix(Final_Matrix, h / 8.0, i, j);
 	}*/
 	else
-	{ 
-		cout << "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: " << Type_Integration<<endl;
+	{
+		cout << "Была выбрана неправильная вариация для численного интегрирования: " << Type_Integration << endl;
 		exit(0);
 	}
 }
