@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
-#include "classes.h"
-#include "solutions.h"
-#include "additional_functions.h"
+#include "Classes.h"
+#include "Solutions.h"
+#include "Additional_functions.h"
 
 using namespace std;
 

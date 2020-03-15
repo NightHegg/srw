@@ -3,25 +3,25 @@
 #include <iostream>
 #include <string>
 #include <cmath>
-#include "classes.h"
+#include "Classes.h"
 
 using namespace std;
 
 void Get_Eps(Vector& rr, Vector& y, Matrix& Eps)
 {
 	double h = rr[1] - rr[0];
-	for (int i = 0; i < Eps.jM; i++) //Цикл записи данных в файл
+	for (int i = 0; i < Eps.jM; i++) //пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
 	{
-		Eps[0][i] = (y[i + 1] - y[i])*1.0 / (h*1.0); //Радиальная деформация
-		Eps[1][i] = (y[i + 1] + y[i])*1.0 / (rr[i] + rr[i + 1])*1.0; //Окружная деформация
-																	 //Eps[i][1] = (y[i]) / (rr[i]); //Окружная деформация
+		Eps[0][i] = (y[i + 1] - y[i])*1.0 / (h*1.0); //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		Eps[1][i] = (y[i + 1] + y[i])*1.0 / (rr[i] + rr[i + 1])*1.0; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+																	 //Eps[i][1] = (y[i]) / (rr[i]); //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	}
 }
 
 void Get_Sigma(Matrix& D, Matrix& Eps, Matrix& Sigma)
 {
 	Sigma = D * Eps;
-	/*for (int i = 0; i < Eps.iM; i++) //Цикл записи данных в файл
+	/*for (int i = 0; i < Eps.iM; i++) //пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
 	{
 
 		Sigma[i][0] = K1*(Eps[i][0])*1.0 + K2*(Eps[i][1])*1.0;
