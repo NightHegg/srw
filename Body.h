@@ -28,26 +28,26 @@ void Solve(int N, int Amount_Subdomains)
 
 	printf("%f\n", a);
 
-	int DimTask = 1; // Размерность задачи, варианты - 1 (1D), 2 (2D)
-	int AmNodes = 2; // Количество узлов для 2D варианта
-	int EpsDimArray = 2 * DimTask; //Количество деформаций, в базовом варианте (1D) - радиальное и окружное напряжения
-	int SigmaDimArray = 2 * DimTask; //Количество напряжений, в базовом варианте (1D) - радиальное и окружное напряжения
+	int DimTask = 1; // Dimension of the main task - 1 (1D), 2 (2D)
+	int AmNodes = 2; // Amound of the nodes 
+	int EpsDimArray = 2 * DimTask; //Size of the Eps array
+	int SigmaDimArray = 2 * DimTask; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (1D) - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 	double myu = E / (2 * (1 + nyu));
 	double lambda = (nyu*E) / ((1 + nyu)*(1 - 2 * nyu)*1.0);
-	double K1 = lambda + 2 * myu; //Коэффицент для получение Sigma
-	double K2 = lambda; //Коэффицент для получение Sigma
+	double K1 = lambda + 2 * myu; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Sigma
+	double K2 = lambda; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Sigma
 	Vector rr(N + 1);
-	double h = (b - a) / (N*1.0); //Шаг
-	rr[0] = a; //начальное условие для массива радиусов 
-	for (int i = 1; i < N + 1; i++) //Создание массива радиусов
+	double h = (b - a) / (N*1.0); //пїЅпїЅпїЅ
+	rr[0] = a; //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
+	for (int i = 1; i < N + 1; i++) //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 		rr[i] = rr[i - 1] + h;
 	Vector y(N + 1);
 	Vector yPrevious(N + 1);
 	y.FillVector(-1e-6);
 	Matrix D(SigmaDimArray, EpsDimArray);
 
-	for (int i = 0; i < D.iM; i++) // Задаём элементы обычной матрицы D
+	for (int i = 0; i < D.iM; i++) // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ D
 	{
 		for (int j = 0; j < D.jM; j++)
 		{
@@ -89,7 +89,7 @@ void Solve(int N, int Amount_Subdomains)
 			Counter++;
 		} while (y.ConvergenceL2(yPrevious, rr) > 1e-6);
 	}
-	printf("\nКритерий останова: %g\nКоличество итераций: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
+	printf("\nпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: %g\nпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
 	y.Show();
 	Get_Eps(rr, y, Eps);
 	Get_Sigma(D, Eps, Sigma);
