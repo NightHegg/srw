@@ -10,11 +10,11 @@ using namespace std;
 void Get_Eps(Vector& rr, Vector& y, Matrix& Eps)
 {
 	double h = rr[1] - rr[0];
-	for (int i = 0; i < Eps.jM; i++) //���� ������ ������ � ����
+	for (int i = 0; i < Eps.jM; i++)
 	{
-		Eps[0][i] = (y[i + 1] - y[i])*1.0 / (h*1.0); //���������� ����������
-		Eps[1][i] = (y[i + 1] + y[i])*1.0 / (rr[i] + rr[i + 1])*1.0; //�������� ����������
-																	 //Eps[i][1] = (y[i]) / (rr[i]); //�������� ����������
+		Eps[0][i] = (y[i + 1] - y[i])*1.0 / (h*1.0);
+		Eps[1][i] = (y[i + 1] + y[i])*1.0 / (rr[i] + rr[i + 1])*1.0;
+																	 //Eps[i][1] = (y[i]) / (rr[i]);
 	}
 }
 

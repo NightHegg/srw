@@ -34,4 +34,5 @@
 *.ilk
 *.dat
 *.txt
-*.vscode
+.vscode
+*.json

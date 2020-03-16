@@ -6,26 +6,6 @@
 
 using namespace std;
 
-/*void Progonka_Method(int n, double *A, double *C, double *B, double *F, double *x)
-{
-	double denom;
-	double *alpha = new double[n - 1];
-	double *beta = new double[n - 1];
-	alpha[0] = (-B[0]) / (C[0]);
-	beta[0] = (F[0]) / (C[0]);
-	for (int k = 1; k < n - 1; k++)
-	{
-		denom = C[k] + (A[k] * alpha[k - 1]);
-		alpha[k] = (-B[k]) / (denom*1.0);
-		beta[k] = (F[k] - A[k] * beta[k - 1]) / (denom*1.0);
-	}
-	x[n - 1] = (F[n - 1] - A[n - 1] * beta[n - 2]) / (C[n - 1] + A[n - 1] * alpha[n - 2]);
-	for (int k = n - 2; k >= 0; k--)
-	{
-		x[k] = (x[k + 1] * alpha[k]) + beta[k];
-	}
-}*/
-
 void Progonka_Method(int N, Matrix& A, Vector& F, Vector& y)
 {
 	double denom;
