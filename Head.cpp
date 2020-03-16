@@ -1,10 +1,8 @@
 #include "Body.h"
 
-using namespace std;
-
-int main(int argc, char* argv[])
+int main()
 {
-	int N{ 50 };
+	int N{ 25 };
 	int Amount_Subdomains{ 1 };
 	Solve(N, Amount_Subdomains);
 }

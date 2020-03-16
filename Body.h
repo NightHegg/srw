@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
-#include "Classes.h"
 #include "Solutions.h"
 #include "Additional_Functions.h"
 #include "Data_Record.h"
+#include "Classes.h"
 
 using namespace std;
 
