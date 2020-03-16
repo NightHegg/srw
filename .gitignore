@@ -32,7 +32,5 @@
 *.app
 *.pdb
 *.ilk
-*.dat
-*.txt
 .vscode
 *.json
