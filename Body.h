@@ -2,7 +2,8 @@
 #include <vector>
 #include "Classes.h"
 #include "Solutions.h"
-#include "Additional_functions.h"
+#include "Additional_Functions.h"
+#include "Data_Record.h"
 
 using namespace std;
 
@@ -11,7 +12,7 @@ void Solve(int N, int Amount_Subdomains)
 {
 	double Buffer_Value{ 0 };
 	vector<double> Temporary_Buffer;
-	ifstream ifs("mainData.dat");
+	ifstream ifs("files/mainData.dat");
 	while (!ifs.eof())
 	{
 		ifs >> Buffer_Value;
@@ -26,7 +27,7 @@ void Solve(int N, int Amount_Subdomains)
 	double uk{ Temporary_Buffer.at(6) };
 	double rk{ Temporary_Buffer.at(7) };
 
-	printf("%f\n", a);
+	printf("%f\n", b);
 	int DimTask = 1; // Dimension of the main task - 1 (1D), 2 (2D)
 	int AmNodes = 2; // Amound of the nodes 
 	int EpsDimArray = 2 * DimTask; //Size of the Eps array
@@ -34,19 +35,19 @@ void Solve(int N, int Amount_Subdomains)
 
 	double myu = E / (2 * (1 + nyu));
 	double lambda = (nyu*E) / ((1 + nyu)*(1 - 2 * nyu)*1.0);
-	double K1 = lambda + 2 * myu; //���������� ��� ��������� Sigma
-	double K2 = lambda; //���������� ��� ��������� Sigma
+	double K1 = lambda + 2 * myu; 
+	double K2 = lambda; 
 	Vector rr(N + 1);
-	double h = (b - a) / (N*1.0); //���
-	rr[0] = a; //��������� ������� ��� ������� �������� 
-	for (int i = 1; i < N + 1; i++) //�������� ������� ��������
+	double h = (b - a) / (N*1.0); 
+	rr[0] = a; 
+	for (int i = 1; i < N + 1; i++) 
 		rr[i] = rr[i - 1] + h;
 	Vector y(N + 1);
 	Vector yPrevious(N + 1);
 	y.FillVector(-1e-6);
 	Matrix D(SigmaDimArray, EpsDimArray);
 
-	for (int i = 0; i < D.iM; i++) // ����� �������� ������� ������� D
+	for (int i = 0; i < D.iM; i++)
 	{
 		for (int j = 0; j < D.jM; j++)
 		{
@@ -59,26 +60,23 @@ void Solve(int N, int Amount_Subdomains)
 	int Counter{ 0 };
 	Matrix Eps(EpsDimArray, N);
 	Matrix Sigma(SigmaDimArray, N);
-	int SchwarzSteps;
 	if (Amount_Subdomains < 2)
 	{
-		SchwarzSteps = 1;
-		Progonka_Solution(SchwarzSteps, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
+		Progonka_Solution(1, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
 	}
 	else
 	{
 		rr.Decomposition(Amount_Subdomains);
-		for (vector<int>::iterator it = rr.SchwarzNodes.begin();it != rr.SchwarzNodes.end();++it)
+		for (auto it: rr.SchwarzNodes)
 		{
-			y.SchwarzNodes.push_back(*it);
-			yPrevious.SchwarzNodes.push_back(*it);
-			cout << *it << endl;
+			y.SchwarzNodes.push_back(it);
+			yPrevious.SchwarzNodes.push_back(it);
+			cout << it << endl;
 		}
 		cout << endl;
 		y.UsingMethodSchwarz = true;
 		do
 		{
-			printf("Eps=%g\n", y.ConvergenceL2(yPrevious, rr));
 			yPrevious = y;
 			y.FillVector(0);
 			for (int i = 0; i < Amount_Subdomains; i++)
@@ -94,8 +92,8 @@ void Solve(int N, int Amount_Subdomains)
 	Get_Sigma(D, Eps, Sigma);
 	Matrix SigmaT;
 	Sigma.Transpose(SigmaT);
+	Record_Results(y,Sigma,uk,rk);
 	//SigmaT.Show();
-	//Sigma.Show();
 	//Record_Important_Data(N, uk, rk, y, Sigma, Array_Names_Files, Number_Operation);
 	//Record_Solution_Additional_Settings(end - start, N, Number_Operation, Array_Names_Files[3]);
 }
