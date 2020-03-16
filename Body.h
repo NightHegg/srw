@@ -11,7 +11,7 @@ void Solve(int N, int Amount_Subdomains)
 {
 	double Buffer_Value{ 0 };
 	vector<double> Temporary_Buffer;
-	ifstream ifs("F:\\YandexDisk\\University\\SRW\\NIR\\NIR\\dataFiles\\mainData.dat");
+	ifstream ifs("mainData.dat");
 	while (!ifs.eof())
 	{
 		ifs >> Buffer_Value;
@@ -27,11 +27,10 @@ void Solve(int N, int Amount_Subdomains)
 	double rk{ Temporary_Buffer.at(7) };
 
 	printf("%f\n", a);
-
 	int DimTask = 1; // Dimension of the main task - 1 (1D), 2 (2D)
 	int AmNodes = 2; // Amound of the nodes 
 	int EpsDimArray = 2 * DimTask; //Size of the Eps array
-	int SigmaDimArray = 2 * DimTask; //���������� ����������, � ������� �������� (1D) - ���������� � �������� ����������
+	int SigmaDimArray = 2 * DimTask; //Size of the Sigma array
 
 	double myu = E / (2 * (1 + nyu));
 	double lambda = (nyu*E) / ((1 + nyu)*(1 - 2 * nyu)*1.0);
@@ -89,7 +88,7 @@ void Solve(int N, int Amount_Subdomains)
 			Counter++;
 		} while (y.ConvergenceL2(yPrevious, rr) > 1e-6);
 	}
-	printf("\n�������� ��������: %g\n���������� ��������: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
+	printf("\nThe stop criteria: %g\nAmount of iterations: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
 	y.Show();
 	Get_Eps(rr, y, Eps);
 	Get_Sigma(D, Eps, Sigma);
