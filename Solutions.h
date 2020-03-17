@@ -97,6 +97,7 @@ void Progonka_Solution(int SchwarzStep,
 		F[0] += pa * rrChosen[0];
 		F[yChosen.iV - 1] += -pb * rrChosen[yChosen.iV - 1];
 	}
+	//KM.Show();
 	Progonka_Method(yChosen.iV, KM, F, yChosen);
 	if (y.UsingMethodSchwarz)
 	{
