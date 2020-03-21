@@ -1,7 +1,6 @@
 #pragma once
 
 #include <fstream>
-#include <iostream>
 #include "Classes.h"
 
 void Record_Results(Vector& y, Matrix& Sigma, double uk, double rk)
@@ -13,15 +12,11 @@ void Record_Results(Vector& y, Matrix& Sigma, double uk, double rk)
         outfile <<endl;
     }
     outfile.close();
-    ofstream outfile_second("results/SigmaR.dat");
-    ofstream outfile_third("results/SigmaT.dat");
+    ofstream outfile_second("results/Sigma.dat");
     for (int j=0;j<Sigma.jM;j++)
     {
-        outfile_second<<Sigma.M[0][j]*rk;
-        outfile_third<<Sigma.M[1][j]*rk;
+        outfile_second<<Sigma.M[0][j]*rk<<" "<<Sigma.M[1][j];;
         outfile_second<<endl;
-        outfile_third<<endl;
     }
     outfile_second.close();
-    outfile_third.close();
 }

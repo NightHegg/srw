@@ -87,13 +87,9 @@ void Solve(int N, int Amount_Subdomains)
 		} while (y.ConvergenceL2(yPrevious, rr) > 1e-6);
 	}
 	printf("\nThe stop criteria: %g\nAmount of iterations: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
-	y.Show();
 	Get_Eps(rr, y, Eps);
-	Get_Sigma(D, Eps, Sigma);
-	Matrix SigmaT;
-	Sigma.Transpose(SigmaT);
+	Sigma = D * Eps;
 	Record_Results(y,Sigma,uk,rk);
-	//SigmaT.Show();
 	//Record_Important_Data(N, uk, rk, y, Sigma, Array_Names_Files, Number_Operation);
 	//Record_Solution_Additional_Settings(end - start, N, Number_Operation, Array_Names_Files[3]);
 }
