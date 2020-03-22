@@ -90,6 +90,4 @@ void Solve(int N, int Amount_Subdomains)
 	Get_Eps(rr, y, Eps);
 	Sigma = D * Eps;
 	Record_Results(y,Sigma,uk,rk);
-	//Record_Important_Data(N, uk, rk, y, Sigma, Array_Names_Files, Number_Operation);
-	//Record_Solution_Additional_Settings(end - start, N, Number_Operation, Array_Names_Files[3]);
 }
