@@ -5,6 +5,7 @@ format loose
 y=importdata("results/y.dat");
 Sigma=importdata("results/Sigma.dat");
 Imp_Data=importdata("files/mainData.dat");
+Add_Data=importdata("files/addData.dat")
 a=Imp_Data(1,1);
 b=Imp_Data(1,2);
 pa=Imp_Data(2,1);
@@ -26,5 +27,6 @@ hold on
 pl2=plot(r,Sigma(1:10:end,1),"bo");
 set( pl2, 'LineWidth', 2 );
 axis auto
+l=legend("Analytical","Numerical","Location","southeast");
 %saveas(pl2,"graphs/SigmaR.png");
 

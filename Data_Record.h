@@ -1,5 +1,6 @@
 #pragma once
 
+#include "string"
 #include <fstream>
 #include "Classes.h"
 /**
@@ -21,4 +22,17 @@ void Record_Results(Vector& y, Matrix& Sigma, double uk, double rk)
         outfile_second<<endl;
     }
     outfile_second.close();
+}
+
+void Record_AddData(int *N, int* Amount_Subdomains, int *Counter, double *stopCriteria)
+{
+    ofstream ofile("files/addData.dat");
+    ofile<<*N;
+    ofile<<endl;
+    ofile<<*Amount_Subdomains;
+    ofile<<endl;
+    ofile<<*Counter;
+    ofile<<endl;
+    ofile<<*stopCriteria;
+    ofile<<endl;
 }

@@ -113,24 +113,24 @@ public:
 			CoefVariants.push_back(0.1*i);
 		}
 		double Length_Subdomain{ V[iV / Amount_Subdomains] - V[0] };
-		for (vector<double>::iterator it = CoefVariants.begin();it != CoefVariants.end();++it)
+		for (auto it: CoefVariants)
 		{
 			for (int i = 1; i < iV / Amount_Subdomains; i++)
 			{
-				if (fabs(V[i] - V[0] - *it * Length_Subdomain) < 1e-15)
+				if (fabs(V[i] - V[0] - it * Length_Subdomain) < 1e-15)
 				{
-					CoefSuitable.push_back(*it);
+					CoefSuitable.push_back(it);
 				}
 			}
 		}
 		if (CoefSuitable.size() > 1)
 		{
-			printf("�� ����� ������� ��������� ������������� ��� �������������� �������:\n");
-			for (vector<double>::iterator it = CoefSuitable.begin();it != CoefSuitable.end();++it)
+			printf("There are few coefs for choice:\n");
+			for (auto it: CoefSuitable)
 			{
-				printf("%.1f\n", *it);
+				printf("%.1f\n", it);
 			}
-			printf("�������� ���� �� �������������:\n");
+			printf("Choose one of coefs:\n");
 			scanf_s("%d", &UserChoice);
 			printf("\n");
 			CoefChosen = CoefSuitable.at(UserChoice - 1);
@@ -141,7 +141,7 @@ public:
 		}
 		else
 		{
-			printf("������������ �� 0.1 �� 0.4 �� ��������!\n");
+			printf("Coefs from 0.1 to 0.4 are inavailable!\n");
 			system("PAUSE");
 		}
 		SchwarzNodes.push_back(0);
@@ -176,7 +176,6 @@ public:
 		}
 		else
 		{
-			//printf("NUMBERS: %d\n", SchwarzNodes[SchwarzStep * 2 - 1]);
 			LeftB = SchwarzNodes[SchwarzStep * 2 - 1];
 			RightB = SchwarzNodes[SchwarzStep * 2 + 2];
 		}
@@ -204,26 +203,27 @@ public:
 			this->V[i] = var;
 		}
 	}
-	double ConvergenceM(Vector &A)
+	double ConvergenceL2(Vector &yprev, Vector &rr)
 	{
-		double max = 0.0;
-		for (int i = 0;i < iV;i++)
-		{
-			if ((abs(this->V[i] - A.V[i])) > max)
-			{
-				max = (abs(this->V[i] - A.V[i]));
-			}
-		}
-		return max;
-	}
-	double ConvergenceL2(Vector &A, Vector &rr)
-	{
+		double s{0};
 		double h = rr[1] - rr[0];
 		double Length = rr[rr.iV - 1] - rr[0];
 		double sum{ 0.0 };
 		for (int i = 0;i < iV;i++)
 		{
-			sum += pow((V[i] - A.V[i]) / V[i], 2)*h*1.0 / Length * 1.0;
+			if (i==0)
+			{
+				s=(rr.V[i+1]-rr.V[i])/2;
+			}
+			else if(i==iV-1)
+			{
+				s=(rr.V[i]-rr.V[i-1])/2;
+			}
+			else
+			{
+				s=(((rr.V[i]-rr.V[i-1])/2)+((rr.V[i+1]-rr.V[i])/2))/2;
+			}
+			sum += pow((V[i] - yprev.V[i]) / V[i], 2)*s*1.0 / Length * 1.0;
 		}
 		return sqrt(sum);
 	}
@@ -405,6 +405,55 @@ public:
 		}
 
 	}
+	void SingleMatrix()
+	{
+		for (int i=0;i<iM;i++)
+		{
+			for (int j=0;j<jM;j++)
+			{
+				if (i==j)
+				M[i][j]=1;
+			}
+		}
+	}
+
+	void Inverse(Matrix& A)
+	{
+		double Buf{0};
+		A.ConstructMatrix(iM, jM);
+		A.SingleMatrix();
+		for (int i=0;i<iM;i++)
+		{
+			Buf=M[i][i];
+			for (int j=0;j<jM;j++)
+			{
+				M[i][j]/=Buf*1.0;
+				A.M[i][j]/=Buf*1.0;
+			}
+			for (int k=i+1;k<iM;k++)
+			{
+				Buf=M[k][i];
+				for (int j=0;j<jM;j++)
+				{
+					M[k][j]-=M[i][j]*Buf;
+					A.M[k][j]-=A.M[i][j]*Buf;
+				}
+			}
+		}
+		for (int i=iM-1;i>0;i--)
+		{
+			for (int k=i-1;k>=0;k--)
+			{
+				Buf=M[k][i];
+				for (int j=0;j<jM;j++)
+				{
+					M[k][j]-=M[i][j]*Buf;
+					A.M[k][j]-=A.M[i][j]*Buf;
+				}
+			}
+		}
+	}
+
 };
 
 #endif _INTERACTIONS_MATRIX_H

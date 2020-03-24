@@ -10,6 +10,7 @@ using namespace std;
 
 void Solve(int N, int Amount_Subdomains)
 {
+	double stopCriteria{1e-6};
 	double Buffer_Value{ 0 };
 	vector<double> Temporary_Buffer;
 	ifstream ifs("files/mainData.dat");
@@ -71,7 +72,7 @@ void Solve(int N, int Amount_Subdomains)
 		{
 			y.SchwarzNodes.push_back(it);
 			yPrevious.SchwarzNodes.push_back(it);
-			cout << it << endl;
+			//cout << it << endl;
 		}
 		cout << endl;
 		y.UsingMethodSchwarz = true;
@@ -84,10 +85,11 @@ void Solve(int N, int Amount_Subdomains)
 				Progonka_Solution(i, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
 			}
 			Counter++;
-		} while (y.ConvergenceL2(yPrevious, rr) > 1e-6);
+		} while (y.ConvergenceL2(yPrevious, rr) > stopCriteria);
 	}
 	printf("\nThe stop criteria: %g\nAmount of iterations: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
 	Get_Eps(rr, y, Eps);
 	Sigma = D * Eps;
 	Record_Results(y,Sigma,uk,rk);
+	Record_AddData(&N, &Amount_Subdomains, &Counter, &stopCriteria);
 }
