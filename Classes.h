@@ -403,7 +403,6 @@ public:
 			M[0][j] = BE.Derivative_BE(j, _Node);
 			M[1][j] = BE.Get_N(j, _Node) / _Node;
 		}
-
 	}
 	void SingleMatrix()
 	{

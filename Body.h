@@ -10,7 +10,7 @@ using namespace std;
 
 void Solve(int N, int Amount_Subdomains)
 {
-	double stopCriteria{1e-6};
+	double stopCriteria{1e-4};
 	double Buffer_Value{ 0 };
 	vector<double> Temporary_Buffer;
 	ifstream ifs("files/mainData.dat");
