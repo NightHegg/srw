@@ -9,19 +9,38 @@ class Matrix
 public:
     double **M;
     int iM, jM;
-    Matrix()
+    Matrix() = default;
+    Matrix(int i, int j);
+    Matrix(const Matrix &N);
+    void Construct(int i, int j);
+    ~Matrix()=default;
+    void Null();
+    void Show();
+    void Transpose(Matrix &A);
+    void Identity();
+    void Inverse(Matrix &A);
+    double* operator[](const int index);
+    Matrix operator=(const Matrix &N)
     {
-        iM = 0;
-        jM = 0;
-        M = NULL;
+        Construct(N.iM, N.jM);
+        for (int i = 0; i < iM; i++)
+        {
+            for (int j = 0; j < jM; j++)
+            {
+                this->M[i][j] = N.M[i][j];
+            }
+        }
+        return *this;
     }
 
-    Matrix(int i, int j)
+};
+
+Matrix::Matrix(int i, int j)
     {
-        ConstructMatrix(i, j);
+        Construct(i, j);
     }
 
-    void ConstructMatrix(int i, int j)
+void Matrix::Construct(int i, int j)
     {
         this->iM = i;
         this->jM = j;
@@ -32,7 +51,7 @@ public:
         Null();
     }
 
-    void Null()
+void Matrix::Null()
     {
         for (int i = 0; i < iM; i++)
         {
@@ -42,10 +61,9 @@ public:
             }
         }
     }
-
-    Matrix(const Matrix &N)
+Matrix::Matrix(const Matrix &N)
     {
-        ConstructMatrix(N.iM, N.jM);
+        Construct(N.iM, N.jM);
         for (int i = 0; i < iM; i++)
         {
             for (int j = 0; j < jM; j++)
@@ -55,14 +73,7 @@ public:
         }
     }
 
-    ~Matrix()
-    {
-        for (int i = 0; i < iM; i++)
-            delete[] M[i];
-        delete[] M;
-    }
-
-    void Show()
+void Matrix::Show()
     {
         std::cout << std::endl;
         for (int i = 0; i < iM; i++)
@@ -77,9 +88,9 @@ public:
         std::cout << std::endl;
     }
 
-    void Transpose(Matrix &A)
+void Matrix::Transpose(Matrix &A)
     {                   
-        A.ConstructMatrix(jM, iM);
+        A.Construct(jM, iM);
         for (int i = 0; i < A.iM; i++)
         {
             for (int j = 0; j < A.jM; j++)
@@ -89,7 +100,7 @@ public:
         }
     }
 
-    void Identity()
+void Matrix::Identity()
     {
         for (int i = 0; i < iM; i++)
         {
@@ -104,10 +115,10 @@ public:
         }
     }
 
-    void Inverse(Matrix &A)
+void Matrix::Inverse(Matrix &A)
     {
         double Buf{0};
-        A.ConstructMatrix(iM, jM);
+        A.Construct(iM, jM);
         A.Identity();
         for (int i = 0; i < iM; i++)
         {
@@ -141,7 +152,7 @@ public:
         }
     }
 
-    friend Matrix operator*(const Matrix &N, const Matrix &L)
+Matrix operator*(const Matrix &N, const Matrix &L)
     {
         Matrix P(N.iM, L.jM);
         for (int i = 0; i < N.iM; i++)
@@ -157,7 +168,8 @@ public:
         }
         return P;
     }
-    friend Matrix operator*(const Matrix &N, const double val)
+
+Matrix operator*(const Matrix &N, const double val)
     {
         Matrix P(N.iM, N.jM);
         for (int i = 0; i < N.iM; i++)
@@ -169,9 +181,10 @@ public:
         }
         return P;
     }
-    Matrix &operator=(const Matrix &N)
+
+Matrix Matrix::operator=(const Matrix &N)
     {
-        ConstructMatrix(N.iM, N.jM);
+        Construct(N.iM, N.jM);
         for (int i = 0; i < iM; i++)
         {
             for (int j = 0; j < jM; j++)
@@ -182,10 +195,9 @@ public:
         return *this;
     }
 
-    double *operator[](int i)
+double* Matrix::operator[](const int index)
     {
-        return M[i];
+        return M[index];
     }
-};
 
 #endif
