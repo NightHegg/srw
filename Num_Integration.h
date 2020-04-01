@@ -18,38 +18,8 @@ void Create_Function(double Node, BasicElements& BasicElement, Matrix& D, Matrix
 	ResM = ResM * Node;
 }
 
-/*void Create_Function(string Type_Function, double r, int i, double h, double* rr, double** D, int** Array_Dimensions,double** Function)
-{
-	setlocale(LC_ALL, "Russian");
-
-	int iB = Array_Dimensions[0][0];
-	int jB = Array_Dimensions[0][1];
-
-	double **B = new double*[iB]; //������� B
-	for (int i = 0; i < iB; i++)
-		B[i] = new double[jB];
-
-	BCreate(i, rr, r, h, B);
-
-	if (Type_Function == "A")
-	{
-		Function_A(r, B, D, Array_Dimensions,Function);
-	}
-	else
-	{
-		cout << "����������� ����� ��� �������: " << Type_Function << endl;
-		exit(0);
-	}
-	for (int i = 0; i < iB; i++)
-	{
-		delete[] B[i];
-	}
-	delete[] B;
-}*/
-
 void Numerical_Integration(int Step, Vector& rr, Matrix& D, BasicElements& ElementB, string Type_Integration, Matrix& ResMat)
 {
-	setlocale(LC_ALL, "Russian");
 	double h = rr[1] - rr[0];
 	double* Node = new double[8];
 

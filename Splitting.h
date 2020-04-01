@@ -10,4 +10,5 @@ void Splitting(double a, double b)
     int Ny{5};
     vector<double> mesh;
     
+    
 }

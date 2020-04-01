@@ -28,14 +28,14 @@ SR1_2=plot(r,Sigma(1:N/10:end,1),"bo");
 set( SR1_2, 'LineWidth', 2 );
 axis auto
 l1=legend("Analytical","Numerical","Location","southeast");
-saveas(SR1_2,"SRW_Text/graphs/SigmaR.png");
-hold off
+%saveas(SR1_2,"SRW_Text/graphs/SigmaR.png");
+hold on
 SR2_1=fplot(SigmaT_an,[a b],"r-");
 set( SR2_1, 'LineWidth', 2 );
 hold on
-SR2_2=plot(r,Sigma(1:N/10:end,2),"bo");
+SR2_2=scatter(r,Sigma(1:N/10:end,2));
 set( SR2_2, 'LineWidth', 2 );
 axis auto
 l2=legend("Analytical","Numerical","Location","northeast");
-saveas(SR2_2,"SRW_Text/graphs/SigmaT.png");
+%saveas(SR2_2,"SRW_Text/graphs/SigmaT.png");
 
