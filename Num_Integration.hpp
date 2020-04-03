@@ -1,16 +1,19 @@
-#pragma once
-#include <fstream>
-#include <iostream>
-#include <cmath>
-#include <string>
-#include "Classes.h"
-#include "omp.h"
 
-void Create_Function(double Node, BasicElements& BasicElement, Matrix& D, Matrix& ResM)
+#include <cmath>
+#include <vector>
+#include <string>
+#include "Classes_Schwarz.hpp"
+
+using namespace std;
+
+void Create_Function(double Node, 
+                    Basis_Functions& BasicElement, 
+					MatrixSchwarz& D, 
+					MatrixSchwarz& ResM)
 {
-	Matrix B;
-	Matrix BTD;
-	Matrix BT;
+	MatrixSchwarz B;
+	MatrixSchwarz BTD;
+	MatrixSchwarz BT;
 	B.ConstructFullB(BasicElement, Node);
 	B.Transpose(BT);
 	BTD = BT * D;
@@ -18,14 +21,19 @@ void Create_Function(double Node, BasicElements& BasicElement, Matrix& D, Matrix
 	ResM = ResM * Node;
 }
 
-void Numerical_Integration(int Step, Vector& rr, Matrix& D, BasicElements& ElementB, string Type_Integration, Matrix& ResMat)
+void Numerical_Integration(int Step, 
+                        VectorSchwarz& rr, 
+						MatrixSchwarz& D, 
+						Basis_Functions& ElementB, 
+						string Type_Integration, 
+						MatrixSchwarz& ResMat)
 {
 	double h = rr[1] - rr[0];
-	double* Node = new double[8];
+	std::vector<double> Node;
 
 	if (Type_Integration == "Riemann_Type")
 	{
-		Node[0] = (rr[Step] + rr[Step + 1]) / 2.0;
+		Node.push_back((rr[Step] + rr[Step + 1]) / 2.0);
 		Create_Function(Node[0], ElementB, D, ResMat);
 		ResMat = ResMat * h; 
 

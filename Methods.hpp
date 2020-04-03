@@ -1,13 +1,11 @@
-#pragma once
-#include <fstream>
-#include <iostream>
+#ifndef METHODS_HPP
+#define METHODS_HPP
+
 #include <cmath>
 #include <string>
-#include "Classes.h"
+#include "Classes_Schwarz.hpp"
 
-using namespace std;
-
-void Progonka_Method(int N, Matrix& A, Vector& F, Vector& y)
+void Progonka_Method(int N, Matrix& A, Vector& F, VectorSchwarz& y)
 {
 	double denom;
 	double *Alpha = new double[N - 1];
@@ -41,12 +39,6 @@ void Progonka_Method(int N, Matrix& A, Vector& F, Vector& y)
 		denom = A[i][i] + (Dzeta[i + 1] * A[i][i + 1]);
 		Eta[i] = (F[i] - Eta[i + 1] * A[i][i + 1]) / (denom*1.0);
 	}
-	/*y[0] = Eta[0];
-	for (int i = 1;i < N;i++)
-	{
-		y[i] = (Dzeta[i] * y[i - 1]) + Eta[i];
-	}*/
-
 
 	y[N - 1] = Beta[N - 1];
 	for (int i = N - 2; i >= 0; i--)
@@ -54,3 +46,11 @@ void Progonka_Method(int N, Matrix& A, Vector& F, Vector& y)
 		y[i] = (y[i + 1] * Alpha[i]) + Beta[i];
 	}
 }
+
+/*y[0] = Eta[0];
+	for (int i = 1;i < N;i++)
+	{
+		y[i] = (Dzeta[i] * y[i - 1]) + Eta[i];
+	}*/
+
+#endif
