@@ -41,7 +41,7 @@ void Progonka_Solution(int SchwarzStep,
 	Matrix KM(SizeDomain, SizeDomain);
 	Vector F(SizeDomain);
 	MatrixSchwarz A;
-	string Type_Integration = "Riemann_Type";
+	string Type_Integration = "Trapezoidal_Type";
 	for (int i = 0; i < SizeDomain - 1; i++)
 	{
 		Basis_Functions ElementB(i, rrChosen, TaskAmNodes);

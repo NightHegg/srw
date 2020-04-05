@@ -70,6 +70,19 @@ public:
 		}
 		return P;
 	}
+
+	friend MatrixSchwarz operator+(const MatrixSchwarz &N, const MatrixSchwarz &L)
+	{
+		MatrixSchwarz P(N.iM, N.jM);
+		for (int i = 0; i < N.iM; i++)
+		{
+			for (int j = 0; j < N.jM; j++)
+			{
+				P[i][j] = N.M[i][j] + L.M[i][j];
+			}
+		}
+		return P;
+	}
 };
 
 class VectorSchwarz : public Vector
@@ -78,6 +91,7 @@ private:
 	std::vector<int> SchwarzNodes;
 	int LeftBoundary, RightBoundary;
 	bool UsingMethodSchwarz;
+
 public:
 	VectorSchwarz() : Vector::Vector()
 	{
@@ -86,7 +100,7 @@ public:
 		UsingMethodSchwarz = false;
 	}
 	VectorSchwarz(int i) : Vector(i)
-	{	
+	{
 		SchwarzNodes = std::vector<int>();
 		LeftBoundary = 0;
 		RightBoundary = iV - 1;
@@ -107,7 +121,7 @@ public:
 		UsingMethodSchwarz = false;
 	}*/
 
-	void Decomposition(int Amount_Subdomains, double* Coef_Overflow)
+	void Decomposition(int Amount_Subdomains, double *Coef_Overflow)
 	{
 		setlocale(LC_ALL, "Russian");
 		int Count{0};
@@ -144,13 +158,13 @@ public:
 			scanf_s("%d", &UserChoice);
 			printf("\n");
 			CoefChosen = CoefSuitable.at(UserChoice - 1);
-			*Coef_Overflow=CoefChosen;
+			*Coef_Overflow = CoefChosen;
 		}
 		else if (CoefSuitable.size() == 1)
 		{
 			printf("There is only one coef for choice: %.2f\n", CoefSuitable.front());
 			CoefChosen = CoefSuitable.front();
-			*Coef_Overflow=CoefChosen;
+			*Coef_Overflow = CoefChosen;
 		}
 		else
 		{

@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void Get_Eps(Vector& rr, Vector& y, Matrix& Eps)
+void Get_Eps(VectorSchwarz& rr, VectorSchwarz& y, MatrixSchwarz& Eps)
 {
 	double h = rr[1] - rr[0];
 	for (int i = 0; i < Eps.GetSize_j(); i++)

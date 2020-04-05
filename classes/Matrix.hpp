@@ -30,6 +30,7 @@ public:
     void Inverse(Matrix &A);
     double *operator[](const int index);
     friend Matrix operator*(const Matrix &N, const Matrix &L);
+    friend Matrix operator+(const Matrix &N, const Matrix &L);
     friend Matrix operator*(const Matrix &N, const double val);
     Matrix operator=(const Matrix &N);
     int GetSize_i();
@@ -152,6 +153,19 @@ void Matrix::Inverse(Matrix &A)
             }
         }
     }
+}
+
+Matrix operator+(const Matrix &N, const Matrix &L)
+{
+    Matrix P(N.iM, N.jM);
+    for (int i = 0; i < N.iM; i++)
+    {
+        for (int j = 0; j < N.jM; j++)
+        {
+            P[i][j]=N.M[i][j]+L.M[i][j];
+        }
+    }
+    return P;
 }
 
 Matrix operator*(const Matrix &N, const Matrix &L)

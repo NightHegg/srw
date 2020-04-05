@@ -51,6 +51,8 @@ void Record_AddData(int N, int Amount_Subdomains, int Counter, double stopCriter
     }
     std::string AS=std::to_string(Amount_Subdomains);
     ofstream ofile(Route+"AddData"+sep+size+sep+AS+".dat");
+    ofile<<N;
+    ofile<<endl;
     ofile<<Amount_Subdomains;
     ofile<<endl;
     ofile<<Counter;
