@@ -1,4 +1,5 @@
 clc
+global a b h N L rSpecific 
 format shortG
 format loose
 sep="_";
@@ -26,59 +27,48 @@ y_an=@(r)(((1-2*nyu)*(1+nyu)/E)*((pa*(a^2)-pb*b^2)/(b^2-a^2))*r+((1+nyu)/E)*((a^
     ((pa-pb)/(b^2-a^2))).*uk;
 SigmaR_an=@(r)(((pa*(a.^2)-pb.*b.^2)./(b.^2-a.^2))-(((a.^2*b.^2)./(r.^2)).*((pa-pb)./(b.^2-a.^2)))).*rk;
 SigmaT_an=@(r)(((pa.*a.^2-pb.*b.^2)/(b.^2-a.^2))+(((a.^2*b.^2)./(r.^2))*((pa-pb)./(b.^2-a.^2)))).*rk;
-<<<<<<< HEAD
-r=linspace(a,b,10);
-rr=linspace(a,b,N);
-ErrorL2=@(Name)sqrt(sum((Name(:,1).'-SigmaR_an(a:h:b-h)).^(2)))/sqrt(sum((SigmaR_an(a:h:b-h)).^2));
-ErrorL2(Sigma_S3)
-=======
 rSpecific=linspace(a,b,10);
 rReal=linspace(a,b,N);
-sqrt(sum((Sigma_NS(:,1).'-SigmaR_an(a:h:b-h)).^(2).*h))/sqrt(sum((SigmaR_an(a:h:b-h)).^2.*L))
->>>>>>> bf814fcdaf015b7552a5b32b9014c86e093c0768
 
-%SR1_1=fplot(SigmaR_an,[a b],"r-");
-set( SR1_1, 'LineWidth', 2 );
-hold on
-<<<<<<< HEAD
-%SR1_2=plot(r,Sigma_NS(1:N/10:end,1),"bo");
-=======
-SR1_2=plot(rSpecific,Sigma_NS(1:N/10:end,1),"bo");
->>>>>>> bf814fcdaf015b7552a5b32b9014c86e093c0768
-set( SR1_2, 'LineWidth', 2 );
-axis auto
-l1=legend("Analytical","Numerical","Location","southeast");
+ErrorL2(SigmaT_an, Sigma_S3, 2)
+
+%plotAn(SigmaR_an);
+%hold on
+%plotNum(Sigma_NS,1);
 %saveas(SR1_2,"SRW_Text/graphs/SigmaR.png");
-figure;
-%SR2_1=fplot(SigmaT_an,[a b],"r-");
-set( SR2_1, 'LineWidth', 2 );
-hold on
-<<<<<<< HEAD
-%SR2_2=scatter(r,Sigma_NS(1:N/10:end,2));
-=======
-SR2_2=scatter(rSpecific,Sigma_NS(1:N/10:end,2));
->>>>>>> bf814fcdaf015b7552a5b32b9014c86e093c0768
-set( SR2_2, 'LineWidth', 2);
-axis auto
-l2=legend("Analytical","Numerical","Location","northeast");
+%figure;
+%plotAn(SigmaT_an);
+%hold on
+%plotNum(Sigma_NS,2);
 %saveas(SR2_2,"SRW_Text/graphs/SigmaT.png")
+%figure;
+% scatter(rSpecific,Sigma_NS(1:N/10:end,1));
+% hold on
+% scatter(rSpecific,Sigma_S1(1:N/10:end,1));
+% hold on
+% scatter(rSpecific,Sigma_S2(1:N/10:end,1));
+% hold on
+% scatter(rSpecific,Sigma_S3(1:N/10:end,1));
 
-figure;
-<<<<<<< HEAD
-%scatter(r,Sigma_NS(1:N/10:end,1));
-hold on
-%scatter(r,Sigma_S1(1:N/10:end,1));
-hold on
-%scatter(r,Sigma_S2(1:N/10:end,1));
-hold on
-%scatter(r,Sigma_S3(1:N/10:end,1));
-=======
-scatter(rSpecific,Sigma_NS(1:N/10:end,1));
-hold on
-scatter(rSpecific,Sigma_S1(1:N/10:end,1));
-hold on
-scatter(rSpecific,Sigma_S2(1:N/10:end,1));
-hold on
-scatter(rSpecific,Sigma_S3(1:N/10:end,1));
->>>>>>> bf814fcdaf015b7552a5b32b9014c86e093c0768
+function res = plotAn(Name)
+global a b
+res = fplot(Name,[a b],"r-");
+set( res, 'LineWidth', 2 );
+end
+
+function res = plotNum(Name,Num)
+global N rSpecific
+res=scatter(rSpecific,Name(1:N/10:end,Num),"b");
+set( res, 'LineWidth', 2 );
+axis auto
+legend("Analytical","Numerical","Location","southeast");
+end
+
+function res=ErrorL2(NameAn,NameNum,Num)
+global a b h L
+si=h/L;
+res=sqrt(sum((NameNum(:,Num).'-NameAn(a:h:b-h)).^2*si))./sqrt(sum((NameAn(a:h:b-h)).^2*si));
+end
+
+
 
