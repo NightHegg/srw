@@ -2,7 +2,7 @@
 
 int main()
 {
-	int N{ 400 };
-	int Amount_Subdomains{ 10 };
+	int N{ 100 };
+	int Amount_Subdomains{ 1 };
 	Solve(N, Amount_Subdomains);
 }
