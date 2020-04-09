@@ -17,15 +17,3 @@ void Get_Eps(VectorSchwarz& rr, VectorSchwarz& y, MatrixSchwarz& Eps)
 																	 //Eps[i][1] = (y[i]) / (rr[i]);
 	}
 }
-
-void Get_Sigma(Matrix& D, Matrix& Eps, Matrix& Sigma)
-{
-	Sigma = D * Eps;
-	/*for (int i = 0; i < Eps.iM; i++) //���� ������ ������ � ����
-	{
-
-		Sigma[i][0] = K1*(Eps[i][0])*1.0 + K2*(Eps[i][1])*1.0;
-		Sigma[i][1] = K2*(Eps[i][0] )*1.0 + K1*(Eps[i][1])*1.0;
-		//Sigma[i][2] = (1.0 / 2.0)*(Sigma[i][0] + Sigma[i][1]);
-	}*/
-}

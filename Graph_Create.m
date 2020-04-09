@@ -30,21 +30,22 @@ SigmaT_an=@(r)(((pa.*a.^2-pb.*b.^2)/(b.^2-a.^2))+(((a.^2*b.^2)./(r.^2))*((pa-pb)
 rSpecific=linspace(a,b,10);
 rReal=linspace(a,b,N);
 
-ErrorL2(SigmaT_an, Sigma_S3, 2)
+ErrorL2(SigmaR_an, Sigma_S2, 1);
 
-%plotAn(SigmaR_an);
-%hold on
-%plotNum(Sigma_NS,1);
+plotAn(SigmaR_an);
+hold on
+plotNum(Sigma_S2,1);
 %saveas(SR1_2,"SRW_Text/graphs/SigmaR.png");
-%figure;
-%plotAn(SigmaT_an);
-%hold on
-%plotNum(Sigma_NS,2);
+figure;
+plotAn(SigmaT_an);
+hold on
+plotNum(Sigma_S2,2);
 %saveas(SR2_2,"SRW_Text/graphs/SigmaT.png")
+
 %figure;
-% scatter(rSpecific,Sigma_NS(1:N/10:end,1));
-% hold on
-% scatter(rSpecific,Sigma_S1(1:N/10:end,1));
+%scatter(rSpecific,Sigma_NS(1:N/10:end,1));
+%hold on
+%scatter(rSpecific,Sigma_S1(1:N/10:end,1));
 % hold on
 % scatter(rSpecific,Sigma_S2(1:N/10:end,1));
 % hold on

@@ -5,10 +5,9 @@
 #include <vector>
 /**
  * Matrix class with some basic features
- * TODO Add getters and private section
+ * TODO Add getters and private section // DONE
  * ? Do I need to add template for this class?
- * ? Do I need to create child class?
- * ! DO NO ATTEMPT TO BOARD THE HELLICOPTER
+ * ? Do I need to create child class? // DONE
  */
 
 class Matrix
@@ -16,7 +15,6 @@ class Matrix
 protected:
     double **M;
     int iM, jM;
-
 public:
     Matrix() = default;
     Matrix(int i, int j);

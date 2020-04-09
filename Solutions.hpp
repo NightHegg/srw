@@ -96,7 +96,7 @@ void Progonka_Solution(int SchwarzStep,
 		F[0] += pa * rrChosen[0];
 		F[SizeDomain - 1] += -pb * rrChosen[SizeDomain - 1];
 	}
-	Progonka_Method(SizeDomain, KM, F, yChosen);
+	Tridiogonal_Algorithm(SizeDomain, KM, F, yChosen);
 	if (y.Condition_Schwarz())
 	{
 		y.ReturnAllocatedArrayResults(yChosen, SchwarzStep);

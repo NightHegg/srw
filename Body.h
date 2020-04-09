@@ -10,15 +10,9 @@
 
 using namespace std;
 
-
 void Solve(int N, int Amount_Subdomains)
 {
-	double Coef_Overflow{0};
-	string Route{"results/"};
-	int Counter{ 0 };
-	Route+="1D/";
-	double stopCriteria{1e-4};
-	double Buffer_Value{ 0 };
+	double Buffer_Value{0};
 	vector<double> Temporary_Buffer;
 	ifstream ifs("files/mainData.dat");
 	while (!ifs.eof())
@@ -26,43 +20,50 @@ void Solve(int N, int Amount_Subdomains)
 		ifs >> Buffer_Value;
 		Temporary_Buffer.push_back(Buffer_Value);
 	}
-	double a{ Temporary_Buffer.at(0) };
-	double b{ Temporary_Buffer.at(1) };
-	double pa{ Temporary_Buffer.at(2) };
-	double pb{ Temporary_Buffer.at(3) };
-	double E{ Temporary_Buffer.at(4) };
-	double nyu{ Temporary_Buffer.at(5) };
-	double uk{ Temporary_Buffer.at(6) };
-	double rk{ Temporary_Buffer.at(7) };
+	double a{Temporary_Buffer.at(0)};
+	double b{Temporary_Buffer.at(1)};
+	double pa{Temporary_Buffer.at(2)};
+	double pb{Temporary_Buffer.at(3)};
+	double E{Temporary_Buffer.at(4)};
+	double nyu{Temporary_Buffer.at(5)};
+	double uk{Temporary_Buffer.at(6)};
+	double rk{Temporary_Buffer.at(7)};
 
-	int DimTask = 1; // Dimension of the main task - 1 (1D), 2 (2D)
-	int AmNodes = 2; // Amound of the nodes 
-	int EpsDimArray = 2 * DimTask; //Size of the Eps array
-	int SigmaDimArray = 2 * DimTask; //Size of the Sigma array
-	
-	double lambda = (nyu*E) / ((1 + nyu)*(1 - 2 * nyu)*1.0);
+	double Coef_Overlap{0};
+	string Route{"results/"};
+	int Counter{0};
+	Route += "1D/";
+	double stopCriteria{1e-4};
+
+	double lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
 	double myu = E / (2 * (1 + nyu));
-	VectorSchwarz rr(N + 1);
-	double h = (b - a) / (N*1.0); 
-	rr[0]=a;
-	for (int i = 1; i < N + 1; i++) 
-		rr[i]=rr[i-1]+h;
-	VectorSchwarz y(N + 1);
-	VectorSchwarz yPrevious(N + 1);
-	y.Fill(-1e-6);
+
+	int DimTask = 1;				 // Dimension of the main task - 1 (1D), 2 (2D)
+	int AmNodes = 2;				 // Amound of the nodes
+	int EpsDimArray = 2 * DimTask;	 //Size of the Eps array
+	int SigmaDimArray = 2 * DimTask; //Size of the Sigma array
+
 	MatrixSchwarz D(SigmaDimArray, EpsDimArray);
 	D.Elastic_Modulus_Tensor(lambda, myu);
+
 	MatrixSchwarz Eps(EpsDimArray, N);
 	MatrixSchwarz Sigma(SigmaDimArray, N);
+	VectorSchwarz rr(N + 1);
+	VectorSchwarz y(N + 1);
+	VectorSchwarz yPrevious(N + 1);
+
+	rr.Partition(a, b);
+	y.Fill(-1e-6);
+
 	if (Amount_Subdomains < 2)
 	{
-		Route+="Non_Schwarz/";
+		Route += "Non_Schwarz/";
 		Progonka_Solution(1, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
 	}
 	else
 	{
-		Route+="Schwarz/";
-		rr.Decomposition(Amount_Subdomains, &Coef_Overflow);
+		Route += "Schwarz/";
+		rr.Decomposition(Amount_Subdomains, &Coef_Overlap);
 		y.Equal_SchwarzNodes(rr);
 		yPrevious.Equal_SchwarzNodes(rr);
 		do
@@ -79,6 +80,6 @@ void Solve(int N, int Amount_Subdomains)
 	}
 	Get_Eps(rr, y, Eps);
 	Sigma = D * Eps;
-	Record_Results(y, Sigma,uk,rk, Amount_Subdomains, Route);
-	Record_AddData(N, Amount_Subdomains, Counter, stopCriteria, Coef_Overflow, Route);
+	Record_Results(y, Sigma, uk, rk, Amount_Subdomains, Route);
+	Record_AddData(N, Amount_Subdomains, Counter, stopCriteria, Coef_Overlap, Route);
 }

@@ -273,6 +273,14 @@ public:
 		}
 		return sqrt(sum);
 	}
+
+	void Partition(double LB, double RB)
+	{
+		double h = (RB - LB) / (iV-1);
+		V[0] = LB;
+		for (int i = 1; i < iV; i++)
+			V[i] = V[i - 1] + h;
+	}
 };
 
 #endif
