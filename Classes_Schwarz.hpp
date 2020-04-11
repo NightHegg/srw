@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include "classes/Matrix.hpp"
 #include "classes/Vector.hpp"
@@ -10,12 +11,22 @@
 
 class MatrixSchwarz : public Matrix
 {
+private:
+	std::string name;
+
 public:
-	MatrixSchwarz() : Matrix()
+	MatrixSchwarz() : Matrix::Matrix()
 	{
+		name = "";
 	}
 	MatrixSchwarz(int i, int j) : Matrix(i, j)
 	{
+		name = "";
+	}
+	void Construct(int i, int j)
+	{
+		Matrix::Construct(i, j);
+		name = "";
 	}
 	void ConstructFullB(Basis_Functions &BE, double _Node)
 	{
@@ -83,6 +94,52 @@ public:
 		}
 		return P;
 	}
+
+	void SetName(std::string str)
+	{
+		name = str;
+	}
+
+	std::string GetName()
+	{
+		return name;
+	}
+
+	void Record(std::string Route, int amntSubdomains, double Coef)
+	{
+		std::string sep = "_";
+		std::string size = std::to_string(jM);
+		std::string AS = std::to_string(amntSubdomains);
+
+		if (jM < 10)
+		{
+			size = "00" + size;
+		}
+		else if (jM >= 10 && jM < 100)
+		{
+			size = "0" + size;
+		}
+
+		if (amntSubdomains < 2)
+		{
+			Route += name + sep + size + ".dat";
+		}
+		else
+		{
+			Route += name + sep + size + sep + AS + ".dat";
+		}
+		std::ofstream outfile(Route);
+		for (int j = 0; j < jM; j++)
+		{
+			for (int i = 0; i < iM; i++)
+			{
+				outfile << M[i][j] * Coef;
+				outfile << " ";
+			}
+			outfile << std::endl;
+		}
+		outfile.close();
+	}
 };
 
 class VectorSchwarz : public Vector
@@ -91,6 +148,7 @@ private:
 	std::vector<int> SchwarzNodes;
 	int LeftBoundary, RightBoundary;
 	bool UsingMethodSchwarz;
+	std::string name;
 
 public:
 	VectorSchwarz() : Vector::Vector()
@@ -98,6 +156,7 @@ public:
 		SchwarzNodes = std::vector<int>();
 		LeftBoundary = RightBoundary = 0;
 		UsingMethodSchwarz = false;
+		name = "";
 	}
 	VectorSchwarz(int i) : Vector(i)
 	{
@@ -105,6 +164,7 @@ public:
 		LeftBoundary = 0;
 		RightBoundary = iV - 1;
 		UsingMethodSchwarz = false;
+		name = "";
 	}
 	void Construct(int i)
 	{
@@ -112,6 +172,7 @@ public:
 		LeftBoundary = 0;
 		RightBoundary = iV - 1;
 		UsingMethodSchwarz = false;
+		name = "";
 	}
 	/*void Vector(const Vector &N)
 	{
@@ -276,10 +337,47 @@ public:
 
 	void Partition(double LB, double RB)
 	{
-		double h = (RB - LB) / (iV-1);
+		double h = (RB - LB) / (iV - 1);
 		V[0] = LB;
 		for (int i = 1; i < iV; i++)
 			V[i] = V[i - 1] + h;
+	}
+
+	void SetName(std::string str)
+	{
+		name = str;
+	}
+
+	void Record(std::string Route, int amntSubdomains, double Coef)
+	{
+		std::string sep = "_";
+		std::string size = std::to_string(iV - 1);
+		std::string AS = std::to_string(amntSubdomains);
+
+		if (iV < 10)
+		{
+			size = "00" + size;
+		}
+		else if (iV >= 10 && iV < 100)
+		{
+			size = "0" + size;
+		}
+
+		if (amntSubdomains < 2)
+		{
+			Route += name + sep + size + ".dat";
+		}
+		else
+		{
+			Route += name + sep + size + sep + AS + ".dat";
+		}
+		std::ofstream outfile(Route);
+		for (int i = 0; i < iV; i++)
+		{
+			outfile << V[i] * Coef;
+			outfile << std::endl;
+		}
+		outfile.close();
 	}
 };
 

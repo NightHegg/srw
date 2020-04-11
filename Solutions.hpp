@@ -8,7 +8,6 @@
 
 using namespace std;
 
-
 void Progonka_Solution(int SchwarzStep,
 	VectorSchwarz& rr,
 	double pa,
