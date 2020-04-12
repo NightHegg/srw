@@ -30,7 +30,7 @@ void Numerical_Integration(int Step,
 {
 	double h = rr[1] - rr[0];
 	std::vector<double> Node;
-	vector<MatrixSchwarz *> SpecM;
+	vector<MatrixSchwarz*> SpecM{};
 	if (Type_Integration == "Riemann_Type")
 	{
 		Node.push_back((rr[Step] + rr[Step + 1]) / 2.0);
@@ -41,7 +41,7 @@ void Numerical_Integration(int Step,
 	{
 		Node.push_back(rr[Step]);
 		Node.push_back(rr[Step + 1]);
-		
+
 		MatrixSchwarz M1;
 		MatrixSchwarz M2;
 

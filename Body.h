@@ -34,10 +34,11 @@ void Solve(int N, int amntSubdomains)
 	string Route{"results/"};
 	int Counter{0};
 	Route += "1D/";
-	double stopCriteria{1e-5};
+	double stopCriteria{1e-7};
 
-	std::ostringstream ss;
+	std::stringstream ss;
 	ss<<stopCriteria;
+	ss.precision(7);
 	std::string sStopCriteria = ss.str();
 
 	double lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
@@ -74,7 +75,6 @@ void Solve(int N, int amntSubdomains)
 		do
 		{
 			yPrevious = y;
-			y.Fill(0);
 			for (int i = 0; i < amntSubdomains; i++)
 			{
 				Progonka_Solution(i, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
