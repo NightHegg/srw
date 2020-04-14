@@ -34,7 +34,7 @@ void Solve(int N, int amntSubdomains)
 	string Route{"results/"};
 	int Counter{0};
 	Route += "1D/";
-	double stopCriteria{1e-7};
+	double stopCriteria{1e-6};
 
 	std::stringstream ss;
 	ss<<stopCriteria;
@@ -79,6 +79,7 @@ void Solve(int N, int amntSubdomains)
 			{
 				Progonka_Solution(i, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
 			}
+			cout<<y.ConvergenceL2(yPrevious, rr)<<endl;
 			Counter++;
 		} while (y.ConvergenceL2(yPrevious, rr) > stopCriteria);
 		printf("\nThe stop criteria: %g\nAmount of iterations: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);

@@ -1,17 +1,18 @@
 clc
 global a b h N L rSpecific 
 format shortG
-format loose
+%format loose
 sep="_";
 NN="200";
-route=@(Dim,Type,obj,size,AS)"results/"+Dim+Type+obj+sep+size+sep+AS+".dat";
+stopCrit="SC_1e-06/";
+route=@(Dim,Type,obj,size,AS)"results/"+Dim+Type+obj+sep+size+AS+".dat";
 Imp_Data=importdata("files/mainData.dat");
-y=importdata(route("1D/","Non_Schwarz/","y",NN,"1"));
-Sigma_NS=importdata(route("1D/","Non_Schwarz/","Sigma",NN,"1"));
-Sigma_S1=importdata(route("1D/","Schwarz/","Sigma",NN,"2"));
-Sigma_S2=importdata(route("1D/","Schwarz/","Sigma",NN,"4"));
-Sigma_S3=importdata(route("1D/","Schwarz/","Sigma",NN,"10"));
-Add_Data=importdata(route("1D/","Non_Schwarz/","AddData",NN,"1"));
+y=importdata(route("1D/","Non_Schwarz/","y",NN,""));
+Sigma_NS=importdata(route("1D/","Non_Schwarz/","Sigma",NN,""));
+Sigma_S1=importdata(route("1D/","Schwarz/"+stopCrit,"Sigma",NN,"_2"));
+Sigma_S2=importdata(route("1D/","Schwarz/"+stopCrit,"Sigma",NN,"_4"));
+Sigma_S3=importdata(route("1D/","Schwarz/"+stopCrit,"Sigma",NN,"_10"));
+Add_Data=importdata(route("1D/","Non_Schwarz/","AddData",NN,""));
 N=Add_Data(1);
 a=Imp_Data(1,1);
 b=Imp_Data(1,2);
@@ -30,7 +31,10 @@ SigmaT_an=@(r)(((pa.*a.^2-pb.*b.^2)/(b.^2-a.^2))+(((a.^2*b.^2)./(r.^2))*((pa-pb)
 rSpecific=linspace(a,b,10);
 rReal=linspace(a,b,N);
 
-ErrorL2(SigmaT_an, Sigma_S3, 2)
+[ErrorL2(SigmaT_an, Sigma_NS, 2) ...
+ErrorL2(SigmaT_an, Sigma_S1, 2) ...
+ErrorL2(SigmaT_an, Sigma_S2, 2) ...
+ErrorL2(SigmaT_an, Sigma_S3, 2) ]
 
 % plotAn(SigmaR_an);
 % hold on
