@@ -3,7 +3,7 @@ global a b h N L rSpecific
 format shortG
 %format loose
 sep="_";
-NN="200";
+NN="050";
 stopCrit="SC_1e-06/";
 route=@(Dim,Type,obj,size,AS)"results/"+Dim+Type+obj+sep+size+AS+".dat";
 Imp_Data=importdata("files/mainData.dat");
