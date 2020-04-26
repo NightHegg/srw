@@ -11,8 +11,35 @@
 
 using namespace std;
 
-void Solve(int N, int amntSubdomains)
+void Solve(int N, int dimTask)
 {
+	string strDimTask=to_string(dimTask)+"D";
+	int amntSubdomains;
+	double stopCriteria;
+	
+	ifstream sch("files/"+strDimTask+"/schwarz.dat");
+	sch>>amntSubdomains;
+	sch>>stopCriteria;
+
+	int dimEps, dimSigma;
+	switch (dimTask)
+	{
+		case 1:
+		{
+			dimEps=2;
+			dimSigma=2;
+			break;
+		}
+		case 2:
+		{
+			dimEps=3;
+			dimSigma=3;
+		}
+	}
+	MatrixSchwarz D(dimSigma, dimEps);
+	MatrixSchwarz Eps(dimEps, N);
+	MatrixSchwarz Sigma(dimSigma, N);
+
 	double bufferValue{0};
 	vector<double> tempBuffer;
 	ifstream ifs("files/mainData.dat");
@@ -44,16 +71,12 @@ void Solve(int N, int amntSubdomains)
 	double lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
 	double myu = E / (2 * (1 + nyu));
 
-	int DimTask = 1;				 // Dimension of the main task - 1 (1D), 2 (2D)
-	int AmNodes = 2;				 // Amound of the nodes
-	int EpsDimArray = 2 * DimTask;	 //Size of the Eps array
-	int SigmaDimArray = 2 * DimTask; //Size of the Sigma array
+	int dimTask, amntNodes, dimEps, dimSigma;
 
-	MatrixSchwarz D(SigmaDimArray, EpsDimArray);
-	D.Elastic_Modulus_Tensor(lambda, myu);
 
-	MatrixSchwarz Eps(EpsDimArray, N);
-	MatrixSchwarz Sigma(SigmaDimArray, N);
+	
+	D.Elastic_Modulus_Tensor(dimTask);
+
 	VectorSchwarz rr(N + 1);
 	VectorSchwarz y(N + 1);
 	VectorSchwarz yPrevious(N + 1);

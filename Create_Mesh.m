@@ -1,18 +1,18 @@
 clc
 global node edge
+format shortG
 
-Imp_Data=importdata("files/mainData.dat");
+node=importdata("files/2D/nodes.dat");
+edge=importdata("files/2D/edges.dat");
+hfun = (max(node(:,1))-min(node(:,1)))/4;
 
-node = [0,0;2,0;2,2;0,2];
-edge=[1 2; 2 3; 3 4; 4 1];
-
-hfun = .5 ;
 [vert,etri,tria,tnum] = refine2(node,edge,[],[],hfun);
    
 [vnew,etri,tnew,tnum] = smooth2(vert,etri,tria,tnum);
+
 PlotMesh(vnew, tnew);
-writematrix(vnew,"files/mesh.dat",'Delimiter',' ');
-writematrix(tnew,'files/elements.dat','Delimiter',' ');
+writematrix(vnew,"files/2D/triMesh.dat",'Delimiter',' ');
+writematrix(tnew,'files/2D/triElements.dat','Delimiter',' ');
     
 function res = PlotMesh(vert,tria)
     global node  edge

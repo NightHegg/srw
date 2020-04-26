@@ -40,6 +40,23 @@ public:
 
 	void Elastic_Modulus_Tensor(double lambda, double myu)
 	{
+		switch (dimTask)
+		{
+			case 1:
+			{
+
+				break;
+			}
+			case 2:
+			{
+				
+				break;
+			}
+			default:
+			{
+				
+			}
+		}
 		for (int i = 0; i < iM; i++)
 		{
 			for (int j = 0; j < jM; j++)
