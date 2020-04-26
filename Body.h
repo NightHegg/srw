@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -13,11 +12,10 @@ using namespace std;
 
 void Solve(int N, int dimTask)
 {
-	string strDimTask=to_string(dimTask)+"D";
 	int amntSubdomains;
 	double stopCriteria;
 	
-	ifstream sch("files/"+strDimTask+"/schwarz.dat");
+	ifstream sch("files/"+to_string(dimTask)+"D/schwarz.dat");
 	sch>>amntSubdomains;
 	sch>>stopCriteria;
 
