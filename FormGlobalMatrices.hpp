@@ -22,3 +22,12 @@
         }
     }
 }*/
+
+void Form_Global_Mat_Stiffness(int dimTask,
+                               VectorSchwarz a,
+                               VectorSchwarz y,
+                               VectorSchwarz D,
+                               VectorSchwarz S)
+{
+    
+}

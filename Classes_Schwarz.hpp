@@ -38,34 +38,51 @@ public:
 		}
 	}
 
-	void Elastic_Modulus_Tensor(double lambda, double myu)
+	void Elastic_Modulus_Tensor(int dimTask)
 	{
+		double E, nyu, lambda, myu;
+		ifstream out("files/" + to_string(dimTask) + "D/schwarz.dat");
+		out >> E;
+		out >> myu;
+
+		lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
+		myu = E / (2 * (1 + nyu));
+
 		switch (dimTask)
 		{
-			case 1:
-			{
-
-				break;
-			}
-			case 2:
-			{
-				
-				break;
-			}
-			default:
-			{
-				
-			}
-		}
-		for (int i = 0; i < iM; i++)
+		case 1:
 		{
-			for (int j = 0; j < jM; j++)
+			for (int i = 0; i < iM; i++)
 			{
-				if (i == j)
-					M[i][j] = lambda + 2 * myu;
-				else
-					M[i][j] = lambda;
+				for (int j = 0; j < jM; j++)
+				{
+					if (i == j)
+						M[i][j] = lambda + 2 * myu;
+					else
+						M[i][j] = lambda;
+				}
 			}
+			break;
+		}
+		case 2:
+		{
+			for (int i = 0; i < iM - 1; i++)
+			{
+				for (int j = 0; j < jM - 1; j++)
+				{
+					if (i == j)
+						M[i][j] = lambda + 2 * myu;
+					else
+						M[i][j] = lambda;
+				}
+			}
+			M[iM][jM] = 2 * myu;
+			break;
+		}
+		default:
+		{
+			printf("Wrong input, matrix D\n");
+		}
 		}
 	}
 
@@ -352,12 +369,32 @@ public:
 		return sqrt(sum);
 	}
 
-	void Partition(double LB, double RB)
+	void Partition(int dimTask)
 	{
-		double h = (RB - LB) / (iV - 1);
-		V[0] = LB;
-		for (int i = 1; i < iV; i++)
-			V[i] = V[i - 1] + h;
+		double a, b;
+		ifstream out("files/" + to_string(dimTask) + "D/nodes.dat");
+
+		switch (dimTask)
+		{
+		case 1:
+		{
+			out >> a;
+			out >> b;
+			double h;
+			V[0] = a;
+			for (int i = 1; i < iV; i++)
+			{
+				h = (V[i] - V[i - 1]) / (iV - 1);
+				V[i] = V[i - 1] + h;
+			}
+			break;
+		}
+		case 2:
+		{
+
+			break;
+		}
+		}
 	}
 
 	void SetName(std::string str)

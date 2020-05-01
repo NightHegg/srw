@@ -10,7 +10,7 @@ protected:
 	double *V;
 	int iV;
 public:
-	Vector() = default;
+	Vector()=default;
 	Vector(int index);
 	~Vector() = default;
 	Vector(const Vector &N);

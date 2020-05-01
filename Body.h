@@ -14,29 +14,56 @@ void Solve(int N, int dimTask)
 {
 	int amntSubdomains;
 	double stopCriteria;
-	
-	ifstream sch("files/"+to_string(dimTask)+"D/schwarz.dat");
-	sch>>amntSubdomains;
-	sch>>stopCriteria;
+
+	ifstream sch("files/" + to_string(dimTask) + "D/schwarz.dat");
+	sch >> amntSubdomains;
+	sch >> stopCriteria;
 
 	int dimEps, dimSigma;
+	VectorSchwarz y;
+	VectorSchwarz yPrevious;
+	VectorSchwarz a;
+	MatrixSchwarz K;
+	MatrixSchwarz Ke;
+	VectorSchwarz F;
+	VectorSchwarz Fe;
+
 	switch (dimTask)
 	{
-		case 1:
-		{
-			dimEps=2;
-			dimSigma=2;
-			break;
-		}
-		case 2:
-		{
-			dimEps=3;
-			dimSigma=3;
-		}
+	case 1:
+	{
+		dimEps = dimSigma = 2;
+		y.Construct(N + 1);
+		yPrevious.Construct(N + 1);
+		a.Construct(N + 1);
+		K.Construct(N + 1, N + 1);
+		break;
 	}
-	MatrixSchwarz D(dimSigma, dimEps);
+	case 2:
+	{
+		dimEps = dimSigma = 3;
+		y.Construct(2 * (N + 1));
+		yPrevious.Construct(2 * (N + 1));
+		a.Construct(2 * (N + 1));
+		K.Construct(2 * (N + 1), 2 * (N + 1));
+		break;
+	}
+	default:
+	{
+		printf("Wrong input: dimTask\n");
+	}
+	}
+
 	MatrixSchwarz Eps(dimEps, N);
 	MatrixSchwarz Sigma(dimSigma, N);
+
+	MatrixSchwarz D(dimSigma, dimEps);
+	D.Elastic_Modulus_Tensor(dimTask);
+
+	a.Partition(dimTask);
+	y.Fill(-1e-6);
+
+	Progonka_Solution(dimTask, a, y, D);
 
 	double bufferValue{0};
 	vector<double> tempBuffer;
@@ -62,18 +89,9 @@ void Solve(int N, int dimTask)
 	double stopCriteria{1e-6};
 
 	std::stringstream ss;
-	ss<<stopCriteria;
+	ss << stopCriteria;
 	ss.precision(7);
 	std::string sStopCriteria = ss.str();
-
-	double lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
-	double myu = E / (2 * (1 + nyu));
-
-	int dimTask, amntNodes, dimEps, dimSigma;
-
-
-	
-	D.Elastic_Modulus_Tensor(dimTask);
 
 	VectorSchwarz rr(N + 1);
 	VectorSchwarz y(N + 1);
@@ -100,7 +118,7 @@ void Solve(int N, int dimTask)
 			{
 				Progonka_Solution(i, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
 			}
-			cout<<y.ConvergenceL2(yPrevious, rr)<<endl;
+			cout << y.ConvergenceL2(yPrevious, rr) << endl;
 			Counter++;
 		} while (y.ConvergenceL2(yPrevious, rr) > stopCriteria);
 		printf("\nThe stop criteria: %g\nAmount of iterations: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
