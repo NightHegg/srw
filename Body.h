@@ -10,42 +10,45 @@
 
 using namespace std;
 
-void Solve(int N, int dimTask)
+void Solve(int dimTask)
 {
+	string Route{"results/" + to_string(dimTask) + "D/"};
+	int Counter{0};
+	int amntNodes;
 	int amntSubdomains;
 	double stopCriteria;
+	double coefOverlap{0};
 
 	ifstream sch("files/" + to_string(dimTask) + "D/schwarz.dat");
 	sch >> amntSubdomains;
 	sch >> stopCriteria;
 
-	int dimEps, dimSigma;
-	VectorSchwarz y;
-	VectorSchwarz yPrevious;
-	VectorSchwarz a;
-	MatrixSchwarz K;
-	MatrixSchwarz Ke;
-	VectorSchwarz F;
-	VectorSchwarz Fe;
+	std::stringstream ss;
+	ss << stopCriteria;
+	ss.precision(7);
+	std::string sStopCriteria = ss.str();
 
+	int dimEps, dimSigma;
+
+	double tmp;
+	vector<double> tmpBuf;
+	ifstream scanfN("files/" + to_string(dimTask) + "D/mesh.dat");
+	while (!scanfN.eof())
+	{
+		scanfN >> tmp;
+		tmpBuf.push_back(tmp);
+		amntNodes++;
+	}
 	switch (dimTask)
 	{
 	case 1:
 	{
 		dimEps = dimSigma = 2;
-		y.Construct(N + 1);
-		yPrevious.Construct(N + 1);
-		a.Construct(N + 1);
-		K.Construct(N + 1, N + 1);
 		break;
 	}
 	case 2:
 	{
 		dimEps = dimSigma = 3;
-		y.Construct(2 * (N + 1));
-		yPrevious.Construct(2 * (N + 1));
-		a.Construct(2 * (N + 1));
-		K.Construct(2 * (N + 1), 2 * (N + 1));
 		break;
 	}
 	default:
@@ -53,17 +56,36 @@ void Solve(int N, int dimTask)
 		printf("Wrong input: dimTask\n");
 	}
 	}
+	VectorSchwarz a(amntNodes);
+	VectorSchwarz y(amntNodes);
+	VectorSchwarz yPrevious(amntNodes);
 
-	MatrixSchwarz Eps(dimEps, N);
-	MatrixSchwarz Sigma(dimSigma, N);
+	MatrixSchwarz Eps(dimEps, amntElements);
+	MatrixSchwarz Sigma(dimSigma, amntElements);
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
 
-	a.Partition(dimTask);
+	//a.Partition(dimTask);
 	y.Fill(-1e-6);
 
-	Progonka_Solution(dimTask, a, y, D);
+	if (amntSubdomains < 2)
+	{
+		Get_Displacements(dimTask, y, B, D);
+		Insert_y_Back();
+	}
+	else
+	{
+		Route += "Schwarz/SC_" + sStopCriteria + "/";
+		rr.Decomposition(amntSubdomains, &coefOverlap);
+		y.Equal_SchwarzNodes(rr);
+		yPrevious.Equal_SchwarzNodes(rr);
+		do
+		{
+			yPrevious = y;
+			Get_Displacements();
+		} while (y.ConvergenceL2(yPrevious, rr) > stopCriteria);
+	}
 
 	double bufferValue{0};
 	vector<double> tempBuffer;

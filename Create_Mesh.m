@@ -1,18 +1,26 @@
 clc
 global node edge
 format shortG
+%----------------
+dimTask="2D";
+%----------------
+if dimTask=="2D" 
+    node=importdata("files/2D/nodes.dat");
+    edge=importdata("files/2D/edges.dat");
+    hfun = (max(node(:,1))-min(node(:,1)))/4;
 
-node=importdata("files/2D/nodes.dat");
-edge=importdata("files/2D/edges.dat");
-hfun = (max(node(:,1))-min(node(:,1)))/4;
-
-[vert,etri,tria,tnum] = refine2(node,edge,[],[],hfun);
+    [vert,etri,tria,tnum] = refine2(node,edge,[],[],hfun);
    
-[vnew,etri,tnew,tnum] = smooth2(vert,etri,tria,tnum);
-
-PlotMesh(vnew, tnew);
-writematrix(vnew,"files/2D/triMesh.dat",'Delimiter',' ');
-writematrix(tnew,'files/2D/triElements.dat','Delimiter',' ');
+    [meshAr,etri,elemAr,tnum] = smooth2(vert,etri,tria,tnum);
+    PlotMesh(meshAr, elemAr);
+    writematrix(meshAr,"files/2D/mesh.dat",'Delimiter',' ');
+    writematrix(elemAr,'files/2D/elements.dat','Delimiter',' ');
+elseif dimTask=="1D"
+    coefs=importdata("files/1D/coefs.dat");
+    node=importdata("files/1D/nodes.dat");
+    meshAr=linspace(node(1),node(2),coefs(1)).';
+    writematrix(meshAr,'files/1D/mesh.dat','Delimiter',' ');   
+end
     
 function res = PlotMesh(vert,tria)
     global node  edge

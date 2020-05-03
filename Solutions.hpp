@@ -104,8 +104,5 @@ void Progonka_Solution(int SchwarzStep,
 	{
 		y = yChosen;
 	}
-	A.~MatrixSchwarz();
-	KM.~Matrix();
-	F.~Vector();
 
 }
