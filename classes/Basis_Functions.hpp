@@ -13,6 +13,7 @@ public:
 	Vector arg;
 	double *N;
 	double **B;
+
 	Basis_Functions(int _dimTask, Vector a)
 	{
 		numNode = 0;
@@ -24,15 +25,15 @@ public:
 		{
 			B = new double *[2];
 			for (int i = 0; i < 2; i++)
-				B[i] = new double[3];
+				B[i] = new double[1];
 
 			N = new double[2];
 
 			B[0][0] = Derivative_BE(func, arg, numNode);
 			B[1][0] = func.GetElement(numNode) / (arg.GetElement(numNode));
 			
-			N[0] = (r.GetElement(iBE + 1) - _Node) / h;
-			N[1] = (_Node - r.GetElement(iBE)) / h;
+			//N[0] = (a.GetElement(iBE + 1) - _Node) / h;
+			//N[1] = (_Node - r.GetElement(iBE)) / h;
 			break;
 		}
 		}

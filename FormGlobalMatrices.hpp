@@ -3,6 +3,7 @@
 #include "classes/Basis_Functions.hpp"
 #include "Classes_Schwarz.hpp"
 #include "Num_Integration.hpp"
+#include "Methods.hpp"
 
 /*void formElemMatStiffness(int i, 
                             MatrixSchwarz& KM, 
@@ -23,11 +24,11 @@
     }
 }*/
 
-void Form_Element_Mat_Stiffness(int dimTask,
-                                VectorSchwarz a,
-                                VectorSchwarz y,
-                                VectorSchwarz D,
-                                VectorSchwarz S)
+void Form_Elem_Mat_Stiffness(int dimTask,
+                             VectorSchwarz a,
+                             VectorSchwarz y,
+                             VectorSchwarz D,
+                             VectorSchwarz S)
 {
     for (int i = 0; i < SizeDomain - 1; i++)
     {
@@ -36,18 +37,10 @@ void Form_Element_Mat_Stiffness(int dimTask,
     }
 }
 
-void Ensembling()
+void Ensembling(MatrixSchwarz K, VectorSchwarz F, MatrixSchwarz D, int amntElements)
 {
-}
-
-void Get_Displacements(int dimTask, VectorSchwarz y)
-{
-    double tmp;
-    int amntElements{0};
-    VectorSchwarz a;
-
-    MatrixSchwarz K(amntElements,amntElements);
-    VectorSchwarz F(amntElements);
+    MatrixSchwarz Ke(D.GetSize_i(), D.GetSize_i());
+    VectorSchwarz Fe(D.GetSize_i());
 
     for (int i = 0; i < amntElements; i++)
     {
@@ -57,7 +50,32 @@ void Get_Displacements(int dimTask, VectorSchwarz y)
         Form_Glob_Vec_Right(F, Fe, i);
         Form_Boundary_Conditions(K, F);
     }
+}
 
-    Ensembling(K, F);
-    Tridiogonal_Algorithm(SizeDomain, K, F, y);
+void Get_Displacements(int dimTask, VectorSchwarz y, VectorSchwarz a, MatrixSchwarz B, MatrixSchwarz D)
+{
+    int amntNodes = y.GetSize();
+    int amntElements;
+    switch (dimTask)
+    {
+    case 1:
+    {
+        amntElements = amntNodes - 1;
+    }
+    case 2:
+    {
+        ifstream scan("files/2D/elements.dat");
+        while (!scan.eof())
+        {
+            amntElements++;
+        }
+        scan.close();
+    }
+    }
+
+    MatrixSchwarz K(amntNodes, amntNodes);
+    VectorSchwarz F(amntNodes);
+
+    Ensembling(K, F, D, amntElements);
+    Tridiogonal_Algorithm(amntNodes, K, F, y);
 }

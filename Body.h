@@ -15,6 +15,7 @@ void Solve(int dimTask)
 	string Route{"results/" + to_string(dimTask) + "D/"};
 	int Counter{0};
 	int amntNodes;
+	int amntElements{0};
 	int amntSubdomains;
 	double stopCriteria;
 	double coefOverlap{0};
@@ -39,16 +40,29 @@ void Solve(int dimTask)
 		tmpBuf.push_back(tmp);
 		amntNodes++;
 	}
+	VectorSchwarz a(amntNodes);
+	int tmpC{0};
+	for (int x : tmpBuf)
+	{
+		a.SetElement(tmpC, x);
+	}
 	switch (dimTask)
 	{
 	case 1:
 	{
 		dimEps = dimSigma = 2;
+		amntElements = amntNodes - 1;
 		break;
 	}
 	case 2:
 	{
 		dimEps = dimSigma = 3;
+		ifstream scan("files/2D/elements.dat");
+		while (!scan.eof())
+		{
+			amntElements++;
+		}
+		scan.close();
 		break;
 	}
 	default:
@@ -66,25 +80,23 @@ void Solve(int dimTask)
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
 
-	//a.Partition(dimTask);
-	y.Fill(-1e-6);
-
 	if (amntSubdomains < 2)
 	{
-		Get_Displacements(dimTask, y, B, D);
+		Get_Displacements(dimTask, y, a, B, D);
 		Insert_y_Back();
 	}
 	else
 	{
+		y.Fill(-1e-6);
 		Route += "Schwarz/SC_" + sStopCriteria + "/";
-		rr.Decomposition(amntSubdomains, &coefOverlap);
-		y.Equal_SchwarzNodes(rr);
-		yPrevious.Equal_SchwarzNodes(rr);
+		a.Decomposition(amntSubdomains, &coefOverlap);
+		y.Equal_SchwarzNodes(a);
+		yPrevious.Equal_SchwarzNodes(a);
 		do
 		{
 			yPrevious = y;
 			Get_Displacements();
-		} while (y.ConvergenceL2(yPrevious, rr) > stopCriteria);
+		} while (y.ConvergenceL2(yPrevious, a) > stopCriteria);
 	}
 
 	double bufferValue{0};

@@ -103,6 +103,13 @@ public:
 		return P;
 	}
 
+	friend MatrixSchwarz operator*(const Basis_Functions &S, const VectorSchwarz &N)
+	{
+		MatrixSchwarz P();
+
+		return P;
+	}
+
 	friend MatrixSchwarz operator*(const MatrixSchwarz &N, const double val)
 	{
 		MatrixSchwarz P(N.iM, N.jM);
