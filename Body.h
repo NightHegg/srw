@@ -7,6 +7,8 @@
 #include "Solutions.hpp"
 #include "Additional_Functions.h"
 #include "Data_Record.h"
+#include "classes/Strain_Matrix.hpp"
+#include "FormGlobalMatrices.hpp"
 
 using namespace std;
 
@@ -46,6 +48,8 @@ void Solve(int dimTask)
 	{
 		a.SetElement(tmpC, x);
 	}
+	MatrixStrain S(dimTask, a);
+
 	switch (dimTask)
 	{
 	case 1:
@@ -70,7 +74,7 @@ void Solve(int dimTask)
 		printf("Wrong input: dimTask\n");
 	}
 	}
-	VectorSchwarz a(amntNodes);
+
 	VectorSchwarz y(amntNodes);
 	VectorSchwarz yPrevious(amntNodes);
 
@@ -80,10 +84,13 @@ void Solve(int dimTask)
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
 
+	VectorSchwarz yChosen;
+	VectorSchwarz aChosen;
+	VectorSchwarz yPreviousChosen;
+
 	if (amntSubdomains < 2)
 	{
-		Get_Displacements(dimTask, y, a, B, D);
-		Insert_y_Back();
+		Get_Displacements(dimTask, y, yPrevious, a, S, D);
 	}
 	else
 	{
@@ -95,11 +102,17 @@ void Solve(int dimTask)
 		do
 		{
 			yPrevious = y;
-			Get_Displacements();
+			for (int i = 0; i < amntSubdomains; i++)
+			{
+				yChosen = y.CreateAllocatedArray(i);
+				aChosen = a.CreateAllocatedArray(i);
+				yPreviousChosen = yPrevious.CreateAllocatedArray(i);
+				Get_Displacements(dimTask, yChosen, yPreviousChosen, aChosen, S, D);
+			}
 		} while (y.ConvergenceL2(yPrevious, a) > stopCriteria);
 	}
 
-	double bufferValue{0};
+	/*double bufferValue{0};
 	vector<double> tempBuffer;
 	ifstream ifs("files/mainData.dat");
 	while (!ifs.eof())
@@ -165,5 +178,5 @@ void Solve(int dimTask)
 
 	y.Record(Route, amntSubdomains, uk);
 	Sigma.Record(Route, amntSubdomains, rk);
-	Record_AddData(N, amntSubdomains, Counter, stopCriteria, coefOverlap, Route);
+	Record_AddData(N, amntSubdomains, Counter, stopCriteria, coefOverlap, Route);*/
 }

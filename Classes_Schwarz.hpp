@@ -8,6 +8,7 @@
 #include "classes/Matrix.hpp"
 #include "classes/Vector.hpp"
 #include "classes/Basis_Functions.hpp"
+#include "classes/Strain_Matrix.hpp"
 
 class MatrixSchwarz : public Matrix
 {
@@ -33,8 +34,8 @@ public:
 		Construct(2, 2);
 		for (int j = 0; j < jM; j++)
 		{
-			M[0][j] = BE.Derivative_BE(j, _Node);
-			M[1][j] = BE.Get_N(j, _Node) / _Node;
+			//M[0][j] = BE.Derivative_BE(j, _Node);
+			//M[1][j] = BE.Get_N(j, _Node) / _Node;
 		}
 	}
 
@@ -103,9 +104,16 @@ public:
 		return P;
 	}
 
-	friend MatrixSchwarz operator*(const Basis_Functions &S, const VectorSchwarz &N)
+	friend MatrixSchwarz operator*(const MatrixStrain &S, VectorSchwarz &m)
 	{
-		MatrixSchwarz P();
+		MatrixSchwarz P(S.dimSol, m.GetSize());
+		for (int i=0;i<P.GetSize_i();i++)
+		{
+			for (int j=0;j<P.GetSize_j();j++)
+			{
+				P[i][j]=
+			}
+		}
 
 		return P;
 	}
