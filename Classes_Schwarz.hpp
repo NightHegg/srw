@@ -29,8 +29,21 @@ public:
 		Matrix::Construct(i, j);
 		name = "";
 	}
-	void ConstructFullB(Basis_Functions &BE, double _Node)
+	void ConstructFullB(int dimTask, VectorSchwarz &a, double _Node, int numElem)
 	{
+		int iS, jS;
+		vector<double> basisFunctions;
+		switch (dimTask)
+		{
+		case 1:
+		{
+			basisFunctions.push_back((a.GetElement(numElem + 1) - _Node) / (a.GetElement(numElem + 1) - a.GetElement(numElem)));
+			basisFunctions.push_back((_Node - a.GetElement(numElem + 1)) / (a.GetElement(numElem + 1) - a.GetElement(numElem)));
+			iS = 2;
+			jS = 1;
+			Construct(iS, jS);
+		}
+		}
 		Construct(2, 2);
 		for (int j = 0; j < jM; j++)
 		{
@@ -87,7 +100,7 @@ public:
 		}
 	}
 
-	friend MatrixSchwarz operator*(const MatrixSchwarz &N, const MatrixSchwarz &L)
+	friend MatrixSchwarz operator*(MatrixSchwarz &N, const MatrixSchwarz &L)
 	{
 		MatrixSchwarz P(N.iM, L.jM);
 		for (int i = 0; i < N.iM; i++)
@@ -104,17 +117,49 @@ public:
 		return P;
 	}
 
-	friend MatrixSchwarz operator*(const MatrixStrain &S, VectorSchwarz &m)
+	/*friend MatrixSchwarz operator*(const MatrixStrain &S, VectorSchwarz &m)
 	{
 		MatrixSchwarz P(S.dimSol, m.GetSize());
 		for (int i=0;i<P.GetSize_i();i++)
 		{
 			for (int j=0;j<P.GetSize_j();j++)
 			{
-				P[i][j]=
+				switch (S.dimTask)
+				{
+					case 1:
+					{
+						P[i][j]=Derivative_BE(m, S.arg, j)
+					}
+				}
 			}
 		}
 
+		return P;
+	}*/
+
+	friend MatrixSchwarz operator*(MatrixStrain &S, Basis_Functions &matrN)
+	{
+		double h = matrN.arg.GetElement(matrN.numNode + 1) - matrN.arg.GetElement(matrN.numNode);
+		MatrixSchwarz P(S.dimSol, S.dimTask * matrN.N.size());
+		for (int j = 0; j < P.GetSize_j(); j++)
+		{
+			switch (S.dimTask)
+			{
+			case 1:
+			{
+				P[0][j] = (matrN.Get_N(matrN.node + h, j) - matrN.Get_N(matrN.node, j)) / h;
+				P[1][j] = matrN.Get_N(matrN.node, j) / matrN.node;
+				break;
+			}
+			case 2:
+			{
+				break;
+			}
+			default:
+			{
+			}
+			}
+		}
 		return P;
 	}
 

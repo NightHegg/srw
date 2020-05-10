@@ -90,7 +90,7 @@ void Solve(int dimTask)
 
 	if (amntSubdomains < 2)
 	{
-		Get_Displacements(dimTask, y, yPrevious, a, S, D);
+		Get_Displacements(dimTask, y, yPrevious, a, D);
 	}
 	else
 	{
@@ -107,7 +107,7 @@ void Solve(int dimTask)
 				yChosen = y.CreateAllocatedArray(i);
 				aChosen = a.CreateAllocatedArray(i);
 				yPreviousChosen = yPrevious.CreateAllocatedArray(i);
-				Get_Displacements(dimTask, yChosen, yPreviousChosen, aChosen, S, D);
+				Get_Displacements(dimTask, yChosen, yPreviousChosen, aChosen, D);
 			}
 		} while (y.ConvergenceL2(yPrevious, a) > stopCriteria);
 	}

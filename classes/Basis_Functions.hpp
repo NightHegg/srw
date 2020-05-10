@@ -7,28 +7,32 @@
 class Basis_Functions
 {
 public:
+	double node;
 	int numNode;
-	double Node;
 	int dimTask;
 	Vector func;
 	Vector arg;
 	vector<double> N;
 
-	Basis_Functions(int _dimTask, Vector a)
+	Basis_Functions(int _dimTask, Vector a, int _numNode, double _node)
 	{
-		numNode = 0;
-		Node = 0;
+		node = _node;
+		numNode = _numNode;
 		dimTask = _dimTask;
 		arg = a;
+	}
+	double Get_N(double Node, int val)
+	{
 		switch (dimTask)
 		{
 		case 1:
 		{
-			N.push_back((a.GetElement(numNode + 1) - Node) / (a.GetElement(numNode + 1) - a.GetElement(numNode)));
-			N.push_back((Node - a.GetElement(numNode + 1)) / (a.GetElement(numNode + 1) - a.GetElement(numNode)));
+			N.push_back((arg.GetElement(numNode + 1) - Node) / (arg.GetElement(numNode + 1) - arg.GetElement(numNode)));
+			N.push_back((Node - arg.GetElement(numNode + 1)) / (arg.GetElement(numNode + 1) - arg.GetElement(numNode)));
 			break;
 		}
 		}
+		return N[val];
 	}
 };
 

@@ -25,21 +25,21 @@
     }
 }*/
 
-void Form_Elem_Mat_Stiffness(MatrixSchwarz Ke, VectorSchwarz &a, MatrixSchwarz &D, int numElem)
+void Form_Elem_Mat_Stiffness(int dimTask, MatrixSchwarz Ke, VectorSchwarz &a, MatrixSchwarz &D, int numElem)
 {
     string Type_Integration = "Trapezoidal_Type";
-    Basis_Functions ElementB(numElem, a);
-    Numerical_Integration(numElem, rrChosen, D, ElementB, Type_Integration, Ke);
+    //Basis_Functions ElementB(numElem, a);
+    Numerical_Integration(dimTask, numElem, a, D, Type_Integration, Ke);
 }
 
-void Ensembling(MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &D, VectorSchwarz &a, int amntElements)
+void Ensembling(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &D, VectorSchwarz &a, int amntElements)
 {
     MatrixSchwarz Ke(D.GetSize_i(), D.GetSize_i());
     VectorSchwarz Fe(D.GetSize_i());
 
     for (int i = 0; i < amntElements; i++)
     {
-        Form_Elem_Mat_Stiffness(Ke, a, D, i);
+        Form_Elem_Mat_Stiffness(dimTask, Ke, a, D, i);
         Form_Glob_Mat_Stiffness(K, Ke, i);
         Form_Elem_Vec_Right(Fe, i);
         Form_Glob_Vec_Right(F, Fe, i);
@@ -47,7 +47,7 @@ void Ensembling(MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &D, VectorSchw
     }
 }
 
-void Get_Displacements(int dimTask, VectorSchwarz &y, VectorSchwarz &yPrevious, VectorSchwarz &a, MatrixStrain &S, MatrixSchwarz &D)
+void Get_Displacements(int dimTask, VectorSchwarz &y, VectorSchwarz &yPrevious, VectorSchwarz &a, MatrixSchwarz &D)
 {
     int amntNodes = y.GetSize();
     int amntElements;
@@ -71,7 +71,7 @@ void Get_Displacements(int dimTask, VectorSchwarz &y, VectorSchwarz &yPrevious, 
     MatrixSchwarz K(amntNodes, amntNodes);
     VectorSchwarz F(amntNodes);
 
-    Ensembling(K, F, D, a, amntElements);
+    Ensembling(dimTask, K, F, D, a, amntElements);
     Tridiogonal_Algorithm(amntNodes, K, F, y);
 }
 
