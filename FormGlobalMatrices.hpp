@@ -57,13 +57,14 @@ void Form_Elem_Mat_Stiffness(int dimTask, MatrixSchwarz &Ke, VectorSchwarz &a, M
 
 void Form_Elem_Vec_Right(VectorSchwarz &Fe, int numElem)
 {
-	Fe[0] += pa * rrChosen[0];
-	Fe[SizeDomain - 1] += -pb * rrChosen[SizeDomain - 1];
 }
 
 void Form_Glob_Vec_Right(VectorSchwarz &F, VectorSchwarz &Fe, int numElem)
 {
-	
+}
+
+void Form_Boundary_Conditions(int dimTask, MatrixSchwarz &K, VectorSchwarz &F)
+{
 }
 
 void Ensembling(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &D, strainMatrix &S, VectorSchwarz &a, int amntElements)
@@ -77,7 +78,7 @@ void Ensembling(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &
 		Form_Glob_Mat_Stiffness(dimTask, K, Ke, i);
 		Form_Elem_Vec_Right(Fe, i);
 		Form_Glob_Vec_Right(F, Fe, i);
-		Form_Boundary_Conditions(K, F);
+		Form_Boundary_Conditions(dimTask, K, F);
 	}
 }
 
@@ -88,18 +89,16 @@ void Get_Displacements(int dimTask, VectorSchwarz &y, VectorSchwarz &yPrevious, 
 	switch (dimTask)
 	{
 	case 1:
-	{
 		amntElements = amntNodes - 1;
-	}
+		break;
 	case 2:
-	{
 		ifstream scan("files/2D/elements.dat");
 		while (!scan.eof())
 		{
 			amntElements++;
 		}
 		scan.close();
-	}
+		break;
 	}
 
 	MatrixSchwarz K(amntNodes, amntNodes);

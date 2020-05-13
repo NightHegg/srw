@@ -16,7 +16,7 @@ void Solve(int dimTask)
 {
 	string Route{"results/" + to_string(dimTask) + "D/"};
 	int Counter{0};
-	int amntNodes;
+	int amntNodes{0};
 	int amntElements{0};
 	int amntSubdomains;
 	double stopCriteria;
@@ -97,6 +97,7 @@ void Solve(int dimTask)
 				aChosen = a.CreateAllocatedArray(i);
 				yPreviousChosen = yPrevious.CreateAllocatedArray(i);
 				Get_Displacements(dimTask, yChosen, yPreviousChosen, aChosen, D, S);
+				y.ReturnAllocatedArrayResults(yChosen, i);
 			}
 		} while (y.ConvergenceL2(yPrevious, a) > stopCriteria);
 	}
