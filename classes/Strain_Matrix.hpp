@@ -7,19 +7,29 @@
  * ! Переписать S, чтобы сначала была просто пустышка, а потом сверху добавлялась функция в зависимости от размерности
  **/
 
-class MatrixStrain
+class strainMatrix
 {
 public:
-	int dimSol;
-	int numNode;
 	int dimTask;
-	Vector func;
-	Vector arg;
-
-	MatrixStrain(int _dimTask)
+	int iSize;
+	strainMatrix(int _dimTask)
 	{
-		numNode = 0;
 		dimTask = _dimTask;
+		switch (dimTask)
+		{
+		case 1:
+			iSize = 2;
+			break;
+		case 2:
+			iSize = 3;
+			break;
+		case 3:
+			iSize = 4;
+			break;
+		default:
+			printf("Wrong input.\n");
+			break;
+		}
 	}
 };
 

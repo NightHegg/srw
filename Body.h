@@ -21,6 +21,7 @@ void Solve(int dimTask)
 	int amntSubdomains;
 	double stopCriteria;
 	double coefOverlap{0};
+	strainMatrix S(dimTask);
 
 	ifstream sch("files/" + to_string(dimTask) + "D/schwarz.dat");
 	sch >> amntSubdomains;
@@ -45,34 +46,24 @@ void Solve(int dimTask)
 	VectorSchwarz a(amntNodes);
 	int tmpC{0};
 	for (int x : tmpBuf)
-	{
 		a.SetElement(tmpC, x);
-	}
-	MatrixStrain S(dimTask, a);
 
 	switch (dimTask)
 	{
 	case 1:
-	{
 		dimEps = dimSigma = 2;
 		amntElements = amntNodes - 1;
 		break;
-	}
 	case 2:
-	{
 		dimEps = dimSigma = 3;
 		ifstream scan("files/2D/elements.dat");
 		while (!scan.eof())
-		{
 			amntElements++;
-		}
 		scan.close();
 		break;
-	}
 	default:
-	{
 		printf("Wrong input: dimTask\n");
-	}
+		break;
 	}
 
 	VectorSchwarz y(amntNodes);
@@ -89,9 +80,7 @@ void Solve(int dimTask)
 	VectorSchwarz yPreviousChosen;
 
 	if (amntSubdomains < 2)
-	{
-		Get_Displacements(dimTask, y, yPrevious, a, D);
-	}
+		Get_Displacements(dimTask, y, yPrevious, a, D, S);
 	else
 	{
 		y.Fill(-1e-6);
@@ -107,7 +96,7 @@ void Solve(int dimTask)
 				yChosen = y.CreateAllocatedArray(i);
 				aChosen = a.CreateAllocatedArray(i);
 				yPreviousChosen = yPrevious.CreateAllocatedArray(i);
-				Get_Displacements(dimTask, yChosen, yPreviousChosen, aChosen, D);
+				Get_Displacements(dimTask, yChosen, yPreviousChosen, aChosen, D, S);
 			}
 		} while (y.ConvergenceL2(yPrevious, a) > stopCriteria);
 	}

@@ -137,27 +137,23 @@ public:
 		return P;
 	}*/
 
-	friend MatrixSchwarz operator*(MatrixStrain &S, Basis_Functions &matrN)
+	friend MatrixSchwarz operator*(strainMatrix &S, basfuncMatrix &matrN)
 	{
 		double h = matrN.arg.GetElement(matrN.numNode + 1) - matrN.arg.GetElement(matrN.numNode);
-		MatrixSchwarz P(S.dimSol, S.dimTask * matrN.N.size());
+		MatrixSchwarz P(S.iSize, S.dimTask * matrN.N.size());
 		for (int j = 0; j < P.GetSize_j(); j++)
 		{
 			switch (S.dimTask)
 			{
 			case 1:
-			{
 				P[0][j] = (matrN.Get_N(matrN.node + h, j) - matrN.Get_N(matrN.node, j)) / h;
 				P[1][j] = matrN.Get_N(matrN.node, j) / matrN.node;
 				break;
-			}
 			case 2:
-			{
 				break;
-			}
 			default:
-			{
-			}
+				printf("Wrong input.\n");
+				break;
 			}
 		}
 		return P;

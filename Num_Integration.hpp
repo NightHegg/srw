@@ -12,13 +12,14 @@ void Create_Function(int dimTask,
 					 double node,
 					 int numElem,
 					 MatrixSchwarz &D,
+					 strainMatrix &S,
 					 MatrixSchwarz &resMatrix)
 {
-	Basis_Functions N(dimTask, a, numElem, node);
-	MatrixStrain S
+	basfuncMatrix N(dimTask, a, numElem, node);
 	MatrixSchwarz B;
 	MatrixSchwarz BTD;
 	MatrixSchwarz BT;
+	B = S * N;
 	B.ConstructFullB(dimTask, a, node, numElem);
 	B.Transpose(BT);
 	BTD = BT * D;
@@ -30,18 +31,19 @@ void Numerical_Integration(int dimTask,
 						   int numElem,
 						   VectorSchwarz &a,
 						   MatrixSchwarz &D,
-						   string Type_Integration,
+						   strainMatrix &S,
+						   string typeIntegration,
 						   MatrixSchwarz &ResMat)
 {
 	double h = a[numElem + 1] - a[numElem];
 	std::vector<double> arrNodes;
-	if (Type_Integration == "Riemann_Type")
+	if (typeIntegration == "Riemann_Type")
 	{
 		arrNodes.push_back((a[numElem] + a[numElem + 1]) / 2.0);
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, ResMat);
+		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, ResMat);
 		ResMat = ResMat * h;
 	}
-	else if (Type_Integration == "Trapezoidal_Type")
+	else if (typeIntegration == "Trapezoidal_Type")
 	{
 		arrNodes.push_back(a[numElem]);
 		arrNodes.push_back(a[numElem + 1]);
@@ -49,13 +51,13 @@ void Numerical_Integration(int dimTask,
 		MatrixSchwarz M1;
 		MatrixSchwarz M2;
 
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, ResMat);
-		Create_Function(dimTask, a, arrNodes[1], numElem, D, ResMat);
+		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, ResMat);
+		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, ResMat);
 
 		ResMat = M1 + M2;
 		ResMat = ResMat * (h / 2.0);
 	}
-	else if (Type_Integration == "Gauss_2_Type")
+	else if (typeIntegration == "Gauss_2_Type")
 	{
 
 		arrNodes.push_back((a[numElem] + a[numElem + 1]) / 2.0 - (a[numElem + 1] - a[numElem]) / (2 * sqrt(3.0)));
@@ -64,15 +66,15 @@ void Numerical_Integration(int dimTask,
 		MatrixSchwarz M1;
 		MatrixSchwarz M2;
 
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, ResMat);
-		Create_Function(dimTask, a, arrNodes[1], numElem, D, ResMat);
+		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, ResMat);
+		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, ResMat);
 
 		ResMat = M1 + M2;
 		ResMat = ResMat * (h / 2.0);
 	}
 	else
 	{
-		printf("You entered the wrong type of numerical integration: %s\n", Type_Integration.c_str());
+		printf("You entered the wrong type of numerical integration: %s\n", typeIntegration.c_str());
 		exit(0);
 	}
 }

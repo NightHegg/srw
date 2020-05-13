@@ -4,7 +4,7 @@
 #include "classes/Vector.hpp"
 #include <vector>
 
-class Basis_Functions
+class basfuncMatrix
 {
 public:
 	double node;
@@ -14,7 +14,7 @@ public:
 	Vector arg;
 	vector<double> N;
 
-	Basis_Functions(int _dimTask, Vector a, int _numNode, double _node)
+	basfuncMatrix(int _dimTask, Vector a, int _numNode, double _node)
 	{
 		node = _node;
 		numNode = _numNode;

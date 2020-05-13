@@ -25,54 +25,88 @@
     }
 }*/
 
-void Form_Elem_Mat_Stiffness(int dimTask, MatrixSchwarz Ke, VectorSchwarz &a, MatrixSchwarz &D, int numElem)
+void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, int numElem)
 {
-    string Type_Integration = "Trapezoidal_Type";
-    //Basis_Functions ElementB(numElem, a);
-    Numerical_Integration(dimTask, numElem, a, D, Type_Integration, Ke);
+	int size{0};
+	int amntBF;
+	switch (dimTask)
+	{
+		amntBF = 2;
+		size = dimTask * amntBF;
+	case 1:
+		for (int j = 0; j < size; j++)
+		{
+			for (int k = 0; k < size; k++)
+			{
+				K[numElem + j][numElem + k] += Ke[j][k];
+			}
+		}
+		break;
+	case 2:
+		break;
+	default:
+		break;
+	}
 }
 
-void Ensembling(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &D, VectorSchwarz &a, int amntElements)
+void Form_Elem_Mat_Stiffness(int dimTask, MatrixSchwarz &Ke, VectorSchwarz &a, MatrixSchwarz &D, strainMatrix &S, int numElem)
 {
-    MatrixSchwarz Ke(D.GetSize_i(), D.GetSize_i());
-    VectorSchwarz Fe(D.GetSize_i());
-
-    for (int i = 0; i < amntElements; i++)
-    {
-        Form_Elem_Mat_Stiffness(dimTask, Ke, a, D, i);
-        Form_Glob_Mat_Stiffness(K, Ke, i);
-        Form_Elem_Vec_Right(Fe, i);
-        Form_Glob_Vec_Right(F, Fe, i);
-        Form_Boundary_Conditions(K, F);
-    }
+	string Type_Integration = "Trapezoidal_Type";
+	Numerical_Integration(dimTask, numElem, a, D, S, Type_Integration, Ke);
 }
 
-void Get_Displacements(int dimTask, VectorSchwarz &y, VectorSchwarz &yPrevious, VectorSchwarz &a, MatrixSchwarz &D)
+void Form_Elem_Vec_Right(VectorSchwarz &Fe, int numElem)
 {
-    int amntNodes = y.GetSize();
-    int amntElements;
-    switch (dimTask)
-    {
-    case 1:
-    {
-        amntElements = amntNodes - 1;
-    }
-    case 2:
-    {
-        ifstream scan("files/2D/elements.dat");
-        while (!scan.eof())
-        {
-            amntElements++;
-        }
-        scan.close();
-    }
-    }
+	Fe[0] += pa * rrChosen[0];
+	Fe[SizeDomain - 1] += -pb * rrChosen[SizeDomain - 1];
+}
 
-    MatrixSchwarz K(amntNodes, amntNodes);
-    VectorSchwarz F(amntNodes);
+void Form_Glob_Vec_Right(VectorSchwarz &F, VectorSchwarz &Fe, int numElem)
+{
+	
+}
 
-    Ensembling(dimTask, K, F, D, a, amntElements);
-    Tridiogonal_Algorithm(amntNodes, K, F, y);
+void Ensembling(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &D, strainMatrix &S, VectorSchwarz &a, int amntElements)
+{
+	MatrixSchwarz Ke(D.GetSize_i(), D.GetSize_i());
+	VectorSchwarz Fe(D.GetSize_i());
+
+	for (int i = 0; i < amntElements; i++)
+	{
+		Form_Elem_Mat_Stiffness(dimTask, Ke, a, D, S, i);
+		Form_Glob_Mat_Stiffness(dimTask, K, Ke, i);
+		Form_Elem_Vec_Right(Fe, i);
+		Form_Glob_Vec_Right(F, Fe, i);
+		Form_Boundary_Conditions(K, F);
+	}
+}
+
+void Get_Displacements(int dimTask, VectorSchwarz &y, VectorSchwarz &yPrevious, VectorSchwarz &a, MatrixSchwarz &D, strainMatrix &S)
+{
+	int amntNodes = y.GetSize();
+	int amntElements;
+	switch (dimTask)
+	{
+	case 1:
+	{
+		amntElements = amntNodes - 1;
+	}
+	case 2:
+	{
+		ifstream scan("files/2D/elements.dat");
+		while (!scan.eof())
+		{
+			amntElements++;
+		}
+		scan.close();
+	}
+	}
+
+	MatrixSchwarz K(amntNodes, amntNodes);
+	VectorSchwarz F(amntNodes);
+
+	Ensembling(dimTask, K, F, D, S, a, amntElements);
+	Tridiogonal_Algorithm(amntNodes, K, F, y);
 }
 
 /*void Progonka_Solution(int SchwarzStep,
