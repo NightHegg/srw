@@ -14,11 +14,19 @@ using namespace std;
 
 void Solve(int dimTask)
 {
+	int uk, rk, tmpV;
+
 	VectorSchwarz mesh;
 	VectorSchwarz elements;
 
 	double tmp, tmpCount{0};
 	vector<double> tmpBuf;
+
+	ifstream scanV("files/" + to_string(dimTask) + "D/coefs.dat");
+	scanV >> tmpV;
+	scanV>>uk;
+	scanV>>rk;
+	scanV.close();
 
 	string Route{"results/" + to_string(dimTask) + "D/"};
 
@@ -75,16 +83,15 @@ void Solve(int dimTask)
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
-
-	Get_Displacements(dimTask, Route, y, mesh, elements, S, D);
+	
+	Get_Displacements(dimTask, Route, y, mesh, elements, S, D, uk);
 
 	Eps.Create_Sy(S, y);
 	Sigma = D * Eps;
 
-	y.SetName("y");
 	Sigma.SetName("Sigma");
 
-	//y.Record(Route, amntSubdomains, uk);
+	//
 	//Sigma.Record(Route, amntSubdomains, rk);
 
 	/*double bufferValue{0};

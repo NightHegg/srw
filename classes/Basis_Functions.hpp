@@ -5,6 +5,8 @@
 #include <vector>
 #include <iostream>
 
+using namespace std;
+
 class basfuncMatrix
 {
 public:
@@ -32,18 +34,23 @@ public:
 			break;
 		}
 	}
-	double Get_N(double Node, int val)
+	double Get_N(double valNode, int val)
 	{
+		double h;
+		double res;
 		switch (dimTask)
 		{
 		case 1:
 		{
-			N.push_back((arg.GetElement(numNode + 1) - Node) / (arg.GetElement(numNode + 1) - arg.GetElement(numNode)));
-			N.push_back((Node - arg.GetElement(numNode + 1)) / (arg.GetElement(numNode + 1) - arg.GetElement(numNode)));
+			h = arg.GetElement(numNode + 1) - arg.GetElement(numNode);
+			N.push_back((arg.GetElement(numNode + 1) - valNode) / h);
+			N.push_back((valNode - arg.GetElement(numNode)) / h);
+			res = N[val];
+			N.erase(N.begin(), N.end());
 			break;
 		}
 		}
-		return N[val];
+		return res;
 	}
 };
 

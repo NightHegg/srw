@@ -56,7 +56,7 @@ void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, i
 
 void Form_Elem_Mat_Stiffness(int dimTask, MatrixSchwarz &Ke, VectorSchwarz &mesh, MatrixSchwarz &D, strainMatrix &S, int numElem)
 {
-	string Type_Integration = "Gauss_2_Type";
+	string Type_Integration = "Riemann_Type";
 	Numerical_Integration(dimTask, numElem, mesh, D, S, Type_Integration, Ke);
 }
 
@@ -116,6 +116,8 @@ void Form_Boundary_Conditions_Schwarz(int dimTask,
 			K[size - 1][size - 2] = 0;
 			K[size - 2][size - 1] = 0;
 			F[size - 1] = yPreviousSubd[size - 1] * 1.0;
+
+			F[0] += arrBound[2] * mesh[0];
 		}
 		else if (ySubd.Compare_Boundary_Right(y))
 		{
@@ -124,6 +126,8 @@ void Form_Boundary_Conditions_Schwarz(int dimTask,
 			K[0][1] = 0;
 			K[1][0] = 0;
 			F[0] = ySubd[0];
+
+			F[size - 1] += (-1.0) * arrBound[3] * mesh[size - 1];
 		}
 		else
 		{
@@ -139,8 +143,6 @@ void Form_Boundary_Conditions_Schwarz(int dimTask,
 			K[size - 2][size - 1] = 0;
 			F[size - 1] = yPreviousSubd[size - 1] * 1.0;
 		}
-		F[0] += arrBound[2] * mesh[0];
-		F[size - 1] += (-1.0) * arrBound[3] * mesh[size - 1];
 		break;
 	}
 }
@@ -170,17 +172,24 @@ void Ensembling(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &
 	}
 }
 
-void Get_Displacements(int dimTask, string &Route, VectorSchwarz &y, VectorSchwarz &mesh, VectorSchwarz &elements, strainMatrix &S, MatrixSchwarz &D)
+void Get_Displacements(int dimTask, 
+					string &Route, 
+					VectorSchwarz &y, 
+					VectorSchwarz &mesh, 
+					VectorSchwarz &elements, 
+					strainMatrix &S, 
+					MatrixSchwarz &D,
+					int uk)
 {
-	int amntNodes{mesh.GetSize()};
-	int amntElements{elements.GetSize()};
+	int amntNodes;
+	int amntElements;
 	int amntSubdomains;
 	double stopCriteria;
 	double coefOverlap{0};
 	int Counter{0};
 
-	MatrixSchwarz K(amntNodes, amntNodes);
-	VectorSchwarz F(amntNodes);
+	MatrixSchwarz K;
+	VectorSchwarz F;
 
 	ifstream sch("files/" + to_string(dimTask) + "D/schwarz.dat");
 	sch >> amntSubdomains;
@@ -209,7 +218,10 @@ void Get_Displacements(int dimTask, string &Route, VectorSchwarz &y, VectorSchwa
 
 	if (amntSubdomains < 2)
 	{
-
+		amntNodes = mesh.GetSize();
+		amntElements = elements.GetSize();
+		K.Construct(amntNodes, amntNodes);
+		F.Construct(amntNodes);
 		Route += "Non_Schwarz/";
 		Ensembling(dimTask, K, F, D, S, mesh, amntElements);
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
@@ -231,12 +243,25 @@ void Get_Displacements(int dimTask, string &Route, VectorSchwarz &y, VectorSchwa
 				ySubd = y.CreateAllocatedArray(i);
 				yPreviousSubd = yPrevious.CreateAllocatedArray(i);
 
-				Ensembling(dimTask, K, F, D, S, mesh, amntElements);
-				Form_Boundary_Conditions_Schwarz(dimTask, arrBound, y, ySubd, yPreviousSubd, mesh, K, F);
-				Tridiogonal_Algorithm_Right(amntNodes, K, F, y);
+				amntNodes = meshSubd.GetSize();
+				amntElements = amntNodes - 1;
+
+				K.Construct(meshSubd.GetSize(), meshSubd.GetSize());
+				F.Construct(meshSubd.GetSize());
+
+				Ensembling(dimTask, K, F, D, S, meshSubd, amntElements);
+
+				Form_Boundary_Conditions_Schwarz(dimTask, arrBound, y, ySubd, yPreviousSubd, meshSubd, K, F);
+
+				Tridiogonal_Algorithm_Right(amntNodes, K, F, ySubd);
 
 				y.ReturnAllocatedArrayResults(ySubd, i);
+
+				K.~MatrixSchwarz();
+				F.~VectorSchwarz();
 			}
 		} while (y.ConvergenceL2(yPrevious, mesh) > stopCriteria);
+		y.SetName("y");
+		y.Record(Route, amntSubdomains, uk);
 	}
 }

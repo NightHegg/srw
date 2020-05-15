@@ -294,10 +294,9 @@ public:
 	void Elastic_Modulus_Tensor(int dimTask)
 	{
 		double E, nyu, lambda, myu;
-		ifstream out("files/" + std::to_string(dimTask) + "D/schwarz.dat");
+		ifstream out("files/" + std::to_string(dimTask) + "D/material.dat");
 		out >> E;
 		out >> nyu;
-
 		lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
 		myu = E / (2 * (1 + nyu));
 
@@ -378,7 +377,6 @@ public:
 			{
 			case 1:
 				M[0][j] = (matrN.Get_N(matrN.node + h, j) - matrN.Get_N(matrN.node, j)) / h;
-
 				M[1][j] = matrN.Get_N(matrN.node, j) / matrN.node;
 				break;
 			case 2:

@@ -21,7 +21,7 @@ if dimTask=="2D"
 elseif dimTask=="1D"
     coefs=importdata("files/1D/coefs.dat");
     node=importdata("files/1D/nodes.dat");
-    meshAr=linspace(node(1),node(2),coefs(1)).';
+    meshAr=linspace(node(1),node(2),coefs(1)+1).';
     writematrix(meshAr,'files/1D/mesh.dat','Delimiter',' ');   
 end
     

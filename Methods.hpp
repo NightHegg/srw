@@ -10,7 +10,6 @@ using namespace std;
 
 void Tridiogonal_Algorithm_Right(int N, MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 {
-	A.Show();
 	double denom;
 	double *Alpha = new double[N - 1];
 	double *Beta = new double[N];
@@ -31,7 +30,6 @@ void Tridiogonal_Algorithm_Right(int N, MatrixSchwarz &A, VectorSchwarz &F, Vect
 	for (int i = N - 2; i >= 0; i--)
 	{
 		y[i] = (y[i + 1] * Alpha[i]) + Beta[i];
-		cout<<y[i]<<endl;
 	}
 }
 
