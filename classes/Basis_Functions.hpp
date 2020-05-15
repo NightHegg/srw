@@ -3,6 +3,7 @@
 
 #include "classes/Vector.hpp"
 #include <vector>
+#include <iostream>
 
 class basfuncMatrix
 {
@@ -12,7 +13,8 @@ public:
 	int dimTask;
 	Vector func;
 	Vector arg;
-	vector<double> N;
+	std::vector<double> N;
+	int amntBE;
 
 	basfuncMatrix(int _dimTask, Vector a, int _numNode, double _node)
 	{
@@ -20,6 +22,15 @@ public:
 		numNode = _numNode;
 		dimTask = _dimTask;
 		arg = a;
+		switch (dimTask)
+		{
+		case 1:
+			amntBE = 2;
+			break;
+		case 2:
+			amntBE = 3;
+			break;
+		}
 	}
 	double Get_N(double Node, int val)
 	{

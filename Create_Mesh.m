@@ -2,17 +2,20 @@ clc
 global node edge
 format shortG
 %----------------
-dimTask="2D";
+dimTask="1D";
 %----------------
 if dimTask=="2D" 
     node=importdata("files/2D/nodes.dat");
     edge=importdata("files/2D/edges.dat");
-    hfun = (max(node(:,1))-min(node(:,1)))/4;
+    coefs=importdata("files/2D/coefs.dat");
+    hfun = (max(node(:,1))-min(node(:,1)))/coefs(1);
 
     [vert,etri,tria,tnum] = refine2(node,edge,[],[],hfun);
    
     [meshAr,etri,elemAr,tnum] = smooth2(vert,etri,tria,tnum);
     PlotMesh(meshAr, elemAr);
+    size(meshAr);
+    size(elemAr);
     writematrix(meshAr,"files/2D/mesh.dat",'Delimiter',' ');
     writematrix(elemAr,'files/2D/elements.dat','Delimiter',' ');
 elseif dimTask=="1D"

@@ -19,8 +19,7 @@ void Create_Function(int dimTask,
 	MatrixSchwarz B;
 	MatrixSchwarz BTD;
 	MatrixSchwarz BT;
-	B = S * N;
-	B.ConstructFullB(dimTask, a, node, numElem);
+	B.Create_B(S,N);
 	B.Transpose(BT);
 	BTD = BT * D;
 	resMatrix = BTD * B;
@@ -51,8 +50,8 @@ void Numerical_Integration(int dimTask,
 		MatrixSchwarz M1;
 		MatrixSchwarz M2;
 
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, ResMat);
-		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, ResMat);
+		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, M1);
+		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, M2);
 
 		ResMat = M1 + M2;
 		ResMat = ResMat * (h / 2.0);
@@ -66,8 +65,8 @@ void Numerical_Integration(int dimTask,
 		MatrixSchwarz M1;
 		MatrixSchwarz M2;
 
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, ResMat);
-		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, ResMat);
+		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, M1);
+		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, M2);
 
 		ResMat = M1 + M2;
 		ResMat = ResMat * (h / 2.0);

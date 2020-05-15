@@ -1,5 +1,5 @@
 
-#include <iostream>
+/*#include <iostream>
 #include <cmath>
 #include <string>
 #include "Classes_Schwarz.hpp"
@@ -105,4 +105,4 @@ void Progonka_Solution(int SchwarzStep,
 		y = yChosen;
 	}
 
-}
+}*/

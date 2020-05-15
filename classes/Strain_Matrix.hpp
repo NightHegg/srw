@@ -2,7 +2,6 @@
 #define STRAIN_MATRIX_HPP
 
 #include "classes/Vector.hpp"
-#include <vector>
 /**
  * ! Переписать S, чтобы сначала была просто пустышка, а потом сверху добавлялась функция в зависимости от размерности
  **/
@@ -12,8 +11,10 @@ class strainMatrix
 public:
 	int dimTask;
 	int iSize;
-	strainMatrix(int _dimTask)
+	Vector arg;
+	strainMatrix(int _dimTask, Vector &a)
 	{
+		arg = a;
 		dimTask = _dimTask;
 		switch (dimTask)
 		{

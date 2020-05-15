@@ -10,227 +10,7 @@
 #include "classes/Basis_Functions.hpp"
 #include "classes/Strain_Matrix.hpp"
 
-class MatrixSchwarz : public Matrix
-{
-private:
-	std::string name;
-
-public:
-	MatrixSchwarz() : Matrix::Matrix()
-	{
-		name = "";
-	}
-	MatrixSchwarz(int i, int j) : Matrix(i, j)
-	{
-		name = "";
-	}
-	void Construct(int i, int j)
-	{
-		Matrix::Construct(i, j);
-		name = "";
-	}
-	void ConstructFullB(int dimTask, VectorSchwarz &a, double _Node, int numElem)
-	{
-		int iS, jS;
-		vector<double> basisFunctions;
-		switch (dimTask)
-		{
-		case 1:
-		{
-			basisFunctions.push_back((a.GetElement(numElem + 1) - _Node) / (a.GetElement(numElem + 1) - a.GetElement(numElem)));
-			basisFunctions.push_back((_Node - a.GetElement(numElem + 1)) / (a.GetElement(numElem + 1) - a.GetElement(numElem)));
-			iS = 2;
-			jS = 1;
-			Construct(iS, jS);
-		}
-		}
-		Construct(2, 2);
-		for (int j = 0; j < jM; j++)
-		{
-			//M[0][j] = BE.Derivative_BE(j, _Node);
-			//M[1][j] = BE.Get_N(j, _Node) / _Node;
-		}
-	}
-
-	void Elastic_Modulus_Tensor(int dimTask)
-	{
-		double E, nyu, lambda, myu;
-		ifstream out("files/" + to_string(dimTask) + "D/schwarz.dat");
-		out >> E;
-		out >> myu;
-
-		lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
-		myu = E / (2 * (1 + nyu));
-
-		switch (dimTask)
-		{
-		case 1:
-		{
-			for (int i = 0; i < iM; i++)
-			{
-				for (int j = 0; j < jM; j++)
-				{
-					if (i == j)
-						M[i][j] = lambda + 2 * myu;
-					else
-						M[i][j] = lambda;
-				}
-			}
-			break;
-		}
-		case 2:
-		{
-			for (int i = 0; i < iM - 1; i++)
-			{
-				for (int j = 0; j < jM - 1; j++)
-				{
-					if (i == j)
-						M[i][j] = lambda + 2 * myu;
-					else
-						M[i][j] = lambda;
-				}
-			}
-			M[iM][jM] = 2 * myu;
-			break;
-		}
-		default:
-		{
-			printf("Wrong input, matrix D\n");
-		}
-		}
-	}
-
-	friend MatrixSchwarz operator*(MatrixSchwarz &N, const MatrixSchwarz &L)
-	{
-		MatrixSchwarz P(N.iM, L.jM);
-		for (int i = 0; i < N.iM; i++)
-		{
-			for (int j = 0; j < L.jM; j++)
-			{
-				P.M[i][j] = 0;
-				for (int k = 0; k < N.jM; k++)
-				{
-					P.M[i][j] += (N.M[i][k] * L.M[k][j]);
-				}
-			}
-		}
-		return P;
-	}
-
-	/*friend MatrixSchwarz operator*(const MatrixStrain &S, VectorSchwarz &m)
-	{
-		MatrixSchwarz P(S.dimSol, m.GetSize());
-		for (int i=0;i<P.GetSize_i();i++)
-		{
-			for (int j=0;j<P.GetSize_j();j++)
-			{
-				switch (S.dimTask)
-				{
-					case 1:
-					{
-						P[i][j]=Derivative_BE(m, S.arg, j)
-					}
-				}
-			}
-		}
-
-		return P;
-	}*/
-
-	friend MatrixSchwarz operator*(strainMatrix &S, basfuncMatrix &matrN)
-	{
-		double h = matrN.arg.GetElement(matrN.numNode + 1) - matrN.arg.GetElement(matrN.numNode);
-		MatrixSchwarz P(S.iSize, S.dimTask * matrN.N.size());
-		for (int j = 0; j < P.GetSize_j(); j++)
-		{
-			switch (S.dimTask)
-			{
-			case 1:
-				P[0][j] = (matrN.Get_N(matrN.node + h, j) - matrN.Get_N(matrN.node, j)) / h;
-				P[1][j] = matrN.Get_N(matrN.node, j) / matrN.node;
-				break;
-			case 2:
-				break;
-			default:
-				printf("Wrong input.\n");
-				break;
-			}
-		}
-		return P;
-	}
-
-	friend MatrixSchwarz operator*(const MatrixSchwarz &N, const double val)
-	{
-		MatrixSchwarz P(N.iM, N.jM);
-		for (int i = 0; i < N.iM; i++)
-		{
-			for (int j = 0; j < N.jM; j++)
-			{
-				P.M[i][j] = N.M[i][j] * val;
-			}
-		}
-		return P;
-	}
-
-	friend MatrixSchwarz operator+(const MatrixSchwarz &N, const MatrixSchwarz &L)
-	{
-		MatrixSchwarz P(N.iM, N.jM);
-		for (int i = 0; i < N.iM; i++)
-		{
-			for (int j = 0; j < N.jM; j++)
-			{
-				P[i][j] = N.M[i][j] + L.M[i][j];
-			}
-		}
-		return P;
-	}
-
-	void SetName(std::string str)
-	{
-		name = str;
-	}
-
-	std::string GetName()
-	{
-		return name;
-	}
-
-	void Record(std::string Route, int amntSubdomains, double Coef)
-	{
-		std::string sep = "_";
-		std::string size = std::to_string(jM);
-		std::string AS = std::to_string(amntSubdomains);
-
-		if (jM < 10)
-		{
-			size = "00" + size;
-		}
-		else if (jM >= 10 && jM < 100)
-		{
-			size = "0" + size;
-		}
-
-		if (amntSubdomains < 2)
-		{
-			Route += name + sep + size + ".dat";
-		}
-		else
-		{
-			Route += name + sep + size + sep + AS + ".dat";
-		}
-		std::ofstream outfile(Route);
-		for (int j = 0; j < jM; j++)
-		{
-			for (int i = 0; i < iM; i++)
-			{
-				outfile << M[i][j] * Coef;
-				outfile << " ";
-			}
-			outfile << std::endl;
-		}
-		outfile.close();
-	}
-};
+using namespace std;
 
 class VectorSchwarz : public Vector
 {
@@ -485,6 +265,198 @@ public:
 		for (int i = 0; i < iV; i++)
 		{
 			outfile << V[i] * Coef;
+			outfile << std::endl;
+		}
+		outfile.close();
+	}
+};
+
+class MatrixSchwarz : public Matrix
+{
+private:
+	std::string name;
+
+public:
+	MatrixSchwarz() : Matrix::Matrix()
+	{
+		name = "";
+	}
+	MatrixSchwarz(int i, int j) : Matrix(i, j)
+	{
+		name = "";
+	}
+	void Construct(int i, int j)
+	{
+		Matrix::Construct(i, j);
+		name = "";
+	}
+
+	void Elastic_Modulus_Tensor(int dimTask)
+	{
+		double E, nyu, lambda, myu;
+		ifstream out("files/" + std::to_string(dimTask) + "D/schwarz.dat");
+		out >> E;
+		out >> nyu;
+
+		lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
+		myu = E / (2 * (1 + nyu));
+
+		switch (dimTask)
+		{
+		case 1:
+			for (int i = 0; i < iM; i++)
+			{
+				for (int j = 0; j < jM; j++)
+				{
+					if (i == j)
+						M[i][j] = lambda + 2 * myu;
+					else
+						M[i][j] = lambda;
+				}
+			}
+			break;
+		case 2:
+			for (int i = 0; i < iM - 1; i++)
+			{
+				for (int j = 0; j < jM - 1; j++)
+				{
+					if (i == j)
+						M[i][j] = lambda + 2 * myu;
+					else
+						M[i][j] = lambda;
+				}
+				M[iM][jM] = 2 * myu;
+				break;
+			}
+		default:
+			printf("Wrong input, matrix D\n");
+			break;
+		}
+	}
+
+	friend MatrixSchwarz operator*(MatrixSchwarz &N, MatrixSchwarz &L)
+	{
+		MatrixSchwarz P(N.iM, L.jM);
+		for (int i = 0; i < N.iM; i++)
+		{
+			for (int j = 0; j < L.jM; j++)
+			{
+				P.M[i][j] = 0;
+				for (int k = 0; k < N.jM; k++)
+				{
+					P.M[i][j] += (N.M[i][k] * L.M[k][j]);
+				}
+			}
+		}
+		return P;
+	}
+
+	void Create_Sy(strainMatrix &S, VectorSchwarz &m)
+	{
+		double h{0};
+		Construct(S.iSize, m.GetSize());
+		for (int j = 0; j < GetSize_j(); j++)
+		{
+			h = S.arg.GetElement(j + 1) - S.arg.GetElement(j);
+			switch (S.dimTask)
+			{
+			case 1:
+				M[0][j] = (m.GetElement(j + 1) - m.GetElement(j)) / h;
+				M[1][j] = (m.GetElement(j + 1) + m.GetElement(j)) / (S.arg.GetElement(j + 1) + S.arg.GetElement(j));
+				break;
+			}
+		}
+	}
+
+	void Create_B(strainMatrix &S, basfuncMatrix &matrN)
+	{
+		double h = matrN.arg.GetElement(matrN.numNode + 1) - matrN.arg.GetElement(matrN.numNode);
+		Construct(S.iSize, S.dimTask * matrN.amntBE);
+		for (int j = 0; j < GetSize_j(); j++)
+		{
+			switch (S.dimTask)
+			{
+			case 1:
+				M[0][j] = (matrN.Get_N(matrN.node + h, j) - matrN.Get_N(matrN.node, j)) / h;
+
+				M[1][j] = matrN.Get_N(matrN.node, j) / matrN.node;
+				break;
+			case 2:
+				break;
+			default:
+				printf("Wrong input.\n");
+				break;
+			}
+		}
+	}
+
+	friend MatrixSchwarz operator*(const MatrixSchwarz &N, const double val)
+	{
+		MatrixSchwarz P(N.iM, N.jM);
+		for (int i = 0; i < N.iM; i++)
+		{
+			for (int j = 0; j < N.jM; j++)
+			{
+				P.M[i][j] = N.M[i][j] * val;
+			}
+		}
+		return P;
+	}
+
+	friend MatrixSchwarz operator+(const MatrixSchwarz &N, const MatrixSchwarz &L)
+	{
+		MatrixSchwarz P(N.iM, N.jM);
+		for (int i = 0; i < N.iM; i++)
+		{
+			for (int j = 0; j < N.jM; j++)
+			{
+				P[i][j] = N.M[i][j] + L.M[i][j];
+			}
+		}
+		return P;
+	}
+
+	void SetName(std::string str)
+	{
+		name = str;
+	}
+
+	std::string GetName()
+	{
+		return name;
+	}
+
+	void Record(std::string Route, int amntSubdomains, double Coef)
+	{
+		std::string sep = "_";
+		std::string size = std::to_string(jM);
+		std::string AS = std::to_string(amntSubdomains);
+
+		if (jM < 10)
+		{
+			size = "00" + size;
+		}
+		else if (jM >= 10 && jM < 100)
+		{
+			size = "0" + size;
+		}
+
+		if (amntSubdomains < 2)
+		{
+			Route += name + sep + size + ".dat";
+		}
+		else
+		{
+			Route += name + sep + size + sep + AS + ".dat";
+		}
+		std::ofstream outfile(Route);
+		for (int j = 0; j < jM; j++)
+		{
+			for (int i = 0; i < iM; i++)
+			{
+				outfile << M[i][j] * Coef;
+				outfile << " ";
+			}
 			outfile << std::endl;
 		}
 		outfile.close();
