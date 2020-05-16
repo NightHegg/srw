@@ -238,11 +238,8 @@ public:
 		name = str;
 	}
 
-	void Record(std::string Route, int dimTask, double Coef)
+	void Record(std::string Route, int amntSubdomains, double Coef)
 	{
-		int amntSubdomains;
-		ifstream sch("files/" + to_string(dimTask) + "D/schwarz.dat");
-		sch >> amntSubdomains;
 		
 		std::string sep = "_";
 		std::string size = std::to_string(iV - 1);
@@ -428,17 +425,17 @@ public:
 		return name;
 	}
 
-	void Record(std::string Route, int amntSubdomains, double Coef)
+	void Record(std::string Route, int amntNodes, int amntSubdomains, double Coef)
 	{
 		std::string sep = "_";
-		std::string size = std::to_string(jM);
+		std::string size = std::to_string(amntNodes-1);
 		std::string AS = std::to_string(amntSubdomains);
 
-		if (jM < 10)
+		if (amntNodes < 10)
 		{
 			size = "00" + size;
 		}
-		else if (jM >= 10 && jM < 100)
+		else if (amntNodes >= 10 && amntNodes < 100)
 		{
 			size = "0" + size;
 		}

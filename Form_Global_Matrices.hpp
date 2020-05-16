@@ -179,22 +179,14 @@ void Get_Displacements(int dimTask,
 					   VectorSchwarz &elements,
 					   strainMatrix &S,
 					   MatrixSchwarz &D,
-					   int uk)
+					   int uk,
+					   int amntSubdomains,
+					   double stopCriteria)
 {
-	int amntNodes;
-	int amntElements;
-	int amntSubdomains;
-	double stopCriteria;
+	int amntNodes, amntElements, Counter{0};
 	double coefOverlap{0};
-	int Counter{0};
-
 	MatrixSchwarz K;
 	VectorSchwarz F;
-
-	ifstream sch("files/" + to_string(dimTask) + "D/schwarz.dat");
-	sch >> amntSubdomains;
-	sch >> stopCriteria;
-
 	std::stringstream ss;
 	ss << stopCriteria;
 	ss.precision(7);
@@ -265,7 +257,8 @@ void Get_Displacements(int dimTask,
 		cout << Counter << endl;
 	}
 	y.SetName("y");
-	y.Record(*Route, dimTask, uk);
 
-	Record_AddData(amntNodes, *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
+	y.Record(*Route, amntSubdomains, uk);
+
+	//Record_AddData(amntNodes, *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
 }

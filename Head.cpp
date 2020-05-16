@@ -6,14 +6,15 @@ using namespace std;
 
 int main()
 {
+	int count{1};
 	vector<vector<double>> solSet = {
-		{1, 50, 1},
-		{1, 100, 1},
-		{1, 200, 1},
-		{1, 50, 2, 1e-5}};
+		{1, 50, 1}};
 
+	printf("Planned: %d calculations\n\n", solSet.size());
 	for (auto i : solSet)
 	{
+		printf("Running %d iteration...\n\n", count++);
 		Solve(i);
 	}
+	printf("End of iterations\n");
 }

@@ -14,7 +14,10 @@ using namespace std;
 
 void Solve(vector<double> data)
 {
-	int coefOverlap{0}, amntNodes{0}, uk, rk, tmpV;
+	double stopCriteria{0};
+	int amntNodes{0};
+
+	double uk, rk;
 
 	int dimTask = data.at(0);
 	if (dimTask == 1)
@@ -24,7 +27,21 @@ void Solve(vector<double> data)
 	int amntSubdomains = data.at(2);
 	if (amntSubdomains >= 2)
 	{
-		coefOverlap = data.at(3);
+		stopCriteria = data.at(3);
+	}
+
+	string sAmntNodes;
+	if (amntNodes < 10)
+	{
+		sAmntNodes = "00" + to_string(amntNodes);
+	}
+	else if (amntNodes < 100)
+	{
+		sAmntNodes = "0" + to_string(amntNodes);
+	}
+	else
+	{
+		sAmntNodes = to_string(amntNodes);
 	}
 
 	VectorSchwarz mesh, elements;
@@ -35,21 +52,20 @@ void Solve(vector<double> data)
 	vector<double> tmpBuf;
 
 	ifstream scanV("files/" + to_string(dimTask) + "D/coefs.dat");
-	scanV >> tmpV;
 	scanV >> uk;
 	scanV >> rk;
 	scanV.close();
 
-	int amntElements{0}, amntNodes{0}, dimEps{0}, dimSigma{0};
 
-	ifstream scan("files/" + to_string(dimTask) + "D/mesh.dat");
+	int amntElements{0}, dimEps{0}, dimSigma{0};
+	ifstream scan("files/" + to_string(dimTask) + "D/mesh_" + sAmntNodes + ".dat");
 	while (!scan.eof())
 	{
 		scan >> tmp;
 		tmpBuf.push_back(tmp);
-		amntNodes++;
 	}
 	scan.close();
+	amntNodes++;
 
 	mesh.Construct(amntNodes);
 	for (double x : tmpBuf)
@@ -58,7 +74,7 @@ void Solve(vector<double> data)
 		tmpCount++;
 	}
 
-	tmpBuf.erase(tmpBuf.begin(), tmpBuf.end());
+	tmpBuf.clear();
 	tmpCount = 0;
 
 	switch (dimTask)
@@ -94,82 +110,9 @@ void Solve(vector<double> data)
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
 
-	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk);
+	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria);
 	Eps.Create_Sy(S, y);
 	Sigma = D * Eps;
-
 	Sigma.SetName("Sigma");
-
-	Sigma.Record(Route, dimTask, rk);
-
-	//
-	//
-
-	/*double bufferValue{0};
-	vector<double> tempBuffer;
-	ifstream ifs("files/mainData.dat");
-	while (!ifs.eof())
-	{
-		ifs >> bufferValue;
-		tempBuffer.push_back(bufferValue);
-	}
-	double a{tempBuffer.at(0)};
-	double b{tempBuffer.at(1)};
-	double pa{tempBuffer.at(2)};
-	double pb{tempBuffer.at(3)};
-	double E{tempBuffer.at(4)};
-	double nyu{tempBuffer.at(5)};
-	double uk{tempBuffer.at(6)};
-	double rk{tempBuffer.at(7)};
-
-	double coefOverlap{0};
-	string Route{"results/"};
-	int Counter{0};
-	Route += "1D/";
-	double stopCriteria{1e-6};
-
-	std::stringstream ss;
-	ss << stopCriteria;
-	ss.precision(7);
-	std::string sStopCriteria = ss.str();
-
-	VectorSchwarz rr(N + 1);
-	VectorSchwarz y(N + 1);
-	VectorSchwarz yPrevious(N + 1);
-
-	rr.Partition(a, b);
-	y.Fill(-1e-6);
-
-	if (amntSubdomains < 2)
-	{
-		Route += "Non_Schwarz/";
-		Progonka_Solution(1, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
-	}
-	else
-	{
-		Route += "Schwarz/SC_" + sStopCriteria + "/";
-		rr.Decomposition(amntSubdomains, &coefOverlap);
-		y.Equal_SchwarzNodes(rr);
-		yPrevious.Equal_SchwarzNodes(rr);
-		do
-		{
-			yPrevious = y;
-			for (int i = 0; i < amntSubdomains; i++)
-			{
-				Progonka_Solution(i, rr, pa, pb, y, yPrevious, D, DimTask, AmNodes);
-			}
-			cout << y.ConvergenceL2(yPrevious, rr) << endl;
-			Counter++;
-		} while (y.ConvergenceL2(yPrevious, rr) > stopCriteria);
-		printf("\nThe stop criteria: %g\nAmount of iterations: %d\n\n", y.ConvergenceL2(yPrevious, rr), Counter);
-	}
-	Get_Eps(rr, y, Eps);
-	Sigma = D * Eps;
-
-	y.SetName("y");
-	Sigma.SetName("Sigma");
-
-	y.Record(Route, amntSubdomains, uk);
-	Sigma.Record(Route, amntSubdomains, rk);
-	Record_AddData(N, amntSubdomains, Counter, stopCriteria, coefOverlap, Route);*/
+	Sigma.Record(Route, amntNodes, amntSubdomains, rk);
 }
