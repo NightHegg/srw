@@ -56,7 +56,7 @@ void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, i
 
 void Form_Elem_Mat_Stiffness(int dimTask, MatrixSchwarz &Ke, VectorSchwarz &mesh, MatrixSchwarz &D, strainMatrix &S, int numElem)
 {
-	string Type_Integration = "Riemann_Type";
+	string Type_Integration = "Trapezoidal_Type";
 	Numerical_Integration(dimTask, numElem, mesh, D, S, Type_Integration, Ke);
 }
 
@@ -185,8 +185,10 @@ void Get_Displacements(int dimTask,
 {
 	int amntNodes, amntElements, Counter{0};
 	double coefOverlap{0};
+	
 	MatrixSchwarz K;
 	VectorSchwarz F;
+
 	std::stringstream ss;
 	ss << stopCriteria;
 	ss.precision(7);
@@ -254,11 +256,11 @@ void Get_Displacements(int dimTask,
 			}
 			Counter++;
 		} while (y.ConvergenceL2(yPrevious, mesh) > stopCriteria);
-		cout << Counter << endl;
+		printf("Amount of iterations: %d\n\n",Counter);
 	}
 	y.SetName("y");
 
 	y.Record(*Route, amntSubdomains, uk);
 
-	//Record_AddData(amntNodes, *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
+	Record_AddData(mesh.GetSize(), *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
 }

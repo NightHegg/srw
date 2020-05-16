@@ -3,7 +3,7 @@ global node edge
 format shortG
 %----------------
 dimTask="1D";
-N=200;
+N=10;
 amntElem=2.5;
 %----------------
 if N<10
@@ -24,8 +24,6 @@ if dimTask=="2D"
    
     [meshAr,etri,elemAr,tnum] = smooth2(vert,etri,tria,tnum);
     PlotMesh(meshAr, elemAr);
-    size(meshAr);
-    size(elemAr);
     writematrix(meshAr,"files/2D/mesh.dat",'Delimiter',' ');
     writematrix(elemAr,'files/2D/elements.dat','Delimiter',' ');
 elseif dimTask=="1D"

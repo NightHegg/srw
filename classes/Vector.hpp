@@ -9,8 +9,9 @@ class Vector
 protected:
 	double *V;
 	int iV;
+
 public:
-	Vector()=default;
+	Vector() = default;
 	Vector(int index);
 	~Vector() = default;
 	Vector(const Vector &N);
@@ -18,7 +19,7 @@ public:
 	void Construct(int i);
 	void Show();
 	void Fill(double var);
-	Vector& operator=(const Vector &N)
+	Vector &operator=(const Vector &N)
 	{
 		Construct(N.iV);
 		for (int i = 0; i < iV; i++)
@@ -51,6 +52,8 @@ void Vector::Construct(int i)
 {
 	this->iV = i;
 	V = new double[iV];
+	for (int i = 0; i < iV; i++)
+		V[i] = 0;
 }
 
 Vector::Vector(const Vector &N)
@@ -94,7 +97,7 @@ double Vector::GetElement(int i)
 
 void Vector::SetElement(int i, double a)
 {
-	V[i]=a;
+	V[i] = a;
 }
 
 #endif

@@ -8,7 +8,12 @@ int main()
 {
 	int count{1};
 	vector<vector<double>> solSet = {
-		{1, 50, 1}};
+		{1, 100, 2, 1e-5},
+		{1, 100, 4, 1e-5},
+		{1, 100, 10, 1e-5},
+		{1, 200, 2, 1e-5},
+		{1, 200, 4, 1e-5},
+		{1, 200, 10, 1e-5}};
 
 	printf("Planned: %d calculations\n\n", solSet.size());
 	for (auto i : solSet)

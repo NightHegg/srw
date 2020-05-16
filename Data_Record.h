@@ -13,7 +13,7 @@ void Record_AddData(int amntNodes, string Route, int amntSubdomains, int Counter
 {
     
     std::string sep = "_";
-    std::string size = std::to_string(amntNodes);
+    std::string size = std::to_string(amntNodes-1);
     std::string name = "AddData";
     std::string AS = std::to_string(amntSubdomains);
 

@@ -354,7 +354,7 @@ public:
 	void Create_Sy(strainMatrix &S, VectorSchwarz &m)
 	{
 		double h{0};
-		Construct(S.iSize, m.GetSize());
+		Construct(S.iSize, m.GetSize()-1);
 		for (int j = 0; j < GetSize_j(); j++)
 		{
 			h = S.arg.GetElement(j + 1) - S.arg.GetElement(j);
