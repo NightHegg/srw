@@ -172,14 +172,14 @@ void Ensembling(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, MatrixSchwarz &
 	}
 }
 
-void Get_Displacements(int dimTask, 
-					string &Route, 
-					VectorSchwarz &y, 
-					VectorSchwarz &mesh, 
-					VectorSchwarz &elements, 
-					strainMatrix &S, 
-					MatrixSchwarz &D,
-					int uk)
+void Get_Displacements(int dimTask,
+					   string *Route,
+					   VectorSchwarz &y,
+					   VectorSchwarz &mesh,
+					   VectorSchwarz &elements,
+					   strainMatrix &S,
+					   MatrixSchwarz &D,
+					   int uk)
 {
 	int amntNodes;
 	int amntElements;
@@ -222,7 +222,7 @@ void Get_Displacements(int dimTask,
 		amntElements = elements.GetSize();
 		K.Construct(amntNodes, amntNodes);
 		F.Construct(amntNodes);
-		Route += "Non_Schwarz/";
+		*Route += "Non_Schwarz/";
 		Ensembling(dimTask, K, F, D, S, mesh, amntElements);
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
 		Tridiogonal_Algorithm_Right(amntNodes, K, F, y);
@@ -230,7 +230,7 @@ void Get_Displacements(int dimTask,
 	else
 	{
 		y.Fill(-1e-6);
-		Route += "Schwarz/SC_" + sStopCriteria + "/";
+		*Route += "Schwarz/SC_" + sStopCriteria + "/";
 		mesh.Decomposition(amntSubdomains, &coefOverlap);
 		y.Equal_SchwarzNodes(mesh);
 		yPrevious.Equal_SchwarzNodes(mesh);
@@ -260,8 +260,12 @@ void Get_Displacements(int dimTask,
 				K.~MatrixSchwarz();
 				F.~VectorSchwarz();
 			}
+			Counter++;
 		} while (y.ConvergenceL2(yPrevious, mesh) > stopCriteria);
-		y.SetName("y");
-		y.Record(Route, amntSubdomains, uk);
+		cout << Counter << endl;
 	}
+	y.SetName("y");
+	y.Record(*Route, dimTask, uk);
+
+	Record_AddData(amntNodes, *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
 }

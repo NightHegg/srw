@@ -238,8 +238,12 @@ public:
 		name = str;
 	}
 
-	void Record(std::string Route, int amntSubdomains, double Coef)
+	void Record(std::string Route, int dimTask, double Coef)
 	{
+		int amntSubdomains;
+		ifstream sch("files/" + to_string(dimTask) + "D/schwarz.dat");
+		sch >> amntSubdomains;
+		
 		std::string sep = "_";
 		std::string size = std::to_string(iV - 1);
 		std::string AS = std::to_string(amntSubdomains);

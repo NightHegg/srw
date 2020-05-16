@@ -24,8 +24,8 @@ void Solve(int dimTask)
 
 	ifstream scanV("files/" + to_string(dimTask) + "D/coefs.dat");
 	scanV >> tmpV;
-	scanV>>uk;
-	scanV>>rk;
+	scanV >> uk;
+	scanV >> rk;
 	scanV.close();
 
 	string Route{"results/" + to_string(dimTask) + "D/"};
@@ -83,16 +83,17 @@ void Solve(int dimTask)
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
-	
-	Get_Displacements(dimTask, Route, y, mesh, elements, S, D, uk);
 
+	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk);
 	Eps.Create_Sy(S, y);
 	Sigma = D * Eps;
 
 	Sigma.SetName("Sigma");
 
+	Sigma.Record(Route, dimTask, rk);
+
 	//
-	//Sigma.Record(Route, amntSubdomains, rk);
+	//
 
 	/*double bufferValue{0};
 	vector<double> tempBuffer;

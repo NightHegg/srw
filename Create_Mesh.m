@@ -21,8 +21,10 @@ if dimTask=="2D"
 elseif dimTask=="1D"
     coefs=importdata("files/1D/coefs.dat");
     node=importdata("files/1D/nodes.dat");
-    meshAr=linspace(node(1),node(2),coefs(1)+1).';
-    writematrix(meshAr,'files/1D/mesh.dat','Delimiter',' ');   
+    meshAr=linspace(node(1),node(2),coefs(1)+1);
+    fileID=fopen('files/1D/mesh.dat','w');
+    fprintf(fileID,'%f\n',meshAr(:,1:coefs(1)));
+    fprintf(fileID,'%f',meshAr(:,coefs(1)+1));
 end
     
 function res = PlotMesh(vert,tria)

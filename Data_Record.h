@@ -9,18 +9,19 @@ using namespace std;
  * TODO: Recreate this function for every class //DONE
  */
 
-void Record_AddData(int N, int amntSubdomains, int Counter, double stopCriteria, double Coef_Overflow, string Route)
+void Record_AddData(int amntNodes, string Route, int amntSubdomains, int Counter, double stopCriteria, double Coef_Overflow)
 {
+    
     std::string sep = "_";
-    std::string size = std::to_string(N);
+    std::string size = std::to_string(amntNodes);
     std::string name = "AddData";
     std::string AS = std::to_string(amntSubdomains);
 
-    if (N < 10)
+    if (amntNodes < 10)
     {
         size = "00" + size;
     }
-    else if (N >= 10 && N < 100)
+    else if (amntNodes >= 10 && amntNodes < 100)
     {
         size = "0" + size;
     }
@@ -33,7 +34,7 @@ void Record_AddData(int N, int amntSubdomains, int Counter, double stopCriteria,
         Route += name + sep + size + sep + AS + ".dat";
     }
     ofstream ofile(Route);
-    ofile << N;
+    ofile << amntNodes;
     ofile << endl;
     ofile << amntSubdomains;
     ofile << endl;
