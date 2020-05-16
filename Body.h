@@ -12,12 +12,24 @@
 
 using namespace std;
 
-void Solve(int dimTask)
+void Solve(vector<double> data)
 {
-	int uk, rk, tmpV;
+	int coefOverlap{0}, amntNodes{0}, uk, rk, tmpV;
 
-	VectorSchwarz mesh;
-	VectorSchwarz elements;
+	int dimTask = data.at(0);
+	if (dimTask == 1)
+	{
+		amntNodes = data.at(1);
+	}
+	int amntSubdomains = data.at(2);
+	if (amntSubdomains >= 2)
+	{
+		coefOverlap = data.at(3);
+	}
+
+	VectorSchwarz mesh, elements;
+
+	string Route{"results/" + to_string(dimTask) + "D/"};
 
 	double tmp, tmpCount{0};
 	vector<double> tmpBuf;
@@ -27,8 +39,6 @@ void Solve(int dimTask)
 	scanV >> uk;
 	scanV >> rk;
 	scanV.close();
-
-	string Route{"results/" + to_string(dimTask) + "D/"};
 
 	int amntElements{0}, amntNodes{0}, dimEps{0}, dimSigma{0};
 

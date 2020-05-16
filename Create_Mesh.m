@@ -3,6 +3,16 @@ global node edge
 format shortG
 %----------------
 dimTask="1D";
+N=200;
+amntElem=2.5;
+%----------------
+if N<10
+    strN="00"+int2str(N);
+elseif N<100
+    strN="0"+int2str(N);
+else
+    strN=int2str(N);
+end
 %----------------
 if dimTask=="2D" 
     node=importdata("files/2D/nodes.dat");
@@ -19,12 +29,11 @@ if dimTask=="2D"
     writematrix(meshAr,"files/2D/mesh.dat",'Delimiter',' ');
     writematrix(elemAr,'files/2D/elements.dat','Delimiter',' ');
 elseif dimTask=="1D"
-    coefs=importdata("files/1D/coefs.dat");
     node=importdata("files/1D/nodes.dat");
-    meshAr=linspace(node(1),node(2),coefs(1)+1);
-    fileID=fopen('files/1D/mesh.dat','w');
-    fprintf(fileID,'%f\n',meshAr(:,1:coefs(1)));
-    fprintf(fileID,'%f',meshAr(:,coefs(1)+1));
+    meshAr=linspace(node(1),node(2),N+1);
+    fileID=fopen("files/1D/mesh_"+strN+".dat","w");
+    fprintf(fileID,'%f\n',meshAr(:,1:N));
+    fprintf(fileID,'%f',meshAr(:,N+1));
 end
     
 function res = PlotMesh(vert,tria)
