@@ -6,14 +6,9 @@ using namespace std;
 
 int main()
 {
-	int count{1};
+	int count{1}; //dimTask, amntNodes(1), schwarz, stopCriteria
 	vector<vector<double>> solSet = {
-		{1, 100, 2, 1e-5},
-		{1, 100, 4, 1e-5},
-		{1, 100, 10, 1e-5},
-		{1, 200, 2, 1e-5},
-		{1, 200, 4, 1e-5},
-		{1, 200, 10, 1e-5}};
+		{2,1}};
 
 	printf("Planned: %d calculations\n\n", solSet.size());
 	for (auto i : solSet)

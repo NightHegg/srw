@@ -14,20 +14,21 @@ using namespace std;
 
 void Solve(vector<double> data)
 {
-	double stopCriteria{0};
-	int amntNodes{0};
+	double stopCriteria{0}, uk, rk;
+	int amntNodes{0}, amntSubdomains{0};
 
-	double uk, rk;
+	double tmp, tmpCount{0};
+	vector<double> tmpBuf;
 
 	int dimTask = data.at(0);
 	if (dimTask == 1)
 	{
 		amntNodes = data.at(1);
-	}
-	int amntSubdomains = data.at(2);
-	if (amntSubdomains >= 2)
-	{
-		stopCriteria = data.at(3);
+		amntSubdomains = data.at(2);
+		if (amntSubdomains > 1)
+		{
+			stopCriteria = data.at(3);
+		}
 	}
 
 	string sAmntNodes;
@@ -44,30 +45,43 @@ void Solve(vector<double> data)
 		sAmntNodes = to_string(amntNodes);
 	}
 
+	if (dimTask == 1)
+	{
+		ifstream scan("files/" + to_string(dimTask) + "D/mesh_" + sAmntNodes + ".dat");
+		while (!scan.eof())
+		{
+			scan >> tmp;
+			tmpBuf.push_back(tmp);
+		}
+		scan.close();
+		amntNodes++;
+	}
+	else
+	{
+		ifstream scan("files/" + to_string(dimTask) + "D/mesh" + ".dat");
+		while (!scan.eof())
+		{
+			scan >> tmp;
+			tmpBuf.push_back(tmp);
+			scan >> tmp;
+			tmpBuf.push_back(tmp);
+			amntNodes++;
+		}
+		scan.close();
+	}
+
 	VectorSchwarz mesh, elements;
 
 	string Route{"results/" + to_string(dimTask) + "D/"};
-
-	double tmp, tmpCount{0};
-	vector<double> tmpBuf;
 
 	ifstream scanV("files/" + to_string(dimTask) + "D/coefs.dat");
 	scanV >> uk;
 	scanV >> rk;
 	scanV.close();
 
-
 	int amntElements{0}, dimEps{0}, dimSigma{0};
-	ifstream scan("files/" + to_string(dimTask) + "D/mesh_" + sAmntNodes + ".dat");
-	while (!scan.eof())
-	{
-		scan >> tmp;
-		tmpBuf.push_back(tmp);
-	}
-	scan.close();
-	amntNodes++;
 
-	mesh.Construct(amntNodes);
+	mesh.Construct(dimTask * amntNodes);
 	for (double x : tmpBuf)
 	{
 		mesh.SetElement(tmpCount, x);
@@ -92,16 +106,28 @@ void Solve(vector<double> data)
 		{
 			scan >> tmp;
 			tmpBuf.push_back(tmp);
+			scan >> tmp;
+			tmpBuf.push_back(tmp);
+			scan >> tmp;
+			tmpBuf.push_back(tmp);
 			amntElements++;
 		}
 		scan.close();
+		elements.Construct(amntElements * 3);
+		for (double x : tmpBuf)
+		{
+			elements.SetElement(tmpCount, x);
+			tmpCount++;
+		}
+		tmpBuf.clear();
+		tmpCount = 0;
 		break;
 	}
 	default:
 		printf("Wrong input: dimTask\n");
 		break;
 	}
-	VectorSchwarz y(amntNodes);
+	VectorSchwarz y(amntNodes*dimTask);
 	MatrixSchwarz Eps(dimEps, amntElements);
 	MatrixSchwarz Sigma(dimSigma, amntElements);
 
@@ -109,8 +135,9 @@ void Solve(vector<double> data)
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
-
-	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria);
+	
+	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
+	y.Show();
 	Eps.Create_Sy(S, y);
 	Sigma = D * Eps;
 	Sigma.SetName("Sigma");

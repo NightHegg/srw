@@ -240,7 +240,7 @@ public:
 
 	void Record(std::string Route, int amntSubdomains, double Coef)
 	{
-		
+
 		std::string sep = "_";
 		std::string size = std::to_string(iV - 1);
 		std::string AS = std::to_string(amntSubdomains);
@@ -263,6 +263,7 @@ public:
 			Route += name + sep + size + sep + AS + ".dat";
 		}
 		std::ofstream outfile(Route);
+	
 		for (int i = 0; i < iV; i++)
 		{
 			outfile << V[i] * Coef;
@@ -300,6 +301,7 @@ public:
 		out >> nyu;
 		lambda = (nyu * E) / ((1 + nyu) * (1 - 2 * nyu) * 1.0);
 		myu = E / (2 * (1 + nyu));
+		out.close();
 
 		switch (dimTask)
 		{
@@ -325,9 +327,9 @@ public:
 					else
 						M[i][j] = lambda;
 				}
-				M[iM][jM] = 2 * myu;
-				break;
 			}
+			M[iM-1][jM-1] = 2 * myu;
+			break;
 		default:
 			printf("Wrong input, matrix D\n");
 			break;
@@ -354,7 +356,7 @@ public:
 	void Create_Sy(strainMatrix &S, VectorSchwarz &m)
 	{
 		double h{0};
-		Construct(S.iSize, m.GetSize()-1);
+		Construct(S.iSize, m.GetSize() - 1);
 		for (int j = 0; j < GetSize_j(); j++)
 		{
 			h = S.arg.GetElement(j + 1) - S.arg.GetElement(j);
@@ -428,7 +430,7 @@ public:
 	void Record(std::string Route, int amntNodes, int amntSubdomains, double Coef)
 	{
 		std::string sep = "_";
-		std::string size = std::to_string(amntNodes-1);
+		std::string size = std::to_string(amntNodes - 1);
 		std::string AS = std::to_string(amntSubdomains);
 
 		if (amntNodes < 10)

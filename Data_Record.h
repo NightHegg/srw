@@ -34,7 +34,7 @@ void Record_AddData(int amntNodes, string Route, int amntSubdomains, int Counter
         Route += name + sep + size + sep + AS + ".dat";
     }
     ofstream ofile(Route);
-    ofile << amntNodes;
+    ofile << amntNodes-1;
     ofile << endl;
     ofile << amntSubdomains;
     ofile << endl;

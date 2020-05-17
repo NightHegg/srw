@@ -8,14 +8,14 @@
 using namespace std;
 
 void Create_Function(int dimTask,
-					 VectorSchwarz &a,
+					 VectorSchwarz &mesh,
 					 double node,
 					 int numElem,
 					 MatrixSchwarz &D,
 					 strainMatrix &S,
 					 MatrixSchwarz &resMatrix)
 {
-	basfuncMatrix N(dimTask, a, numElem, node);
+	basfuncMatrix N(dimTask, mesh, numElem, node);
 	MatrixSchwarz B;
 	MatrixSchwarz BTD;
 	MatrixSchwarz BT;
@@ -28,30 +28,31 @@ void Create_Function(int dimTask,
 
 void Numerical_Integration(int dimTask,
 						   int numElem,
-						   VectorSchwarz &a,
+						   VectorSchwarz &mesh,
+						   VectorSchwarz &elements,
 						   MatrixSchwarz &D,
 						   strainMatrix &S,
 						   string typeIntegration,
 						   MatrixSchwarz &ResMat)
 {
-	double h = a[numElem + 1] - a[numElem];
+	double h = mesh[numElem + 1] - mesh[numElem];
 	std::vector<double> arrNodes;
 	if (typeIntegration == "Riemann_Type")
 	{
-		arrNodes.push_back((a[numElem] + a[numElem + 1]) / 2.0);
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, ResMat);
+		arrNodes.push_back((mesh[numElem] + mesh[numElem + 1]) / 2.0);
+		Create_Function(dimTask, mesh, arrNodes[0], numElem, D, S, ResMat);
 		ResMat = ResMat * h;
 	}
 	else if (typeIntegration == "Trapezoidal_Type")
 	{
-		arrNodes.push_back(a[numElem]);
-		arrNodes.push_back(a[numElem + 1]);
+		arrNodes.push_back(mesh[numElem]);
+		arrNodes.push_back(mesh[numElem + 1]);
 
 		MatrixSchwarz M1;
 		MatrixSchwarz M2;
 
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, M1);
-		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, M2);
+		Create_Function(dimTask, mesh, arrNodes[0], numElem, D, S, M1);
+		Create_Function(dimTask, mesh, arrNodes[1], numElem, D, S, M2);
 
 		ResMat = M1 + M2;
 		ResMat = ResMat * (h / 2.0);
@@ -59,14 +60,14 @@ void Numerical_Integration(int dimTask,
 	else if (typeIntegration == "Gauss_2_Type")
 	{
 
-		arrNodes.push_back((a[numElem] + a[numElem + 1]) / 2.0 - (a[numElem + 1] - a[numElem]) / (2 * sqrt(3.0)));
-		arrNodes.push_back((a[numElem] + a[numElem + 1]) / 2.0 + (a[numElem + 1] - a[numElem]) / (2 * sqrt(3.0)));
+		arrNodes.push_back((mesh[numElem] + mesh[numElem + 1]) / 2.0 - (mesh[numElem + 1] - mesh[numElem]) / (2 * sqrt(3.0)));
+		arrNodes.push_back((mesh[numElem] + mesh[numElem + 1]) / 2.0 + (mesh[numElem + 1] - mesh[numElem]) / (2 * sqrt(3.0)));
 
 		MatrixSchwarz M1;
 		MatrixSchwarz M2;
 
-		Create_Function(dimTask, a, arrNodes[0], numElem, D, S, M1);
-		Create_Function(dimTask, a, arrNodes[1], numElem, D, S, M2);
+		Create_Function(dimTask, mesh, arrNodes[0], numElem, D, S, M1);
+		Create_Function(dimTask, mesh, arrNodes[1], numElem, D, S, M2);
 
 		ResMat = M1 + M2;
 		ResMat = ResMat * (h / 2.0);
