@@ -104,12 +104,11 @@ void Solve(vector<double> data)
 		ifstream scan("files/2D/elements.dat");
 		while (!scan.eof())
 		{
-			scan >> tmp;
-			tmpBuf.push_back(tmp);
-			scan >> tmp;
-			tmpBuf.push_back(tmp);
-			scan >> tmp;
-			tmpBuf.push_back(tmp);
+			for (int i = 0; i < 3; i++)
+			{
+				scan >> tmp;
+				tmpBuf.push_back(tmp-1);
+			}
 			amntElements++;
 		}
 		scan.close();
@@ -127,7 +126,7 @@ void Solve(vector<double> data)
 		printf("Wrong input: dimTask\n");
 		break;
 	}
-	VectorSchwarz y(amntNodes*dimTask);
+	VectorSchwarz y(amntNodes * dimTask);
 	MatrixSchwarz Eps(dimEps, amntElements);
 	MatrixSchwarz Sigma(dimSigma, amntElements);
 
@@ -135,9 +134,8 @@ void Solve(vector<double> data)
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
-	
+
 	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
-	y.Show();
 	Eps.Create_Sy(S, y);
 	Sigma = D * Eps;
 	Sigma.SetName("Sigma");

@@ -34,6 +34,7 @@ public:
     int GetSize_i();
     int GetSize_j();
     double GetElement(int i, int j);
+    void SetElement(int i, int j, double a);
 };
 
 Matrix::Matrix(int i, int j)
@@ -227,6 +228,11 @@ int Matrix::GetSize_j()
 double Matrix::GetElement(int i, int j)
 {
     return M[i][j];
+}
+
+void Matrix::SetElement(int i, int j, double a)
+{
+    M[i][j]=a;
 }
 
 #endif
