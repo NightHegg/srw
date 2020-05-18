@@ -107,7 +107,7 @@ void Solve(vector<double> data)
 			for (int i = 0; i < 3; i++)
 			{
 				scan >> tmp;
-				tmpBuf.push_back(tmp-1);
+				tmpBuf.push_back(tmp - 1);
 			}
 			amntElements++;
 		}

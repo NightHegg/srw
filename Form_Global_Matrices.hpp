@@ -52,11 +52,14 @@ void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, i
 		size = dimTask * amntBF;
 		for (int j = 0; j < amntBF; j++)
 		{
-			for (int k = 0; k < size; k++)
+			for (int k = 0; k < amntBF; k++)
 			{
 				for (int i = 0; i < dimTask; i++)
 				{
-					K[localElements[j]+i][localElements[k]+i] += Ke[j+i][k+i];
+					for (int n = 0; n < dimTask; n++)
+					{
+						K[localElements[j] * dimTask + i][localElements[k] * dimTask + n] += Ke[j * dimTask + i][k * dimTask + n];
+					}
 				}
 			}
 		}
@@ -140,7 +143,10 @@ void Form_Glob_Vec_Right(VectorSchwarz &F, VectorSchwarz &Fe, int numElem)
 
 void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwarz &y, VectorSchwarz &mesh, MatrixSchwarz &K, VectorSchwarz &F)
 {
+	int Coef{0};
+	double tmp{0};
 	int size = mesh.GetSize();
+	vector<double> localNodes;
 
 	switch (dimTask)
 	{
@@ -163,6 +169,64 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 			K[size - 2][size - 1] = 0;
 			F[size - 1] = arrBound[size - 1];
 		}
+		break;
+	case 2:
+		ifstream scan("files/" + to_string(dimTask) + "D/nodes.dat");
+		while (!scan.eof())
+		{
+			scan >> tmp;
+			localNodes.push_back(tmp);
+		}
+		for (int i; i < 4; i++)
+		{
+			if ((i == 0 || i == 2) && (arrBound[i] != -1))
+			{
+				Coef == 1;
+				for (int j = 0; j < mesh.GetSize() / 2; j++)
+				{
+					if (mesh.GetElement(j + Coef) == localNodes[i + Coef])
+					{
+						K[j * dimTask + Coef][j * dimTask + Coef] = 1;
+						F[j * dimTask + Coef] = arrBound[i];
+						for (int k; k < mesh.GetSize() / 2; k++)
+						{
+							if (k != j)
+							{
+								K[j * dimTask + Coef][k * dimTask + Coef] = 0;
+								F[k * dimTask + Coef] = F[k * dimTask + Coef] - K[k * dimTask + Coef][j * dimTask + Coef] * arrBound[i];
+								K[k * dimTask + Coef][j * dimTask + Coef] = 0;
+							}
+						}
+					}
+				}
+			}
+			if ((i == 1 || i == 3) && (arrBound[i] != -1))
+			{
+				Coef == 0;
+				for (int j = 0; j < mesh.GetSize() / 2; j++)
+				{
+					if (mesh.GetElement(j + Coef) == localNodes[i + Coef])
+					{
+						K[j * dimTask + Coef][j * dimTask + Coef] = 1;
+						F[j * dimTask + Coef] = arrBound[i];
+						for (int k; k < mesh.GetSize() / 2; k++)
+						{
+							if (k != j)
+							{
+								K[j * dimTask + Coef][k * dimTask + Coef] = 0;
+								F[k * dimTask + Coef] = F[k * dimTask + Coef] - K[k * dimTask + Coef][j * dimTask + Coef] * arrBound[i];
+								K[k * dimTask + Coef][j * dimTask + Coef] = 0;
+							}
+						}
+					}
+				}
+			}
+		}
+		for(int i=4;i<arrBound.size();i++)
+		{
+			
+		}
+		break;
 	}
 }
 
@@ -220,7 +284,7 @@ void Form_Boundary_Conditions_Schwarz(int dimTask,
 void Form_Local_Element(VectorSchwarz &elements, vector<int> &localElements, int numElement)
 {
 	for (int i = 0; i < 3; i++)
-		localElements.push_back(elements.GetElement(numElement + i));
+		localElements.push_back(elements.GetElement(numElement * 3 + i));
 }
 
 void Ensembling(int dimTask,
@@ -301,8 +365,8 @@ void Get_Displacements(int dimTask,
 	}
 	if (amntSubdomains < 2)
 	{
-		K.Construct(amntNodes, amntNodes);
-		F.Construct(amntNodes);
+		K.Construct(amntNodes * dimTask, amntNodes * dimTask);
+		F.Construct(amntNodes * dimTask);
 		*Route += "Non_Schwarz/";
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);

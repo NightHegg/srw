@@ -82,7 +82,7 @@ void Matrix::Show()
     {
         for (int j = 0; j < jM; j++)
         {
-            std::cout.width(12);
+            std::cout.width(10);
             std::cout << M[i][j] << "\t";
         }
         std::cout << "\n";
