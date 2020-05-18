@@ -82,8 +82,7 @@ void Matrix::Show()
     {
         for (int j = 0; j < jM; j++)
         {
-            std::cout.width(10);
-            std::cout << M[i][j] << "\t";
+            printf("%10.4g\t",M[i][j]);
         }
         std::cout << "\n";
     }

@@ -139,5 +139,5 @@ void Solve(vector<double> data)
 	Eps.Create_Sy(S, y);
 	Sigma = D * Eps;
 	Sigma.SetName("Sigma");
-	Sigma.Record(Route, amntNodes, amntSubdomains, rk);
+	//Sigma.Record(Route, amntNodes, amntSubdomains, rk);
 }

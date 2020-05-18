@@ -8,8 +8,9 @@
 
 using namespace std;
 
-void Tridiogonal_Algorithm_Right(int N, MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
+void Tridiogonal_Algorithm_Right(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 {
+	int N=A.GetSize_i();
 	double denom;
 	double *Alpha = new double[N - 1];
 	double *Beta = new double[N];
@@ -33,8 +34,9 @@ void Tridiogonal_Algorithm_Right(int N, MatrixSchwarz &A, VectorSchwarz &F, Vect
 	}
 }
 
-void Tridiogonal_Algorithm_Left(int N, MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
+void Tridiogonal_Algorithm_Left(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 {
+	int N=A.GetSize_i();
 	double denom;
 	double *Dzeta = new double[N];
 	double *Eta = new double[N];
@@ -53,9 +55,43 @@ void Tridiogonal_Algorithm_Left(int N, MatrixSchwarz &A, VectorSchwarz &F, Vecto
 		Eta[i] = (F[i] - Eta[i + 1] * A[i][i + 1]) / (denom * 1.0);
 	}
 	y[0] = Eta[0];
-	for (int i = 1;i < N;i++)
+	for (int i = 1; i < N; i++)
 	{
 		y[i] = (Dzeta[i] * y[i - 1]) + Eta[i];
+	}
+}
+
+void Gaussian_Elimination(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
+{
+	double buf{0}, sum{0};
+	int N = A.GetSize_i();
+	for (int i = 0; i < N; i++)
+	{
+		buf = A[i][i];
+		for (int j = 0; j < N; j++)
+		{
+			A[i][j] /= buf;
+			F[i] /= buf;
+		}
+		for (int k = i + 1; k < N; k++)
+		{
+			buf = A[k][i];
+			for (int j = 0; j < N; j++)
+			{
+				A[k][j] -= A[i][j] * buf;
+				F[k] -= F[i] * buf;
+			}
+		}
+	}
+	y[N - 1] = F[N - 1];
+	for (int i = N - 2; i >= 0; i--)
+	{
+		for (int j = i + 1; j < N; j++)
+		{
+			sum += A[i][j] * y[j];
+		}
+		y[i] = F[i] - sum;
+		sum = 0;
 	}
 }
 

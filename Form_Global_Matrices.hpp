@@ -11,24 +11,18 @@
 
 using namespace std;
 
-/*void formElemMatStiffness(int i, 
-                            MatrixSchwarz& K, 
-                            VectorSchwarz& rVec, 
-                            int amntNodes,
-                            MatrixSchwarz& D,
-                            std::string typeIntegration)
+void Solve_Linear_System(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, VectorSchwarz &y)
 {
-    MatrixSchwarz localKM;
-    Basis_Functions ElementB(i, rVec, amntNodes);
-    Numerical_Integration(i, rVec, D, ElementB, typeIntegration, localKM);
-    for (int j = 0; j < iB; j++)
-    {
-        for (int k = 0; k < jB; k++)
-        {
-            K[i + j][i + k] += localKM[j][k];
-        }
-    }
-}*/
+	switch (dimTask)
+	{
+	case 1:
+		Tridiogonal_Algorithm_Right(K, F, y);
+		break;
+	case 2:
+		Gaussian_Elimination(K, F, y);
+		break;
+	}
+}
 
 void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, int numElem, vector<int> &localElements)
 {
@@ -143,6 +137,8 @@ void Form_Glob_Vec_Right(VectorSchwarz &F, VectorSchwarz &Fe, int numElem)
 
 void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwarz &y, VectorSchwarz &mesh, MatrixSchwarz &K, VectorSchwarz &F)
 {
+	bool keyDirichlet{false};
+	bool keyNeumann{false};
 	int Coef{0};
 	double tmp{0};
 	int size = mesh.GetSize();
@@ -177,39 +173,37 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 			scan >> tmp;
 			localNodes.push_back(tmp);
 		}
-		for (int i; i < 4; i++)
+		for (int i = 0; i < 4; i++)
 		{
 			if ((i == 0 || i == 2) && (arrBound[i] != -1))
 			{
-				Coef == 1;
-				for (int j = 0; j < mesh.GetSize() / 2; j++)
-				{
-					if (mesh.GetElement(j + Coef) == localNodes[i + Coef])
-					{
-						K[j * dimTask + Coef][j * dimTask + Coef] = 1;
-						F[j * dimTask + Coef] = arrBound[i];
-						for (int k; k < mesh.GetSize() / 2; k++)
-						{
-							if (k != j)
-							{
-								K[j * dimTask + Coef][k * dimTask + Coef] = 0;
-								F[k * dimTask + Coef] = F[k * dimTask + Coef] - K[k * dimTask + Coef][j * dimTask + Coef] * arrBound[i];
-								K[k * dimTask + Coef][j * dimTask + Coef] = 0;
-							}
-						}
-					}
-				}
+				Coef = 1;
+				keyDirichlet = true;
+			}
+			if ((i == 0 || i == 2) && (arrBound[i + 4] != -1))
+			{
+				Coef = 1;
+				keyNeumann = true;
 			}
 			if ((i == 1 || i == 3) && (arrBound[i] != -1))
 			{
-				Coef == 0;
+				Coef = 0;
+				keyDirichlet = true;
+			}
+			if ((i == 1 || i == 3) && (arrBound[i + 4] != -1))
+			{
+				Coef = 0;
+				keyNeumann = true;
+			}
+			if (keyDirichlet)
+			{
 				for (int j = 0; j < mesh.GetSize() / 2; j++)
 				{
-					if (mesh.GetElement(j + Coef) == localNodes[i + Coef])
+					if (mesh.GetElement(j * dimTask + Coef) == localNodes[i * dimTask + Coef])
 					{
 						K[j * dimTask + Coef][j * dimTask + Coef] = 1;
 						F[j * dimTask + Coef] = arrBound[i];
-						for (int k; k < mesh.GetSize() / 2; k++)
+						for (int k = 0; k < mesh.GetSize() / 2; k++)
 						{
 							if (k != j)
 							{
@@ -220,11 +214,20 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 						}
 					}
 				}
+				keyDirichlet = false;
 			}
-		}
-		for(int i=4;i<arrBound.size();i++)
-		{
-			
+
+			if (keyNeumann)
+			{
+				for (int j = 0; j < mesh.GetSize() / 2; j++)
+				{
+					if (mesh.GetElement(j * dimTask + Coef) == localNodes[i * dimTask + Coef])
+					{
+						F[j * dimTask + Coef] = F[j * dimTask + Coef] + (-1.0) * arrBound[i + 4] * mesh[j * dimTask + Coef];
+					}
+				}
+				keyNeumann = false;
+			}
 		}
 		break;
 	}
@@ -365,12 +368,15 @@ void Get_Displacements(int dimTask,
 	}
 	if (amntSubdomains < 2)
 	{
+		*Route += "Non_Schwarz/";
 		K.Construct(amntNodes * dimTask, amntNodes * dimTask);
 		F.Construct(amntNodes * dimTask);
-		*Route += "Non_Schwarz/";
+
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
+
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
-		Tridiogonal_Algorithm_Right(amntNodes, K, F, y);
+
+		Solve_Linear_System(dimTask, K, F, y);
 	}
 	else
 	{
@@ -398,7 +404,7 @@ void Get_Displacements(int dimTask,
 
 				Form_Boundary_Conditions_Schwarz(dimTask, arrBound, y, ySubd, yPreviousSubd, meshSubd, K, F);
 
-				Tridiogonal_Algorithm_Right(amntNodes, K, F, ySubd);
+				Solve_Linear_System(dimTask,K,F,y);
 
 				y.ReturnAllocatedArrayResults(ySubd, i);
 
@@ -411,7 +417,7 @@ void Get_Displacements(int dimTask,
 	}
 	y.SetName("y");
 
-	y.Record(*Route, amntSubdomains, uk);
+	//y.Record(*Route, amntSubdomains, uk);
 
-	Record_AddData(mesh.GetSize(), *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
+	//Record_AddData(mesh.GetSize(), *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
 }
