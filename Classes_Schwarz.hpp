@@ -263,7 +263,7 @@ public:
 			Route += name + sep + size + sep + AS + ".dat";
 		}
 		std::ofstream outfile(Route);
-	
+
 		for (int i = 0; i < iV; i++)
 		{
 			outfile << V[i] * Coef;
@@ -328,7 +328,7 @@ public:
 						M[i][j] = lambda;
 				}
 			}
-			M[iM-1][jM-1] = 2 * myu;
+			M[iM - 1][jM - 1] = 2 * myu;
 			break;
 		default:
 			printf("Wrong input, matrix D\n");
@@ -355,16 +355,62 @@ public:
 
 	void Create_Sy(strainMatrix &S, VectorSchwarz &m)
 	{
+		int amntElements{0};
+		vector<double> localNodes;
+		vector<int> localElements;
+
+		double A{0};
+		vector<double> a;
+		vector<double> b;
+		vector<double> c;
+		switch (S.dimTask)
+		{
+		case 1:
+			amntElements = S.elements.GetSize();
+			break;
+		case 2:
+			amntElements = S.elements.GetSize() / 3;
+			break;
+		}
 		double h{0};
-		Construct(S.iSize, m.GetSize() - 1);
+		Construct(S.iSize, amntElements);
 		for (int j = 0; j < GetSize_j(); j++)
 		{
-			h = S.arg.GetElement(j + 1) - S.arg.GetElement(j);
+			h = S.mesh.GetElement(j + 1) - S.mesh.GetElement(j);
 			switch (S.dimTask)
 			{
 			case 1:
 				M[0][j] = (m.GetElement(j + 1) - m.GetElement(j)) / h;
-				M[1][j] = (m.GetElement(j + 1) + m.GetElement(j)) / (S.arg.GetElement(j + 1) + S.arg.GetElement(j));
+				M[1][j] = (m.GetElement(j + 1) + m.GetElement(j)) / (S.mesh.GetElement(j + 1) + S.mesh.GetElement(j));
+				break;
+			case 2:
+				for (int i = 0; i < 3; i++)
+					localElements.push_back(S.elements[j * 3 + i]);
+				for (auto x : localElements)
+					for (int i = 0; i < 2; i++)
+						localNodes.push_back(S.mesh[x * S.dimTask + i]);
+				a.push_back(localNodes[2] * localNodes[5] - localNodes[4] * localNodes[3]);
+				a.push_back(localNodes[4] * localNodes[1] - localNodes[5] * localNodes[0]);
+				a.push_back(localNodes[0] * localNodes[3] - localNodes[2] * localNodes[1]);
+
+				b.push_back(localNodes[3] - localNodes[5]);
+				b.push_back(localNodes[5] - localNodes[1]);
+				b.push_back(localNodes[1] - localNodes[3]);
+
+				c.push_back(localNodes[4] - localNodes[2]);
+				c.push_back(localNodes[0] - localNodes[4]);
+				c.push_back(localNodes[2] - localNodes[0]);
+
+				A = (1 / 2.0) * (localNodes[2] * localNodes[5] - localNodes[4] * localNodes[3] + localNodes[0] * localNodes[3] -
+								 localNodes[0] * localNodes[5] + localNodes[4] * localNodes[1] - localNodes[2] * localNodes[1]);
+				for (int i = 0; i < 3; i++)
+				{
+					M[0][j] += b[i] * m[i * S.dimTask] / (2 * A);
+					M[1][j] += c[i] * m[i * S.dimTask + 1] / (2 * A);
+					M[2][j] += (c[i] * m[i * S.dimTask]) / (2 * A) + (b[i] * m[i * S.dimTask + 1]) / (2 * A);
+				}
+				localElements.clear();
+				localNodes.clear();
 				break;
 			}
 		}

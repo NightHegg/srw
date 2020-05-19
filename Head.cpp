@@ -13,7 +13,7 @@ int main()
 	printf("Planned: %d calculations\n\n", solSet.size());
 	for (auto i : solSet)
 	{
-		printf("Running %d iteration...\n\n", count++);
+		printf("Running %d calculation...\n\n", count++);
 		Solve(i);
 	}
 	printf("End of iterations\n");

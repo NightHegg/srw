@@ -4,7 +4,7 @@ format shortG
 %----------------
 dimTask="2D";
 N=10;
-amntElem=2.5;
+amntElem=1;
 %----------------
 if N<10
     strN="00"+int2str(N);
@@ -22,7 +22,7 @@ if dimTask=="2D"
     [vert,etri,tria,tnum] = refine2(node,edge,[],[],hfun);
    
     [meshAr,etri,elemAr,tnum] = smooth2(vert,etri,tria,tnum);
-    %PlotMesh(meshAr, elemAr);
+    PlotMesh(meshAr, elemAr);
     
     fileID1=fopen("files/2D/mesh.dat","w");
     fileID2=fopen("files/2D/elements.dat","w");

@@ -375,7 +375,8 @@ void Get_Displacements(int dimTask,
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
 
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
-
+		//K.Show();
+		//F.Show();
 		Solve_Linear_System(dimTask, K, F, y);
 	}
 	else
@@ -404,7 +405,7 @@ void Get_Displacements(int dimTask,
 
 				Form_Boundary_Conditions_Schwarz(dimTask, arrBound, y, ySubd, yPreviousSubd, meshSubd, K, F);
 
-				Solve_Linear_System(dimTask,K,F,y);
+				Solve_Linear_System(dimTask, K, F, y);
 
 				y.ReturnAllocatedArrayResults(ySubd, i);
 

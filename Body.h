@@ -130,14 +130,22 @@ void Solve(vector<double> data)
 	MatrixSchwarz Eps(dimEps, amntElements);
 	MatrixSchwarz Sigma(dimSigma, amntElements);
 
-	strainMatrix S(dimTask, mesh);
+	strainMatrix S(dimTask, mesh,elements);
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
 
 	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
 	Eps.Create_Sy(S, y);
+	cout<<endl;
+	for (int i=0;i<y.GetSize()/2;i++)
+	{
+		cout<<y[i*dimTask]<<"\t"<<y[i*dimTask+1]<<endl;
+	}
 	Sigma = D * Eps;
+	MatrixSchwarz SigmaT;
+	Sigma.Transpose(SigmaT);
+	SigmaT.Show();
 	Sigma.SetName("Sigma");
 	//Sigma.Record(Route, amntNodes, amntSubdomains, rk);
 }

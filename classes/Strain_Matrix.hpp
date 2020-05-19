@@ -11,10 +11,12 @@ class strainMatrix
 public:
 	int dimTask;
 	int iSize;
-	Vector arg;
-	strainMatrix(int _dimTask, Vector &a)
+	Vector mesh;
+	Vector elements;
+	strainMatrix(int _dimTask, Vector &_mesh, Vector &_elements)
 	{
-		arg = a;
+		mesh = _mesh;
+		elements = _elements;
 		dimTask = _dimTask;
 		switch (dimTask)
 		{
