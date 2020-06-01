@@ -32,6 +32,9 @@ public:
 	int GetSize();
 	double GetElement(int i);
 	void SetElement(int i, double a);
+	double NormM();
+	double NormL();
+	double NormEuclidean();
 };
 
 Vector::Vector(int index)
@@ -69,7 +72,7 @@ void Vector::Show()
 {
 	for (int i = 0; i < iV; i++)
 	{
-		printf("%g\n", V[i]);
+		printf("%4g\n", V[i]);
 	}
 }
 
@@ -98,6 +101,35 @@ double Vector::GetElement(int i)
 void Vector::SetElement(int i, double a)
 {
 	V[i] = a;
+}
+
+double Vector::NormM()
+{
+	double max{0};
+	for (int i = 0; i < iV; i++)
+		if (abs(V[i]) > max)
+			max = abs(V[i]);
+	return max;
+}
+
+double Vector::NormL()
+{
+	double sum{0};
+	for (int i = 0; i < iV; i++)
+	{
+		sum += abs(V[i]);
+	}
+	return sum;
+}
+
+double Vector::NormEuclidean()
+{
+	double sum{0};
+	for (int i = 0; i < iV; i++)
+	{
+		sum += pow(V[i],2);
+	}
+	return sqrt(sum);
 }
 
 #endif

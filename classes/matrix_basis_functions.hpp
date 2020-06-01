@@ -1,7 +1,8 @@
 #ifndef BASIS_FUNCTIONS_HPP
 #define BASIS_FUNCTIONS_HPP
 
-#include "classes/Vector.hpp"
+#include "vector.hpp"
+
 #include <vector>
 #include <iostream>
 

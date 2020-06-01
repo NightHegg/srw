@@ -1,7 +1,7 @@
 #ifndef STRAIN_MATRIX_HPP
 #define STRAIN_MATRIX_HPP
 
-#include "classes/Vector.hpp"
+#include "vector.hpp"
 /**
  * ! Переписать S, чтобы сначала была просто пустышка, а потом сверху добавлялась функция в зависимости от размерности
  **/

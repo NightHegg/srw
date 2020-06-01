@@ -3,11 +3,10 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "classes/Basis_Functions.hpp"
-#include "classes/Strain_Matrix.hpp"
-#include "Classes_Schwarz.hpp"
+
 #include "Num_Integration.hpp"
 #include "Methods.hpp"
+#include "classes.hpp"
 
 using namespace std;
 
@@ -19,7 +18,7 @@ void Solve_Linear_System(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, Vector
 		Tridiogonal_Algorithm_Right(K, F, y);
 		break;
 	case 2:
-		Gaussian_Elimination(K, F, y);
+		ConjugateGradientMethod(K, F, y);
 		break;
 	}
 }
@@ -201,15 +200,16 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 				{
 					if (mesh.GetElement(j * dimTask + Coef) == localNodes[i * dimTask + Coef])
 					{
+						for (int k = 0; k < mesh.GetSize(); k++)
+							K[j * dimTask + Coef][k] = 0;
 						K[j * dimTask + Coef][j * dimTask + Coef] = 1;
 						F[j * dimTask + Coef] = arrBound[i];
-						for (int k = 0; k < mesh.GetSize() / 2; k++)
+						for (int k = 0; k < mesh.GetSize(); k++)
 						{
-							if (k != j)
+							if (k != j * dimTask + Coef)
 							{
-								K[j * dimTask + Coef][k * dimTask + Coef] = 0;
-								F[k * dimTask + Coef] = F[k * dimTask + Coef] - K[k * dimTask + Coef][j * dimTask + Coef] * arrBound[i];
-								K[k * dimTask + Coef][j * dimTask + Coef] = 0;
+								F[k] = F[k] - K[k][j * dimTask + Coef] * arrBound[i];
+								K[k][j * dimTask + Coef] = 0;
 							}
 						}
 					}
@@ -375,8 +375,7 @@ void Get_Displacements(int dimTask,
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
 
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
-		//K.Show();
-		//F.Show();
+
 		Solve_Linear_System(dimTask, K, F, y);
 	}
 	else

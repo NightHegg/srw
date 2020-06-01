@@ -3,12 +3,11 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include "Classes_Schwarz.hpp"
-#include "Solutions.hpp"
-#include "Additional_Functions.h"
+
 #include "Data_Record.h"
-#include "classes/Strain_Matrix.hpp"
 #include "Form_Global_Matrices.hpp"
+
+#include "classes.hpp"
 
 using namespace std;
 

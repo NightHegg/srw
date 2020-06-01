@@ -4,7 +4,7 @@
 #include <cmath>
 #include <string>
 #include <iostream>
-#include "Classes_Schwarz.hpp"
+#include "classes.hpp"
 
 using namespace std;
 
@@ -90,22 +90,50 @@ void Gaussian_Elimination(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 			}
 		}
 	}
-	//A.Show();
-	//F.Show();
-	y[N*dimTask-1]=F[N*dimTask-1];
-	y[N*dimTask-2]=F[N*dimTask-2];
-	for (int i = N-2; i >= 0; i--)
+	y[N * dimTask - 1] = F[N * dimTask - 1];
+	y[N * dimTask - 2] = F[N * dimTask - 2];
+	for (int i = N - 2; i >= 0; i--)
 	{
 		for (int k = 0; k < dimTask; k++)
 		{
 			for (int j = i + 1; j < N; j++)
 			{
-				sum += A[i*dimTask+k][j*dimTask+k] * y[j*dimTask+k];
+				sum += A[i * dimTask + k][j * dimTask + k] * y[j * dimTask + k];
 			}
-			y[i*dimTask+k] = F[i*dimTask+k] - sum;
+			y[i * dimTask + k] = F[i * dimTask + k] - sum;
 			sum = 0;
 		}
 	}
+}
+
+void ConjugateGradientMethod(MatrixSchwarz &A, VectorSchwarz &b, VectorSchwarz &y)
+{
+	int iter{0};
+	double alpha{0}, beta{0};
+	VectorSchwarz yPrevious(y.GetSize());
+	y.Fill(0);
+	VectorSchwarz r, rPrevious, p, tmp, tmp2;
+	r = b - A * y;
+
+	p = r;
+	do
+	{
+		alpha = (y.ScalarProduct(r, r)) / (y.ScalarProduct(A * p, p));
+
+		yPrevious = y;
+		y = y + alpha * p;
+
+		rPrevious = r;
+		tmp = A * p;
+
+		r = r - alpha * tmp;
+		r.Show();
+		beta = y.ScalarProduct(r, r) / y.ScalarProduct(rPrevious, rPrevious);
+		p = r + beta * p;
+
+		system("PAUSE");
+		iter++;
+	} while (iter < 5);
 }
 
 #endif

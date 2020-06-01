@@ -21,16 +21,19 @@ public:
     Matrix(const Matrix &N);
     void Construct(int i, int j);
     ~Matrix() = default;
+    
     void Null();
     void Show();
     void Transpose(Matrix &A);
     void Identity();
     void Inverse(Matrix &A);
+
     double *operator[](const int index);
     friend Matrix operator*(const Matrix &N, const Matrix &L);
     friend Matrix operator+(const Matrix &N, const Matrix &L);
     friend Matrix operator*(const Matrix &N, const double val);
     Matrix operator=(const Matrix &N);
+
     int GetSize_i();
     int GetSize_j();
     double GetElement(int i, int j);

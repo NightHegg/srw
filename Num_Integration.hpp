@@ -2,8 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <string>
-#include "Classes_Schwarz.hpp"
-#include "classes/Basis_Functions.hpp"
+#include "classes.hpp"
 
 using namespace std;
 
