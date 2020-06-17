@@ -63,46 +63,38 @@ void Tridiogonal_Algorithm_Left(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwar
 
 void Gaussian_Elimination(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 {
-	int dimTask{2};
 	double buf{0}, sum{0};
-	int N = A.GetSize_i() / dimTask;
+	int N = A.GetSize_i();
 	for (int i = 0; i < N; i++)
 	{
-		for (int k = 0; k < dimTask; k++)
+		buf = A[i][i];
+		for (int j = 0; j < N; j++)
 		{
-			buf = A[i * dimTask + k][i * dimTask + k];
-			for (int j = 0; j < N; j++)
-			{
-				A[i * dimTask + k][j * dimTask + k] /= buf;
-			}
-			F[i * dimTask + k] /= buf;
+			A[i][j] /= buf;
 		}
+		F[i] /= buf;
 		for (int k = i + 1; k < N; k++)
 		{
-			for (int l = 0; l < dimTask; l++)
+			buf = A[k][i];
+			for (int j = i; j < N; j++)
 			{
-				buf = A[k * dimTask + l][i * dimTask + l] * 1.0;
-				for (int j = i; j < N; j++)
-				{
-					A[k * dimTask + l][j * dimTask + l] -= A[i * dimTask + l][j * dimTask + l] * buf * 1.0;
-				}
-				F[k * dimTask + l] -= F[i * dimTask + i] * buf * 1.0;
+				A[k][j] -= A[i][j] * buf;
 			}
+			F[k] -= F[i] * buf;
 		}
 	}
-	y[N * dimTask - 1] = F[N * dimTask - 1];
-	y[N * dimTask - 2] = F[N * dimTask - 2];
+	A.Show();
+	F.Show();
+	y[N - 1] = F[N - 1];
+
 	for (int i = N - 2; i >= 0; i--)
 	{
-		for (int k = 0; k < dimTask; k++)
-		{
 			for (int j = i + 1; j < N; j++)
 			{
-				sum += A[i * dimTask + k][j * dimTask + k] * y[j * dimTask + k];
+				sum += A[i][j] * y[j];
 			}
-			y[i * dimTask + k] = F[i * dimTask + k] - sum;
+			y[i] = F[i] - sum;
 			sum = 0;
-		}
 	}
 }
 
@@ -127,11 +119,11 @@ void ConjugateGradientMethod(MatrixSchwarz &A, VectorSchwarz &b, VectorSchwarz &
 		tmp = A * p;
 
 		r = r - alpha * tmp;
-		r.Show();
+		//r.Show();
 		beta = y.ScalarProduct(r, r) / y.ScalarProduct(rPrevious, rPrevious);
 		p = r + beta * p;
 
-		system("PAUSE");
+		//system("PAUSE");
 		iter++;
 	} while (iter < 5);
 }

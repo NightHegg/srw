@@ -7,6 +7,7 @@
 #include "Num_Integration.hpp"
 #include "Methods.hpp"
 #include "classes.hpp"
+#include "record_data.hpp"
 
 using namespace std;
 
@@ -18,7 +19,12 @@ void Solve_Linear_System(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, Vector
 		Tridiogonal_Algorithm_Right(K, F, y);
 		break;
 	case 2:
-		ConjugateGradientMethod(K, F, y);
+		Gaussian_Elimination(K, F, y);
+		for (int i=0;i<y.GetSize();i++)
+		{
+			if (abs(y[i])<1e-20)
+			y.SetElement(i,0);
+		}
 		break;
 	}
 }
@@ -223,7 +229,7 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 				{
 					if (mesh.GetElement(j * dimTask + Coef) == localNodes[i * dimTask + Coef])
 					{
-						F[j * dimTask + Coef] = F[j * dimTask + Coef] + (-1.0) * arrBound[i + 4] * mesh[j * dimTask + Coef];
+						F[j * dimTask + Coef] = F[j * dimTask + Coef] + arrBound[i + 4] * mesh[j * dimTask + Coef];
 					}
 				}
 				keyNeumann = false;
@@ -375,7 +381,10 @@ void Get_Displacements(int dimTask,
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
 
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
-
+		//K.SetName("K");
+		//F.SetName("F");
+		//K.Record("",1);
+		//F.Record("",1);
 		Solve_Linear_System(dimTask, K, F, y);
 	}
 	else
@@ -417,7 +426,9 @@ void Get_Displacements(int dimTask,
 	}
 	y.SetName("y");
 
-	//y.Record(*Route, amntSubdomains, uk);
+	FormRouteSchwarz(Route,amntNodes,amntSubdomains);
 
-	//Record_AddData(mesh.GetSize(), *Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
+	y.Record(*Route, uk);
+
+	//Record_AddData(mesh.GetSize(), Route, amntSubdomains, Counter, stopCriteria, coefOverlap);
 }

@@ -18,7 +18,7 @@ void Create_Function(int dimTask,
 	MatrixSchwarz B;
 	MatrixSchwarz BTD;
 	MatrixSchwarz BT;
-	B.Create_B(S,N);
+	B=S*N;
 	B.Transpose(BT);
 	BTD = BT * D;
 	resMatrix = BTD * B;

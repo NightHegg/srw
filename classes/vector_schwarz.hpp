@@ -15,7 +15,6 @@ private:
 	std::vector<int> SchwarzNodes;
 	int LeftBoundary, RightBoundary;
 	bool UsingMethodSchwarz;
-	std::string name;
 
 public:
 	VectorSchwarz();
@@ -34,10 +33,6 @@ public:
 
 	double ConvergenceL2(VectorSchwarz &yprev, VectorSchwarz &rr);
 
-	void SetName(std::string str);
-
-	void Record(std::string Route, int amntSubdomains, double Coef);
-
 	double ScalarProduct(VectorSchwarz &a, VectorSchwarz &b);
 
 	friend VectorSchwarz operator-(VectorSchwarz &a, VectorSchwarz &b);
@@ -51,7 +46,6 @@ VectorSchwarz::VectorSchwarz() : Vector::Vector()
 	SchwarzNodes = std::vector<int>();
 	LeftBoundary = RightBoundary = 0;
 	UsingMethodSchwarz = false;
-	name = "";
 }
 
 VectorSchwarz::VectorSchwarz(int i) : Vector(i)
@@ -60,7 +54,6 @@ VectorSchwarz::VectorSchwarz(int i) : Vector(i)
 	LeftBoundary = 0;
 	RightBoundary = iV - 1;
 	UsingMethodSchwarz = false;
-	name = "";
 }
 
 void VectorSchwarz::Construct(int i)
@@ -69,7 +62,6 @@ void VectorSchwarz::Construct(int i)
 	LeftBoundary = 0;
 	RightBoundary = iV - 1;
 	UsingMethodSchwarz = false;
-	name = "";
 }
 
 void VectorSchwarz::Decomposition(int Amount_Subdomains, double *Coef_Overflow)
@@ -225,44 +217,6 @@ double VectorSchwarz::ConvergenceL2(VectorSchwarz &yprev, VectorSchwarz &rr)
 	return sqrt(sum);
 }
 
-void VectorSchwarz::SetName(std::string str)
-{
-	name = str;
-}
-
-void VectorSchwarz::Record(std::string Route, int amntSubdomains, double Coef)
-{
-	std::string sep = "_";
-	std::string size = std::to_string(iV - 1);
-	std::string AS = std::to_string(amntSubdomains);
-
-	if (iV < 10)
-	{
-		size = "00" + size;
-	}
-	else if (iV >= 10 && iV < 100)
-	{
-		size = "0" + size;
-	}
-
-	if (amntSubdomains < 2)
-	{
-		Route += name + sep + size + ".dat";
-	}
-	else
-	{
-		Route += name + sep + size + sep + AS + ".dat";
-	}
-	std::ofstream outfile(Route);
-
-	for (int i = 0; i < iV; i++)
-	{
-		outfile << V[i] * Coef;
-		outfile << std::endl;
-	}
-	outfile.close();
-}
-
 double VectorSchwarz::ScalarProduct(VectorSchwarz &a, VectorSchwarz &b)
 {
 	double sum{0};
@@ -288,7 +242,6 @@ VectorSchwarz operator+(VectorSchwarz &a, VectorSchwarz &b)
 		c.V[i] = a[i] + b[i];
 	return c;
 }
-
 
 VectorSchwarz operator*(double val, VectorSchwarz &u)
 {

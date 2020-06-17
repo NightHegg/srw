@@ -4,12 +4,14 @@
 #include <vector>
 #include <string>
 
-#include "Data_Record.h"
+#include "record_data.hpp"
 #include "Form_Global_Matrices.hpp"
 
 #include "classes.hpp"
 
 using namespace std;
+// TODO Rewrite Record structures for Matrix and Vector
+// TODO It need to be more comfortable
 
 void Solve(vector<double> data)
 {
@@ -129,22 +131,25 @@ void Solve(vector<double> data)
 	MatrixSchwarz Eps(dimEps, amntElements);
 	MatrixSchwarz Sigma(dimSigma, amntElements);
 
-	strainMatrix S(dimTask, mesh,elements);
+	strainMatrix S(dimTask, mesh, elements);
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
 
 	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
-	Eps.Create_Sy(S, y);
-	cout<<endl;
-	for (int i=0;i<y.GetSize()/2;i++)
+	Eps = S * y;
+	for (int i = 0; i < y.GetSize() / dimTask; i++)
 	{
-		cout<<y[i*dimTask]<<"\t"<<y[i*dimTask+1]<<endl;
+		printf("%8.3g\t%8.3g\n",y[i * dimTask],y[i * dimTask + 1]);
 	}
+	D.Show();
+	Eps.Show();
 	Sigma = D * Eps;
 	MatrixSchwarz SigmaT;
 	Sigma.Transpose(SigmaT);
-	SigmaT.Show();
+	//SigmaT.Show();
 	Sigma.SetName("Sigma");
-	//Sigma.Record(Route, amntNodes, amntSubdomains, rk);
+
+	Sigma.Record(Route, rk);
+	cout<<endl;
 }

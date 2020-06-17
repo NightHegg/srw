@@ -3,12 +3,20 @@
 
 #include <vector>
 #include <iostream>
+#include <string>
+
+using namespace std;
+
+/** 
+ * TODO Add name as element of class // DONE
+**/
 
 class Vector
 {
 protected:
 	double *V;
 	int iV;
+	string name;
 
 public:
 	Vector() = default;
@@ -19,22 +27,22 @@ public:
 	void Construct(int i);
 	void Show();
 	void Fill(double var);
-	Vector &operator=(const Vector &N)
-	{
-		Construct(N.iV);
-		for (int i = 0; i < iV; i++)
-		{
-			V[i] = N.V[i];
-		}
-		return *this;
-	}
+
+	Vector operator=(const Vector &N);
 	double &operator[](int ind);
+
 	int GetSize();
 	double GetElement(int i);
 	void SetElement(int i, double a);
+
 	double NormM();
 	double NormL();
 	double NormEuclidean();
+
+	void SetName(std::string str);
+	std::string GetName();
+
+	void Record(std::string Route, double Multiplier);
 };
 
 Vector::Vector(int index)
@@ -57,6 +65,7 @@ void Vector::Construct(int i)
 	V = new double[iV];
 	for (int i = 0; i < iV; i++)
 		V[i] = 0;
+	name = "";
 }
 
 Vector::Vector(const Vector &N)
@@ -82,6 +91,15 @@ void Vector::Fill(double var)
 	{
 		this->V[i] = var;
 	}
+}
+
+Vector Vector::operator=(const Vector &N)
+{
+	Construct(N.iV);
+	for (int i = 0; i < iV; i++)
+		V[i] = N.V[i];
+	this->name = N.name;
+	return *this;
 }
 
 double &Vector::operator[](int ind)
@@ -127,9 +145,40 @@ double Vector::NormEuclidean()
 	double sum{0};
 	for (int i = 0; i < iV; i++)
 	{
-		sum += pow(V[i],2);
+		sum += pow(V[i], 2);
 	}
 	return sqrt(sum);
+}
+
+void Vector::SetName(std::string str)
+{
+	name = str;
+}
+
+std::string Vector::GetName()
+{
+	return name;
+}
+
+void Vector::Record(std::string Route, double Multiplier)
+{
+	int pos{0};
+	if (Route.empty())
+		Route = "temp_files/" + name + ".dat";
+	else
+	{
+		pos = Route.find("z/");
+		Route.insert(pos + 2, name + "_");
+	}
+	std::ofstream outfile(Route,ios_base::trunc);
+
+	for (int i = 0; i < iV; i++)
+	{
+		outfile << V[i] * Multiplier;
+		outfile << std::endl;
+	}
+	printf("# File was recorded. Route: %s\n",Route.c_str());
+	outfile.close();
 }
 
 #endif
