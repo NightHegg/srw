@@ -6,6 +6,7 @@
 
 #include "record_data.hpp"
 #include "Form_Global_Matrices.hpp"
+#include "Methods.hpp"
 
 #include "classes.hpp"
 
@@ -142,14 +143,15 @@ void Solve(vector<double> data)
 	{
 		printf("%8.3g\t%8.3g\n",y[i * dimTask],y[i * dimTask + 1]);
 	}
-	D.Show();
-	Eps.Show();
+	//D.Show();
+	//Eps.Show();
 	Sigma = D * Eps;
 	MatrixSchwarz SigmaT;
 	Sigma.Transpose(SigmaT);
-	//SigmaT.Show();
+	SigmaT.Show();
 	Sigma.SetName("Sigma");
 
 	Sigma.Record(Route, rk);
 	cout<<endl;
+
 }

@@ -20,10 +20,10 @@ void Solve_Linear_System(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, Vector
 		break;
 	case 2:
 		Gaussian_Elimination(K, F, y);
-		for (int i=0;i<y.GetSize();i++)
+		for (int i = 0; i < y.GetSize(); i++)
 		{
-			if (abs(y[i])<1e-20)
-			y.SetElement(i,0);
+			//if (abs(y[i])<1e-20)
+			//y.SetElement(i,0);
 		}
 		break;
 	}
@@ -47,6 +47,9 @@ void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, i
 		}
 		break;
 	case 2:
+	cout<<numElem+1<<endl;
+	K.Show();
+	Ke.Show();
 		amntBF = 3;
 		size = dimTask * amntBF;
 		for (int j = 0; j < amntBF; j++)
@@ -117,6 +120,7 @@ void Form_Elem_Mat_Stiffness(int dimTask,
 
 		A = (1 / 2.0) * (localNodes[2] * localNodes[5] - localNodes[4] * localNodes[3] + localNodes[0] * localNodes[3] -
 						 localNodes[0] * localNodes[5] + localNodes[4] * localNodes[1] - localNodes[2] * localNodes[1]);
+
 		for (int j = 0; j < 3; j++)
 		{
 			B.SetElement(0, 2 * j, b[j] / (2 * A));
@@ -128,6 +132,9 @@ void Form_Elem_Mat_Stiffness(int dimTask,
 		BTD = BT * D;
 		Ke = BTD * B;
 		Ke = Ke * A;
+		a.clear();
+		b.clear();
+		c.clear();
 		break;
 	}
 	}
@@ -229,7 +236,7 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 				{
 					if (mesh.GetElement(j * dimTask + Coef) == localNodes[i * dimTask + Coef])
 					{
-						F[j * dimTask + Coef] = F[j * dimTask + Coef] + arrBound[i + 4] * mesh[j * dimTask + Coef];
+						F[j * dimTask + Coef] = F[j * dimTask + Coef] + (arrBound[i + 4]/2.0) * mesh[j * dimTask + Coef];
 					}
 				}
 				keyNeumann = false;
@@ -379,12 +386,14 @@ void Get_Displacements(int dimTask,
 		F.Construct(amntNodes * dimTask);
 
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
-
+		K.Show();
 		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
 		//K.SetName("K");
 		//F.SetName("F");
 		//K.Record("",1);
 		//F.Record("",1);
+
+		//F.Show();
 		Solve_Linear_System(dimTask, K, F, y);
 	}
 	else
@@ -426,7 +435,7 @@ void Get_Displacements(int dimTask,
 	}
 	y.SetName("y");
 
-	FormRouteSchwarz(Route,amntNodes,amntSubdomains);
+	FormRouteSchwarz(Route, amntNodes, amntSubdomains);
 
 	y.Record(*Route, uk);
 

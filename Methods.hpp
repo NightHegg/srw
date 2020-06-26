@@ -83,8 +83,8 @@ void Gaussian_Elimination(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 			F[k] -= F[i] * buf;
 		}
 	}
-	A.Show();
-	F.Show();
+	//A.Show();
+	//F.Show();
 	y[N - 1] = F[N - 1];
 
 	for (int i = N - 2; i >= 0; i--)
