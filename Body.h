@@ -137,7 +137,7 @@ void Solve(vector<double> data)
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
 
-	Get_Displacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
+	CalcDisplacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
 	Eps = S * y;
 	for (int i = 0; i < y.GetSize() / dimTask; i++)
 	{

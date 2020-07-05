@@ -14,7 +14,7 @@ int main()
 	for (auto i : solSet)
 	{
 		printf("# Running: %d of %d calculation...\n", count++, solSet.size());
-		Solve(i);
+		Solve(i);	
 	}
 	printf("# End of iterations");
 }

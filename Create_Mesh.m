@@ -4,7 +4,7 @@ format shortG
 %----------------
 dimTask="2D";
 N=10;
-amntElem=5;
+amntElem=2.25;
 %----------------
 if N<10
     strN="00"+int2str(N);

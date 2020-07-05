@@ -11,6 +11,43 @@
 
 using namespace std;
 
+double GetAreaTriangle(vector<double> &localNodes)
+{
+	vector<double> a;
+	vector<double> b;
+	vector<double> c;
+
+	a.push_back(localNodes[2] * localNodes[5] - localNodes[4] * localNodes[3]);
+	a.push_back(localNodes[4] * localNodes[1] - localNodes[5] * localNodes[0]);
+	a.push_back(localNodes[0] * localNodes[3] - localNodes[2] * localNodes[1]);
+
+	b.push_back(localNodes[3] - localNodes[5]);
+	b.push_back(localNodes[5] - localNodes[1]);
+	b.push_back(localNodes[1] - localNodes[3]);
+
+	c.push_back(localNodes[4] - localNodes[2]);
+	c.push_back(localNodes[0] - localNodes[4]);
+	c.push_back(localNodes[2] - localNodes[0]);
+
+	double A = (1 / 2.0) * (localNodes[2] * localNodes[5] - localNodes[4] * localNodes[3] + localNodes[0] * localNodes[3] -
+							localNodes[0] * localNodes[5] + localNodes[4] * localNodes[1] - localNodes[2] * localNodes[1]);
+	return A;
+}
+
+void FormArray_localElement(VectorSchwarz &elements, vector<int> &localElement, int numElement)
+{
+	for (int i = 0; i < 3; i++)
+		localElement.push_back(elements.GetElement(numElement * 3 + i));
+}
+void FormArray_localMesh(vector<int> &localElement, VectorSchwarz &mesh, vector<double> &localMesh)
+{
+	for (auto x : localElement)
+	{
+		for (int i = 0; i < 2; i++)
+			localMesh.push_back(mesh.GetElement(x * 2 + i));
+	}
+}
+
 void Solve_Linear_System(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, VectorSchwarz &y)
 {
 	switch (dimTask)
@@ -20,16 +57,11 @@ void Solve_Linear_System(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, Vector
 		break;
 	case 2:
 		Gaussian_Elimination(K, F, y);
-		for (int i = 0; i < y.GetSize(); i++)
-		{
-			//if (abs(y[i])<1e-20)
-			//y.SetElement(i,0);
-		}
 		break;
 	}
 }
 
-void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, int numElem, vector<int> &localElements)
+void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, int numElem, vector<int> &localElement)
 {
 	int size{0};
 	int amntBF;
@@ -47,9 +79,6 @@ void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, i
 		}
 		break;
 	case 2:
-	cout<<numElem+1<<endl;
-	K.Show();
-	Ke.Show();
 		amntBF = 3;
 		size = dimTask * amntBF;
 		for (int j = 0; j < amntBF; j++)
@@ -60,7 +89,7 @@ void Form_Glob_Mat_Stiffness(int dimTask, MatrixSchwarz &K, MatrixSchwarz &Ke, i
 				{
 					for (int n = 0; n < dimTask; n++)
 					{
-						K[localElements[j] * dimTask + i][localElements[k] * dimTask + n] += Ke[j * dimTask + i][k * dimTask + n];
+						K[localElement[j] * dimTask + i][localElement[k] * dimTask + n] += Ke[j * dimTask + i][k * dimTask + n];
 					}
 				}
 			}
@@ -79,7 +108,7 @@ void Form_Elem_Mat_Stiffness(int dimTask,
 							 strainMatrix &S,
 							 int numElement,
 							 int amntNodes,
-							 vector<int> &localElements)
+							 vector<int> &localElement)
 {
 	string Type_Integration = "Trapezoidal_Type";
 	MatrixSchwarz B;
@@ -99,12 +128,7 @@ void Form_Elem_Mat_Stiffness(int dimTask,
 	case 2:
 	{
 		B.Construct(3, dimTask * 3);
-
-		for (auto x : localElements)
-		{
-			for (int i = 0; i < 2; i++)
-				localNodes.push_back(mesh.GetElement(x * 2 + i));
-		}
+		FormArray_localMesh(localElement, mesh, localNodes);
 
 		a.push_back(localNodes[2] * localNodes[5] - localNodes[4] * localNodes[3]);
 		a.push_back(localNodes[4] * localNodes[1] - localNodes[5] * localNodes[0]);
@@ -147,14 +171,17 @@ void Form_Glob_Vec_Right(VectorSchwarz &F, VectorSchwarz &Fe, int numElem)
 {
 }
 
-void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwarz &y, VectorSchwarz &mesh, MatrixSchwarz &K, VectorSchwarz &F)
+void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwarz &y, VectorSchwarz &mesh, VectorSchwarz &elements, int amntElements, int amntNodes, MatrixSchwarz &K, VectorSchwarz &F)
 {
 	bool keyDirichlet{false};
 	bool keyNeumann{false};
 	int Coef{0};
 	double tmp{0};
 	int size = mesh.GetSize();
-	vector<double> localNodes;
+	vector<double> coordsBound;
+	vector<double> localMesh;
+	vector<int> localElement;
+	double A{0};
 
 	switch (dimTask)
 	{
@@ -183,7 +210,7 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 		while (!scan.eof())
 		{
 			scan >> tmp;
-			localNodes.push_back(tmp);
+			coordsBound.push_back(tmp);
 		}
 		for (int i = 0; i < 4; i++)
 		{
@@ -211,7 +238,7 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 			{
 				for (int j = 0; j < mesh.GetSize() / 2; j++)
 				{
-					if (mesh.GetElement(j * dimTask + Coef) == localNodes[i * dimTask + Coef])
+					if (mesh.GetElement(j * dimTask + Coef) == coordsBound[i * dimTask + Coef])
 					{
 						for (int k = 0; k < mesh.GetSize(); k++)
 							K[j * dimTask + Coef][k] = 0;
@@ -232,11 +259,17 @@ void Form_Boundary_Conditions(int dimTask, vector<double> &arrBound, VectorSchwa
 
 			if (keyNeumann)
 			{
-				for (int j = 0; j < mesh.GetSize() / 2; j++)
+				for (int j = 0; j < amntElements; j++)
 				{
-					if (mesh.GetElement(j * dimTask + Coef) == localNodes[i * dimTask + Coef])
+					FormArray_localElement(elements, localElement, j);
+					FormArray_localMesh(localElement, mesh, localMesh);
+					for (int k = 0; k < localMesh.size() / dimTask; k++)
 					{
-						F[j * dimTask + Coef] = F[j * dimTask + Coef] + (arrBound[i + 4]/2.0) * mesh[j * dimTask + Coef];
+						if (localMesh[k * dimTask + Coef] == coordsBound[i * dimTask + Coef])
+						{
+							A=GetAreaTriangle(localMesh);
+							F[j * dimTask + Coef] = F[j * dimTask + Coef] + (arrBound[i + 4] / 2.0) *A/3;
+						}
 					}
 				}
 				keyNeumann = false;
@@ -297,12 +330,6 @@ void Form_Boundary_Conditions_Schwarz(int dimTask,
 	}
 }
 
-void Form_Local_Element(VectorSchwarz &elements, vector<int> &localElements, int numElement)
-{
-	for (int i = 0; i < 3; i++)
-		localElements.push_back(elements.GetElement(numElement * 3 + i));
-}
-
 void Ensembling(int dimTask,
 				MatrixSchwarz &K,
 				VectorSchwarz &F,
@@ -330,7 +357,7 @@ void Ensembling(int dimTask,
 	for (int i = 0; i < amntElements; i++)
 	{
 		if (dimTask == 2)
-			Form_Local_Element(elements, localElements, i);
+			FormArray_localElement(elements, localElements, i);
 
 		Form_Elem_Mat_Stiffness(dimTask, Ke, mesh, elements, D, S, i, amntNodes, localElements);
 		Form_Glob_Mat_Stiffness(dimTask, K, Ke, i, localElements);
@@ -340,7 +367,7 @@ void Ensembling(int dimTask,
 	}
 }
 
-void Get_Displacements(int dimTask,
+void CalcDisplacements(int dimTask,
 					   string *Route,
 					   VectorSchwarz &y,
 					   VectorSchwarz &mesh,
@@ -386,14 +413,12 @@ void Get_Displacements(int dimTask,
 		F.Construct(amntNodes * dimTask);
 
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
-		K.Show();
-		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, K, F);
+
+		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, elements, amntElements, amntNodes, K, F);
 		//K.SetName("K");
 		//F.SetName("F");
 		//K.Record("",1);
 		//F.Record("",1);
-
-		//F.Show();
 		Solve_Linear_System(dimTask, K, F, y);
 	}
 	else
