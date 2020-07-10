@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void Tridiogonal_Algorithm_Right(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
+void TridiogonalMatrixAlgorithmRight(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 {
 	int N = A.GetSize_i();
 	double denom;
@@ -34,7 +34,7 @@ void Tridiogonal_Algorithm_Right(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwa
 	}
 }
 
-void Tridiogonal_Algorithm_Left(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
+void TridiogonalMatrixAlgorithmLeft(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 {
 	int N = A.GetSize_i();
 	double denom;
@@ -61,7 +61,7 @@ void Tridiogonal_Algorithm_Left(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwar
 	}
 }
 
-void Gaussian_Elimination(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
+void GaussianElimination(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 {
 	double buf{0}, sum{0};
 	int N = A.GetSize_i();
@@ -83,8 +83,6 @@ void Gaussian_Elimination(MatrixSchwarz &A, VectorSchwarz &F, VectorSchwarz &y)
 			F[k] -= F[i] * buf;
 		}
 	}
-	//A.Show();
-	//F.Show();
 	y[N - 1] = F[N - 1];
 
 	for (int i = N - 2; i >= 0; i--)

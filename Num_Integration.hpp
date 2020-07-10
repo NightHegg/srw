@@ -1,3 +1,5 @@
+#ifndef NUM_INTEGRATION_HPP
+#define NUM_INTEGRATION_HPP
 
 #include <cmath>
 #include <vector>
@@ -77,3 +79,5 @@ void Numerical_Integration(int dimTask,
 		exit(0);
 	}
 }
+
+#endif
