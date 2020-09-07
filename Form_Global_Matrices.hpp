@@ -26,18 +26,18 @@ void SolveLinearSystem(int dimTask, MatrixSchwarz &K, VectorSchwarz &F, VectorSc
 	}
 }
 
-void CalcDisplacements(int dimTask,
-					   string *Route,
-					   VectorSchwarz &y,
-					   VectorSchwarz &mesh,
-					   VectorSchwarz &elements,
-					   strainMatrix &S,
-					   MatrixSchwarz &D,
-					   int uk,
-					   int amntSubdomains,
-					   double stopCriteria,
-					   int amntNodes,
-					   int amntElements)
+void CalcDisplacements(int 				dimTask,
+					   string 			*Route,
+					   VectorSchwarz 	&y,
+					   VectorSchwarz 	&mesh,
+					   VectorSchwarz 	&elements,
+					   strainMatrix 	&S,
+					   MatrixSchwarz 	&D,
+					   int 				uk,
+					   int 				amntSubdomains,
+					   double 			stopCriteria,
+					   int 				amntNodes,
+					   int 				amntElements)
 {
 	int Counter{0};
 	double coefOverlap{0};
@@ -78,8 +78,7 @@ void CalcDisplacements(int dimTask,
 		//F.SetName("F");
 		//K.Record("",1);
 		//F.Record("",1);
-		K.Show();
-		F.Show();
+
 		SolveLinearSystem(dimTask, K, F, y);
 	}
 	else

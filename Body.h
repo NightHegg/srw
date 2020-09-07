@@ -11,7 +11,6 @@
 #include "classes.hpp"
 
 using namespace std;
-// TODO Rewrite Record structures for Matrix and Vector
 // TODO It need to be more comfortable
 
 void Solve(vector<double> data)
@@ -139,19 +138,15 @@ void Solve(vector<double> data)
 
 	CalcDisplacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
 	Eps = S * y;
-	for (int i = 0; i < y.GetSize() / dimTask; i++)
+	/*for (int i = 0; i < y.GetSize() / dimTask; i++)
 	{
 		printf("%8.3g\t%8.3g\n",y[i * dimTask],y[i * dimTask + 1]);
-	}
-	//D.Show();
-	//Eps.Show();
+	}*/
+
 	Sigma = D * Eps;
 	MatrixSchwarz SigmaT;
 	Sigma.Transpose(SigmaT);
-	SigmaT.Show();
 	Sigma.SetName("Sigma");
 
 	Sigma.Record(Route, rk);
-	cout<<endl;
-
 }

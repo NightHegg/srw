@@ -1,6 +1,6 @@
 clc
 clear all
-yResult=importdata("results/2D/Non_Schwarz/y_011.dat");
+yResult=importdata("results/2D/Non_Schwarz/y_019.dat");
 [ySize,val]=size(yResult);
 for i=1:ySize/2
 yResult_mod(i,1)=yResult((i-1)*2+1);

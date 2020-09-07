@@ -117,11 +117,10 @@ void ConjugateGradientMethod(MatrixSchwarz &A, VectorSchwarz &b, VectorSchwarz &
 		tmp = A * p;
 
 		r = r - alpha * tmp;
-		//r.Show();
+
 		beta = y.ScalarProduct(r, r) / y.ScalarProduct(rPrevious, rPrevious);
 		p = r + beta * p;
 
-		//system("PAUSE");
 		iter++;
 	} while (iter < 5);
 }
