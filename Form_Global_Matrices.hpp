@@ -85,7 +85,7 @@ void CalcDisplacements(int 				dimTask,
 	{
 		y.Fill(-1e-6);
 		*Route += "Schwarz/SC_" + sStopCriteria + "/";
-		mesh.Decomposition(amntSubdomains, &coefOverlap);
+		mesh.Decomposition(amntSubdomains, elements, &coefOverlap);
 		y.Equal_SchwarzNodes(mesh);
 		yPrevious.Equal_SchwarzNodes(mesh);
 		do

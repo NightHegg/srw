@@ -62,10 +62,11 @@ void Solve(vector<double> data)
 		ifstream scan("files/" + to_string(dimTask) + "D/mesh" + ".dat");
 		while (!scan.eof())
 		{
-			scan >> tmp;
-			tmpBuf.push_back(tmp);
-			scan >> tmp;
-			tmpBuf.push_back(tmp);
+			for (int i=0; i< dimTask; i++)
+			{
+				scan >> tmp;
+				tmpBuf.push_back(tmp);
+			}
 			amntNodes++;
 		}
 		scan.close();

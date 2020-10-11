@@ -159,15 +159,15 @@ void Form_Glob_Vec_Right(VectorSchwarz &F, VectorSchwarz &Fe, int numElem)
 {
 }
 
-void Ensembling(int dimTask,
-				MatrixSchwarz &K,
-				VectorSchwarz &F,
-				MatrixSchwarz &D,
-				strainMatrix &S,
-				VectorSchwarz &mesh,
-				VectorSchwarz &elements,
-				int amntNodes,
-				int amntElements)
+void Ensembling(int 			 dimTask,
+				MatrixSchwarz	 &K,
+				VectorSchwarz	 &F,
+				MatrixSchwarz	 &D,
+				strainMatrix	 &S,
+				VectorSchwarz	 &mesh,
+				VectorSchwarz	 &elements,
+				int 			 amntNodes,
+				int 			 amntElements)
 {
 	int amntBE;
 	switch (dimTask)
@@ -183,6 +183,7 @@ void Ensembling(int dimTask,
 	MatrixSchwarz Ke(dimTask * amntBE, dimTask * amntBE);
 	VectorSchwarz Fe(dimTask * amntBE);
 	vector<int> localElements;
+	
 	for (int i = 0; i < amntElements; i++)
 	{
 		if (dimTask == 2)
