@@ -22,7 +22,7 @@ public:
 
 	void Construct(int i);
 
-	void Decomposition(int Amount_Subdomains, VectorSchwarz &elements, double *Coef_Overflow);
+	void Decomposition(int Amount_Subdomains, double *Coef_Overflow);
 	VectorSchwarz CreateAllocatedArray(int SchwarzStep);
 	void ReturnAllocatedArrayResults(VectorSchwarz &yChosen, int SchwarzStep);
 	void Equal_SchwarzNodes(VectorSchwarz &v);
@@ -64,66 +64,21 @@ void VectorSchwarz::Construct(int i)
 	UsingMethodSchwarz = false;
 }
 
-void VectorSchwarz::Decomposition(int Amount_Subdomains, VectorSchwarz &elements, double *Coef_Overflow)
+void VectorSchwarz::Decomposition(int Amount_Subdomains, double *Coef_Overflow)
 {
-	int UserChoice{0};
 	int Center_Subdomain{0};
-	double LeftSide_Subdomain{0};
-	double RightSide_Subdomain{0};
+	double LeftSide_Subdomain{0}, RightSide_Subdomain{0};
 
-	std::vector<double> CoefSuitable;
-	std::vector<double> CoefVariants;
-
-	for (int i = 1; i < 49; i++)
-	{
-		CoefVariants.push_back(0.01 * i);
-	}
 	double Length_Subdomain {V[iV / Amount_Subdomains] - V[0]};
-	for (auto it : CoefVariants)
-	{
-		for (int i = 1; i < iV / Amount_Subdomains; i++)
-		{
-			if (fabs(V[i] - V[0] - it * Length_Subdomain) < 1e-15)
-			{
-				CoefSuitable.push_back(it);
-			}
-		}
-	}
-	if (CoefSuitable.size() > 1)
-	{
-		printf("There are few coefs for choice:\n");
-		for (size_t i=0; i!=CoefSuitable.size(); i++)
-		{
-			printf("%d %.2f\n", i, CoefSuitable[i]);
-		}
-		printf("Choose one of coefs:\n");
-		scanf_s("%d", &UserChoice);
-		printf("\n");
-		*Coef_Overflow = CoefSuitable.at(UserChoice);
-	}
-	else if (CoefSuitable.size() == 1)
-	{
-		printf("There is only one coef for choice: %.2f\n", CoefSuitable.front());
-		*Coef_Overflow = CoefSuitable.front();
-	}
-	else
-	{
-		printf("Coefs from 0.1 to 0.4 are inavailable!\n");
-		system("PAUSE");
-	}
+
 	SchwarzNodes.push_back(0);
 	for (int i = 1; i < Amount_Subdomains; i++)
 	{
 		Center_Subdomain = iV * i / Amount_Subdomains;
 		LeftSide_Subdomain = V[Center_Subdomain] - *Coef_Overflow * Length_Subdomain;
 		RightSide_Subdomain = V[Center_Subdomain] + *Coef_Overflow * Length_Subdomain;
-		for (int j = 0; j < iV; j++)
-		{
-			if (fabs(V[j] - LeftSide_Subdomain) < 1e-15 || fabs(V[j] - RightSide_Subdomain) < 1e-15)
-			{
-				SchwarzNodes.push_back(j);
-			}
-		}
+		SchwarzNodes.push_back(LeftSide_Subdomain);
+		SchwarzNodes.push_back(RightSide_Subdomain);
 	}
 	SchwarzNodes.push_back(iV - 1);
 }

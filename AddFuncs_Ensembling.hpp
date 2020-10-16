@@ -129,10 +129,8 @@ void Form_Elem_Mat_Stiffness(int dimTask,
 		c.push_back(localNodes[4] - localNodes[2]);
 		c.push_back(localNodes[0] - localNodes[4]);
 		c.push_back(localNodes[2] - localNodes[0]);
-
 		A = (1 / 2.0) * (localNodes[2] * localNodes[5] - localNodes[4] * localNodes[3] + localNodes[0] * localNodes[3] -
 						 localNodes[0] * localNodes[5] + localNodes[4] * localNodes[1] - localNodes[2] * localNodes[1]);
-
 		for (int j = 0; j < 3; j++)
 		{
 			B.SetElement(0, 2 * j, b[j] / (2 * A));

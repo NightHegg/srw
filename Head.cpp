@@ -8,7 +8,7 @@ int main()
 {
 	int count{1}; //dimTask, amntNodes(1), amntSubdomains (Schwarz attribute), stopCriteria
 	vector<vector<double>> solSet = {
-		{1, 50, 2, 1e-5}};
+		{2, 1}};
 	printf("# Planned: %d calculations\n", solSet.size());
 	printf("//\n//\n//\n");
 	for (auto i : solSet)

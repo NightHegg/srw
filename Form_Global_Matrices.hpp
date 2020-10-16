@@ -72,20 +72,18 @@ void CalcDisplacements(int 				dimTask,
 		F.Construct(amntNodes * dimTask);
 
 		Ensembling(dimTask, K, F, D, S, mesh, elements, amntNodes, amntElements);
-
-		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, elements, amntElements, amntNodes, K, F);
 		//K.SetName("K");
-		//F.SetName("F");
 		//K.Record("",1);
+		Form_Boundary_Conditions(dimTask, arrBound, y, mesh, elements, amntElements, amntNodes, K, F);
+		//F.SetName("F");
 		//F.Record("",1);
-
 		SolveLinearSystem(dimTask, K, F, y);
 	}
 	else
 	{
 		y.Fill(-1e-6);
 		*Route += "Schwarz/SC_" + sStopCriteria + "/";
-		mesh.Decomposition(amntSubdomains, elements, &coefOverlap);
+		mesh.Decomposition(amntSubdomains, &coefOverlap);
 		y.Equal_SchwarzNodes(mesh);
 		yPrevious.Equal_SchwarzNodes(mesh);
 		do

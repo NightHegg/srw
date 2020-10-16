@@ -136,15 +136,15 @@ void Solve(vector<double> data)
 
 	MatrixSchwarz D(dimSigma, dimEps);
 	D.Elastic_Modulus_Tensor(dimTask);
-
 	CalcDisplacements(dimTask, &Route, y, mesh, elements, S, D, uk, amntSubdomains, stopCriteria, amntNodes, amntElements);
 	Eps = S * y;
-	/*for (int i = 0; i < y.GetSize() / dimTask; i++)
+	for (int i = 0; i < y.GetSize() / dimTask; i++)
 	{
 		printf("%8.3g\t%8.3g\n",y[i * dimTask],y[i * dimTask + 1]);
-	}*/
+	}
 
 	Sigma = D * Eps;
+	D.Show();
 	MatrixSchwarz SigmaT;
 	Sigma.Transpose(SigmaT);
 	Sigma.SetName("Sigma");
