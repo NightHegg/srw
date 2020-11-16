@@ -1,0 +1,266 @@
+import numpy as np
+from itertools import combinations
+from itertools import groupby
+import matplotlib.pyplot as plt
+import sys
+import os
+
+def PlotDisplacements(areaPoints_Coords, areaElements, coef_u):
+    def temp(u):
+        plt.triplot(areaPoints_Coords[:,0], areaPoints_Coords[:,1], areaElements.copy())
+        plt.triplot(u[:, 0] * coef_u + areaPoints_Coords[:, 0], u[:,1] * coef_u + areaPoints_Coords[:, 1], areaElements.copy())
+        plt.plot(areaPoints_Coords[:,0] + u[:, 0] * coef_u, areaPoints_Coords[:,1] + u[:, 1] * coef_u, 'o')
+        plt.show()
+    return temp
+
+def PlotDisplacementsSchwarz(areaPoints_Coords, areaElements, coef_u):
+    def temp(u):
+        plt.figure(figsize=(20, 9))
+        for idx, x in enumerate(u):
+            plt.subplot(1, len(u), idx + 1)
+            plt.triplot(areaPoints_Coords[:,0], areaPoints_Coords[:,1], areaElements.copy())
+            plt.triplot(x[:, 0] * coef_u + areaPoints_Coords[:, 0], x[:,1] * coef_u + areaPoints_Coords[:, 1], areaElements.copy())
+            plt.plot(areaPoints_Coords[:,0] + x[:, 0] * coef_u, areaPoints_Coords[:,1] + x[:, 1] * coef_u, 'o')
+        plt.show()
+    return temp
+
+def CalculateStiffnessMatrix(element, points, dimTask):
+    B = np.zeros((3, 6))
+    x_points = np.array([points[element[0], 0], points[element[1], 0], points[element[2], 0]])
+    y_points = np.array([points[element[0], 1], points[element[1], 1], points[element[2], 1]])
+    a = np.array([x_points[1] * y_points[2] - x_points[2] * y_points[1], 
+               x_points[2] * y_points[0] - x_points[0] * y_points[2],
+               x_points[0] * y_points[1] - x_points[1] * y_points[0]])
+    b = np.array([y_points[1]-y_points[2], y_points[2]-y_points[0], y_points[0]-y_points[1]])
+    c = np.array([x_points[2]-x_points[1], x_points[0]-x_points[2], x_points[1]-x_points[0]])
+    A = 0.5*np.linalg.det(np.array([[1, 1, 1], [x_points[0], x_points[1], x_points[2]], 
+                                  [y_points[0], y_points[1], y_points[2]]]).transpose())
+    for i in range(len(element)):
+        B[:, i*dimTask:i*dimTask + 2] += np.array([[b[i], 0], [0, c[i]], [c[i]/2, b[i]/2]])/2/A
+    return B, A
+
+def boundCondition_Neumann(F, element, neumannPoints_Local, dimTask, value, points, dim):
+    L = list(set(element) & set(neumannPoints_Local))
+    len = np.linalg.norm(np.array(points[L[0]]) - np.array(points[L[1]]))
+    for node in L:
+        F[node * dimTask + dim] += value * len / 2
+    return F
+
+def boundCondition_Dirichlet(K, F, dimTask, node, value, dim):
+    for i in range(len(F) // dimTask):
+        F[i * dimTask + dim] -= K[i * dimTask + dim][node * dimTask + dim] * value
+                
+    K[node * dimTask + dim][:] = 0
+    K[:][node * dimTask + dim] = 0
+    
+    K[node * dimTask + dim][node * dimTask + dim] = 1
+    F[node * dimTask + dim] = value
+    return K, F
+
+def readInputFile(nameFile):
+    bounds = []
+    dirichlet_conditions = []
+    neumann_conditions = []
+    areaPoints_Coords = []
+    areaElements = []
+    with open("tests/"+nameFile) as f:
+        dimTask = int(f.readline())
+        for _ in range(int(f.readline())):
+            bounds.append([float(x) for x in f.readline().split()])
+        splitCoef = float(f.readline())
+        coefOverlap = float(f.readline())
+        amntSubdomains = list(map(int, f.readline().split()))
+        E, nyu = list(map(float, f.readline().split()))
+        coef_u, coef_sigma = list(map(float, f.readline().split()))
+        for _ in range(int(f.readline())):
+            dirichlet_conditions.append([int(x) for x in f.readline().split()])
+        for _ in range(int(f.readline())):
+            neumann_conditions.append([int(val) if idx == 0 else float(val) for idx, val in enumerate(f.readline().split())])
+        for _ in range(int(f.readline())):
+            areaPoints_Coords.append([float(val) for val in f.readline().split()])
+        for _ in range(int(f.readline())):
+            areaElements.append([int(val) for val in f.readline().split()])
+    return bounds, areaPoints_Coords, areaElements, dirichlet_conditions, neumann_conditions, dimTask, bounds, splitCoef, coefOverlap, amntSubdomains, E, nyu, coef_u, coef_sigma
+
+def SchwarzProgram(nameFile):
+    bounds, areaPoints_Coords, areaElements, dirichlet_conditions, neumann_conditions, dimTask, bounds, splitCoef, coefOverlap, amntSubdomains, E, nyu, coef_u, coef_sigma = readInputFile(nameFile)
+    
+    bounds = np.array(bounds)
+    areaPoints_Coords = np.array(areaPoints_Coords)
+
+    areaPoints = [x for x in range(len(areaPoints_Coords))]
+    areaBoundaryPoints = [idx for idx, val in enumerate(areaPoints_Coords) if val[0] in [bounds[0, 0], bounds[1, 0]] or val[1] in [bounds[0, 1], bounds[2, 1]]]
+
+    dirichletPoints = [[[idx for idx, val in enumerate(areaPoints_Coords) 
+                     if min([bounds[cond[0], 0], bounds[cond[0] + 1, 0]]) <= val[0] <= max([bounds[cond[0], 0], bounds[cond[0] + 1, 0]])
+                     and min([bounds[cond[0], 1], bounds[cond[0] + 1, 1]]) <= val[1] <= max([bounds[cond[0], 1], bounds[cond[0] + 1, 1]])], cond[1]] for cond in dirichlet_conditions]
+
+    neumannPoints = [[[idx for idx, val in enumerate(areaPoints_Coords) 
+                     if min([bounds[cond[0], 0], bounds[cond[0] + 1, 0]]) <= val[0] <= max([bounds[cond[0], 0], bounds[cond[0] + 1, 0]])
+                     and min([bounds[cond[0], 1], bounds[cond[0] + 1, 1]]) <= val[1] <= max([bounds[cond[0], 1], bounds[cond[0] + 1, 1]])], cond[1], cond[2]] for cond in neumann_conditions]
+
+    dirichletPointsAll = sorted(list(set(sum([side[0] for side in dirichletPoints], []))))
+    neumannPointsAll = sorted(list(set(sum([side[0] for side in neumannPoints], []))))
+
+    relation_PointsElements = {}
+    boundPoints = []
+    subdElements = []
+    subdPoints = []
+    subdPoints_Coords = []
+    subdInternalPoints = []
+    subdBoundary = []
+
+    subdBounds = [bounds[0][0]] + [bounds[0][0] + i*(bounds[1][0] - bounds[0][0])/amntSubdomains[0] for i in range(1, amntSubdomains[0])] + [bounds[1][0]]
+    overlapBounds = [subdBounds[0]] + sum([[subdBounds[x] - (subdBounds[x] - subdBounds[x - 1]) * coefOverlap, subdBounds[x] + (subdBounds[x] - subdBounds[x - 1]) * coefOverlap]   
+               for x in range(1, len(subdBounds)-1)], []) + [subdBounds[-1]]
+
+    subdElements.append([element for element in areaElements 
+                         if overlapBounds[0] < sum([areaPoints_Coords[element[i], 0] for i in range(3)])/3 < overlapBounds[2]])
+    for i in range(1, len(overlapBounds) - 3, 2):
+        subdElements.append([element for element in areaElements
+                         if overlapBounds[i] < sum([areaPoints_Coords[element[i], 0] for i in range(3)])/3 < overlapBounds[i+3]])
+    subdElements.append([element for element in areaElements 
+                         if overlapBounds[-3] < sum([areaPoints_Coords[element[i], 0] for i in range(3)])/3 < overlapBounds[-1]])
+
+    for subd in subdElements:
+        subdPoints.append([el for el, _ in groupby(sorted(sum([i for i in subd], [])))])
+
+    for subd in subdPoints:
+        subdPoints_Coords.append(np.array([areaPoints_Coords[i].tolist() for i in subd]))
+
+    for idx, val in enumerate(areaPoints_Coords):
+        relation_PointsElements[idx] = [element for element in areaElements if idx in element]
+    
+    for idv, subd in enumerate(subdElements):
+        tempList = []
+        relation_PointsElements_subd = {}
+        for point in subdPoints[idv]:
+            relation_PointsElements_subd[point] = [element for element in subd if point in element]
+        for idx, val in relation_PointsElements_subd.items():
+            if val != relation_PointsElements[idx]:
+                tempList.append(idx)
+        for point in areaBoundaryPoints:
+            if point in subdPoints[idv]:
+                tempList.append(point)
+        subdBoundary.append(list(set(tempList)))
+
+    for idx, subd in enumerate(subdElements):   
+        subdInternalPoints.append(list(set(subdPoints[idx]) - set(subdBoundary[idx])))
+
+    backlog = []
+    it = 0
+    u_global = np.zeros((areaPoints_Coords.shape[0], 2))
+    D = np.array([[1, nyu/(1-nyu), 0], [nyu/(1-nyu), 1, 0], [0, 0, (1-2 * nyu) / 2 / (1-nyu)]]) * E * (1-nyu) / (1-2 * nyu) / (1+nyu)
+    while True:
+        u_Previous = np.copy(u_global)
+        for idv, subd in enumerate(subdElements):
+
+            ratioPoints_LocalGlobal = dict(zip(range(len(subdPoints[idv])), subdPoints[idv]))
+            ratioPoints_GlobalLocal = {v: k for k, v in ratioPoints_LocalGlobal.items()}
+        
+            K_global = np.zeros((len(ratioPoints_GlobalLocal) * 2, len(ratioPoints_GlobalLocal) * 2))
+            F = np.zeros((len(ratioPoints_GlobalLocal) * 2, 1))
+            subdElements_Local = np.array([ratioPoints_GlobalLocal[x] for x in np.array(subd).ravel()]).reshape(len(subd), 3)
+
+            for element in subdElements_Local:
+                B, A = CalculateStiffnessMatrix(element, subdPoints_Coords[idv], dimTask)
+                K = np.dot(np.dot(B.transpose(), D), B) * A
+                for i in range(3):
+                    for j in range(3):
+                        K_global[element[i]*dimTask:element[i]*dimTask+2, element[j]*dimTask:element[j]*dimTask+2] += K[i*dimTask:i*dimTask+2,j*dimTask:j*dimTask+2]
+
+            for condition in dirichletPoints:
+                listPoints = list(set(condition[0]) & set(subdPoints[idv]))
+                for node in listPoints:
+                    K_global, F = boundCondition_Dirichlet(K_global, F, dimTask, ratioPoints_GlobalLocal[node], 0, condition[1])
+        
+            for condition in neumannPoints:
+                listPoints = list(set(condition[0]) & set(subdPoints[idv]))
+                segmentPoints = list(combinations(listPoints, 2))
+                for element in [element for element in subd for x in segmentPoints if x[0] in element and x[1] in element]:                
+                    F = boundCondition_Neumann(F, [ratioPoints_GlobalLocal[x] for x in element], [ratioPoints_GlobalLocal[x] for x in listPoints], dimTask, condition[1], subdPoints_Coords[idv], 0)
+                    F = boundCondition_Neumann(F, [ratioPoints_GlobalLocal[x] for x in element], [ratioPoints_GlobalLocal[x] for x in listPoints], dimTask, condition[2], subdPoints_Coords[idv], 1)
+        
+            listPoints_Schwarz = sum([list(set(subdBoundary[idv]) & set(subd)) for idx, subd in enumerate(subdInternalPoints) if idx != idv], [])
+
+            for node in listPoints_Schwarz:
+                K_global, F = boundCondition_Dirichlet(K_global, F, dimTask, ratioPoints_GlobalLocal[node], u_global[node, 0], dim = 0)
+                K_global, F = boundCondition_Dirichlet(K_global, F, dimTask, ratioPoints_GlobalLocal[node], u_global[node, 1], dim = 1)
+            
+            u_local = np.linalg.solve(K_global, F).reshape((subdPoints_Coords[idv].shape[0], 2))     
+            for x in list(ratioPoints_LocalGlobal.keys()):
+                u_global[ratioPoints_LocalGlobal[x], :] = np.copy(u_local[x, :])
+            if it == 0:
+                backlog.append(np.copy(u_global))
+        it += 1
+        if it == 5:
+            break
+    Eps=[]
+    for element in areaElements:
+        B, A = CalculateStiffnessMatrix(element, areaPoints_Coords, dimTask)
+        Eps.append(np.dot(B, np.ravel(np.array([u_global[element[0]], u_global[element[1]], u_global[element[2]]])).transpose()))
+    Eps = np.array(Eps)
+    Sigma = np.dot(D, Eps.transpose())
+    sigma_message = (f"Sigma_xx (min: {min(Sigma.transpose()[:, 0]):g}, max: {max(Sigma.transpose()[:, 0]):g})\n"
+                     f"Sigma_xx (min: {min(Sigma.transpose()[:, 1]):g}, max: {max(Sigma.transpose()[:, 1]):g})\n"
+                     f"Sigma_xx (min: {min(Sigma.transpose()[:, 2]):g}, max: {max(Sigma.transpose()[:, 2]):g})\n")
+    
+    return u_global, Eps, Sigma, sigma_message, PlotDisplacements(areaPoints_Coords, areaElements, coef_u), PlotDisplacementsSchwarz(areaPoints_Coords, areaElements, coef_u), backlog
+
+def mainProgram(nameFile):
+    bounds, areaPoints_Coords, areaElements, dirichlet_conditions, neumann_conditions, dimTask, bounds, splitCoef, coefOverlap, amntSubdomains, E, nyu, coef_u, coef_sigma = readInputFile(nameFile)
+    
+    bounds = np.array(bounds)
+    areaPoints_Coords = np.array(areaPoints_Coords)
+
+    areaPoints = [x for x in range(len(areaPoints_Coords))]
+    areaBoundaryPoints = [idx for idx, val in enumerate(areaPoints_Coords) if val[0] in [bounds[0, 0], bounds[1, 0]] or val[1] in [bounds[0, 1], bounds[2, 1]]]
+
+    dirichletPoints = [[[idx for idx, val in enumerate(areaPoints_Coords) 
+                     if min([bounds[cond[0], 0], bounds[cond[0] + 1, 0]]) <= val[0] <= max([bounds[cond[0], 0], bounds[cond[0] + 1, 0]])
+                     and min([bounds[cond[0], 1], bounds[cond[0] + 1, 1]]) <= val[1] <= max([bounds[cond[0], 1], bounds[cond[0] + 1, 1]])], cond[1]] for cond in dirichlet_conditions]
+
+    neumannPoints = [[[idx for idx, val in enumerate(areaPoints_Coords) 
+                     if min([bounds[cond[0], 0], bounds[cond[0] + 1, 0]]) <= val[0] <= max([bounds[cond[0], 0], bounds[cond[0] + 1, 0]])
+                     and min([bounds[cond[0], 1], bounds[cond[0] + 1, 1]]) <= val[1] <= max([bounds[cond[0], 1], bounds[cond[0] + 1, 1]])], cond[1], cond[2]] for cond in neumann_conditions]
+
+    dirichletPointsAll = sorted(list(set(sum([side[0] for side in dirichletPoints], []))))
+    neumannPointsAll = sorted(list(set(sum([side[0] for side in neumannPoints], []))))
+
+    K_global = np.zeros((len(areaPoints_Coords) * 2, len(areaPoints_Coords) * 2))
+    F = np.zeros((len(areaPoints_Coords) * 2, 1))
+    D = np.array([[1, nyu/(1-nyu), 0], [nyu/(1-nyu), 1, 0], [0, 0, (1-2 * nyu) / 2 / (1-nyu)]]) * E * (1-nyu) / (1-2 * nyu) / (1+nyu)
+    for element in areaElements:
+        B, A = CalculateStiffnessMatrix(element, areaPoints_Coords, dimTask)
+        K = np.dot(np.dot(B.transpose(), D), B) * A
+        for i in range(3):
+            for j in range(3):
+                K_global[element[i]*dimTask:element[i]*dimTask+2, element[j]*dimTask:element[j]*dimTask+2] += K[i*dimTask:i*dimTask+2,j*dimTask:j*dimTask+2]
+            
+    for condition in dirichletPoints:
+        for node in condition[0]:
+            K_global, F = boundCondition_Dirichlet(K_global, F, dimTask, node, 0, condition[1])
+        
+    for condition in neumannPoints:
+        for element in [element for element in areaElements for x in list(combinations(condition[0], 2)) if x[0] in element and x[1] in element]:
+            F = boundCondition_Neumann(F, element, condition[0], dimTask, condition[1], areaPoints_Coords, 0)
+            F = boundCondition_Neumann(F, element, condition[0], dimTask, condition[2], areaPoints_Coords, 1) 
+    u = np.linalg.solve(K_global, F).reshape((areaPoints_Coords.shape[0],2))
+    
+    Eps=[]
+    for element in areaElements:
+        B, A = CalculateStiffnessMatrix(element, areaPoints_Coords, dimTask)
+        Eps.append(np.dot(B, np.ravel(np.array([u[element[0]], u[element[1]], u[element[2]]])).transpose()))
+    Eps = np.array(Eps)
+    Sigma = np.dot(D, Eps.transpose())
+    sigma_message = (f"Sigma_xx (min: {min(Sigma.transpose()[:, 0]):g}, max: {max(Sigma.transpose()[:, 0]):g})\n"
+                     f"Sigma_xx (min: {min(Sigma.transpose()[:, 1]):g}, max: {max(Sigma.transpose()[:, 1]):g})\n"
+                     f"Sigma_xx (min: {min(Sigma.transpose()[:, 2]):g}, max: {max(Sigma.transpose()[:, 2]):g})\n")
+
+    return u, Eps, Sigma, sigma_message, PlotDisplacements(areaPoints_Coords, areaElements, coef_u)
+
+if __name__ == "__main__":
+    nameFile = "test_1.dat"
+    u, Eps, Sigma, sigma_message, graph, graph_backlog, backlog = SchwarzProgram(nameFile)
+    graph_backlog(backlog)
+    #u, Eps, Sigma, sigma_message, graph = mainProgram(nameFile)
