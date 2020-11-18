@@ -4,11 +4,21 @@ import numpy as np
 import os
 import sys
 
+'''
+dirichlet_conditions:
+1) сторона
+2) количество ограничений:
+0 - по x
+1 - по y
+2 - по обеим координатам
+3) ограничение (одно или два)
+'''
+
 nameFile = "test_1.dat"
 
-paramDivider = 10
+paramDivider = 25
 dimTask = 2
-amntSubdomains = [2, 1]
+amntSubdomains = [4, 1]
 coefOverlap = 0.3
 E = 70e+9
 nyu = 0.34
@@ -20,7 +30,7 @@ x_list, y_list = np.linspace(bounds[0, 0], bounds[1, 0], paramDivider), np.linsp
 points = np.array(list(product(x_list,y_list)))
 tri = Delaunay(points)
 
-dirichlet_conditions = [[0, 1], [1, 0], [3, 0]]
+dirichlet_conditions = [[0, 1, 0], [1, 0, 0], [3, 0, 0]]
 neumann_conditions = [[2, 0, -2e+7]]
 
 with open("tests/" + nameFile,"w") as f:
@@ -35,7 +45,10 @@ with open("tests/" + nameFile,"w") as f:
     f.write("{:g} {:g}\n".format(coef_u, coef_sigma))
     f.write("{:g}\n".format(len(dirichlet_conditions)))
     for cond in dirichlet_conditions:
-        f.write("{:g} {:g}\n".format(cond[0], cond[1]))
+        for val in cond:
+            f.write(f"{val:g} ")
+        f.write(f"\n")
+        #f.write("{:g} {:g} {:g}\n".format(cond[0], cond[1], cond[2]))
     f.write("{:g}\n".format(len(neumann_conditions)))
     for cond in neumann_conditions:
         f.write("{:g} {:g} {:g}\n".format(cond[0], cond[1], cond[2]))
