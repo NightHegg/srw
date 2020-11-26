@@ -70,7 +70,7 @@ def writeMainInfo(task, splitCoef, amntSubds):
 
 if __name__ == "__main__":
     listAmntSubds = [2, 4, 8]
-    listSplitCoefs = [20, 30, 40, 50]
+    listSplitCoefs = [20, 25, 30]
     typeTask = [1, 2]
     coefsConvergence = [1e-3, 1e-4, 1e-5]
 
