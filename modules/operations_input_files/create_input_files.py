@@ -1,8 +1,10 @@
-from itertools import product, chain
-from scipy.spatial import Delaunay
-import numpy as np
 import os
 import sys
+from itertools import chain, product
+
+import numpy as np
+from scipy.spatial import Delaunay
+
 
 def writeAddInfo(listAmntSubds, listSplitCoefs, coefsConvergence):
     with open("input_files/tests_info.dat", "w") as f:
@@ -76,8 +78,8 @@ if __name__ == "__main__":
     list_tasks = [1, 2]
     list_coefs_convergence = [1e-3, 1e-4, 1e-5]
 
-    for task in list_tasks:
-        write_task(task)
+    #for task in list_tasks:
+    #    write_task(task)
 
     #for cur_mesh in list_mesh:
     #    write_mesh(cur_mesh)
