@@ -1,16 +1,15 @@
 import os
 import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import time
-from itertools import combinations
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy
-from scipy.sparse import coo_matrix, lil_matrix, linalg
+from scipy.sparse import linalg
+from itertools import combinations
 
-from operations_input_files.read_input_files import read_mesh, read_task
-import basic_functions as base_func
-
+from modules.operations_input_files.read_input_files import read_mesh, read_task
+import modules.basic_functions as base_func
 
 class basic_method:
     def __init__(self, cur_task, cur_mesh, solve_function = linalg.spsolve):
@@ -18,14 +17,15 @@ class basic_method:
         self.area_bounds, self.area_points_coords, self.area_elements = read_mesh(cur_mesh)
 
         *arg, = read_task(cur_task)
-        self.dimTask       = arg[0]
-        E                    = arg[1]
-        nyu                  = arg[2]
-        dirichlet_conditions = arg[3]
-        neumann_conditions   = arg[4]
-        self.coef_u        = arg[5]
-        self.coef_sigma    = arg[6]
-        self.coef_overlap  = arg[7]
+
+        self.dimTask              = arg[0]
+        E                         = arg[1]
+        nyu                       = arg[2]
+        self.dirichlet_conditions = arg[3]
+        neumann_conditions        = arg[4]
+        self.coef_u               = arg[5]
+        self.coef_sigma           = arg[6]
+        self.coef_overlap         = arg[7]
 
         self.D = np.array([[1, nyu/(1 - nyu), 0],
                            [nyu/(1 - nyu), 1, 0], 
@@ -35,7 +35,7 @@ class basic_method:
 
         self.dirichlet_points = {tuple(idx for idx, val in enumerate(self.area_points_coords) 
                     if min(area_limits(cond, 0)) <= val[0] <= max(area_limits(cond, 0)) and
-                       min(area_limits(cond, 1)) <= val[1] <= max(area_limits(cond, 1))) : cond[1:] for cond in dirichlet_conditions}
+                       min(area_limits(cond, 1)) <= val[1] <= max(area_limits(cond, 1))) : cond[1:] for cond in self.dirichlet_conditions}
 
         self.neumann_points = {tuple(idx for idx, val in enumerate(self.area_points_coords) 
                     if min(area_limits(cond, 0)) <= val[0] <= max(area_limits(cond, 0)) and

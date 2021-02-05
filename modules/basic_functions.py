@@ -1,8 +1,12 @@
+import math
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+
+from itertools import groupby
 import numpy as np
 import scipy
-import math
-from scipy.sparse import coo_matrix, lil_matrix, linalg
-from itertools import groupby
+from scipy.sparse import coo_matrix, lil_matrix
 
 def calculate_crit_convergence(u_current, u_previous, area_points_coords, dimTask, relation_PointsElements, coef_u):
     first_sum, second_sum, relative_error = 0, 0, 0
@@ -18,8 +22,8 @@ def calculate_crit_convergence(u_current, u_previous, area_points_coords, dimTas
             first_sum += s * relative_error
             second_sum += s
 
-        
     return math.sqrt(first_sum / second_sum)
+
 
 def calculate_local_matrix_stiffness(element, points, dimTask):
     '''
@@ -56,7 +60,7 @@ def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, D, dimT
                                 col.append(element[j] * dimTask + z)
                                 data.append(K_element[i * dimTask + k, j * dimTask + z])
 
-    return lil_matrix(coo_matrix((data, (row, col)), shape = (area_points_coords.size, area_points_coords.size)))              
+    return coo_matrix((data, (row, col)), shape = (area_points_coords.size, area_points_coords.size)).tolil()        
 
 
 def bound_condition_neumann(F, list_neumann_points, dimTask, value, points, dim):  
@@ -87,6 +91,7 @@ def bound_condition_dirichlet(K, F, dimTask, node, value, dim):
     F[node * dimTask + dim] = value
 
     return K, F
+
 
 def calculate_subd_parameters(area_bounds, area_points_coords, area_elements, coef_overlap, cur_amnt_subds):
     temp_cond = lambda val, i: val[i] in [area_bounds[0, i], area_bounds[i + 1, i]]
@@ -172,4 +177,33 @@ def calculate_subd_parameters(area_bounds, area_points_coords, area_elements, co
     for idx, subd in enumerate(subd_elements):
         subd_internal_points.append(list(set(subd_points[idx]) - set(subd_boundary_points[idx])))
     
-    return subd_elements, subd_points, subd_points_coords
+    return subd_elements, subd_points, subd_points_coords, subd_boundary_overlap_points, relation_points_elements
+
+
+def calculate_element_area(p_1, p_2, p_3):
+    return abs((p_1[0] - p_3[0]) * (p_2[1] - p_3[1]) - (p_2[0] - p_3[0]) * (p_1[1] - p_3[1])) / 2
+
+
+def calculate_local_functions(element, points):
+    def temp(chosen_point, i):
+        '''
+        element - элемент, в котором идёт расчёт \n
+        points - массив координат \n
+        dimTask - размерность \n
+        '''
+        x_points = np.array([points[element[i], 0] for i in range(3)])
+        y_points = np.array([points[element[i], 1] for i in range(3)])
+
+        a = np.array([x_points[1] * y_points[2] - x_points[2] * y_points[1], 
+                      x_points[2] * y_points[0] - x_points[0] * y_points[2],
+                      x_points[0] * y_points[1] - x_points[1] * y_points[0]] )
+        b = np.array([y_points[1]-y_points[2], y_points[2]-y_points[0], y_points[0]-y_points[1]])
+        c = np.array([x_points[2]-x_points[1], x_points[0]-x_points[2], x_points[1]-x_points[0]])
+
+        A = 0.5 * np.linalg.det(np.vstack((np.ones_like(x_points), x_points, y_points)))
+        return (a[i] + b[i] * chosen_point[0] + c[i] * chosen_point[1]) / 2 / A
+    return temp
+
+
+if __name__ == "__main__":
+    pass
