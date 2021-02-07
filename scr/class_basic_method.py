@@ -8,11 +8,13 @@ import numpy as np
 from scipy.sparse import linalg
 from itertools import combinations
 
-from modules.operations_input_files.read_input_files import read_mesh, read_task
-import modules.basic_functions as base_func
+from scr.operations_input_files.read_input_files import read_mesh, read_task
+import scr.functions as base_func
 
 class basic_method:
+
     def __init__(self, cur_task, cur_mesh, solve_function = linalg.spsolve):
+        self.name_method = "basic method"
         self.solve_function = solve_function
         self.area_bounds, self.area_points_coords, self.area_elements = read_mesh(cur_mesh)
 
@@ -22,7 +24,7 @@ class basic_method:
         E                         = arg[1]
         nyu                       = arg[2]
         self.dirichlet_conditions = arg[3]
-        neumann_conditions        = arg[4]
+        self.neumann_conditions        = arg[4]
         self.coef_u               = arg[5]
         self.coef_sigma           = arg[6]
         self.coef_overlap         = arg[7]
@@ -39,7 +41,7 @@ class basic_method:
 
         self.neumann_points = {tuple(idx for idx, val in enumerate(self.area_points_coords) 
                     if min(area_limits(cond, 0)) <= val[0] <= max(area_limits(cond, 0)) and
-                       min(area_limits(cond, 1)) <= val[1] <= max(area_limits(cond, 1))) : cond[1:] for cond in neumann_conditions}
+                       min(area_limits(cond, 1)) <= val[1] <= max(area_limits(cond, 1))) : cond[1:] for cond in self.neumann_conditions}
 
 
     def calculate_u(self):
@@ -82,7 +84,7 @@ class basic_method:
     def get_solution(self):
         init_time = time.time()
         self.calculate_u()
-        self.__time_execution = time.time() - init_time
+        self.time_execution = time.time() - init_time
 
         self.calculate_eps()
         self.calculate_sigma()
@@ -108,7 +110,8 @@ class basic_method:
 
 
     def get_info(self):
-        message = (f"Time of execution: {self.__time_execution}\n"
+        message = (f"Method: {self.name_method}\n"
+                   f"Time of execution: {self.time_execution}\n"
                    f"Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7):.8e}\n"
                    f"Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7):.8e}")
         return message
