@@ -11,7 +11,7 @@ from scr.class_schwarz_multiplicative import schwarz_multiplicative
 
 
 class schwarz_additive(schwarz_multiplicative):
-    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], coef_convergence = 1e-4, solve_function = linalg.spsolve, coef_alpha = 0.5):
+    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], coef_convergence = 1e-3, coef_alpha = 0.5, solve_function = linalg.spsolve):
         super().__init__(cur_task, cur_mesh, cur_amnt_subds, coef_convergence, solve_function)
         
         self.name_method = "schwarz additive method"

@@ -16,8 +16,8 @@ from scr.class_schwarz_additive import schwarz_additive
 
 class schwarz_two_level_additive(schwarz_additive):
     # TODO: Можно ли area_limits тоже сделать атрибутом класса?
-    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], cur_coarse_mesh = 5, coef_convergence = 1e-3, solve_function = linalg.spsolve, coef_alpha = 0.5):
-        super().__init__(cur_task, cur_mesh, cur_amnt_subds, coef_convergence, solve_function, coef_alpha)
+    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], coef_convergence = 1e-3, coef_alpha = 0.5, cur_coarse_mesh = 5, solve_function = linalg.spsolve):
+        super().__init__(cur_task, cur_mesh, cur_amnt_subds, coef_convergence, coef_alpha, solve_function)
 
         self.name_method = "schwarz additive two level method"
 

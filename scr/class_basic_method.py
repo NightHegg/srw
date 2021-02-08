@@ -15,6 +15,7 @@ class basic_method:
 
     def __init__(self, cur_task, cur_mesh, solve_function = linalg.spsolve):
         self.name_method = "basic method"
+
         self.solve_function = solve_function
         self.area_bounds, self.area_points_coords, self.area_elements = read_mesh(cur_mesh)
 
@@ -45,8 +46,8 @@ class basic_method:
 
 
     def calculate_u(self):
-        F = np.zeros(self.area_points_coords.size)
         K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dimTask)
+        F = np.zeros(self.area_points_coords.size)
         
         for list_points, condition in self.dirichlet_points.items():
             for point in list_points:
@@ -112,9 +113,14 @@ class basic_method:
     def get_info(self):
         message = (f"Method: {self.name_method}\n"
                    f"Time of execution: {self.time_execution}\n"
-                   f"Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7):.8e}\n"
-                   f"Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7):.8e}")
+                   f"Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7):.2e}\n"
+                   f"Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7):.2e}")
         return message
+
+
+    def get_special_sigma(self):
+        return f"min = {abs(abs(min(self.Sigma[1])) - 2e+7):.2e}, max = {abs(abs(max(self.Sigma[1])) - 2e+7):.2e}"
+
 
 if __name__ == "__main__":
     pass
