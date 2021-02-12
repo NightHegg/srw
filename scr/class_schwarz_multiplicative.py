@@ -67,27 +67,6 @@ class schwarz_multiplicative(basic_method):
 
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
-
-        K_glob = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dimTask)
-        F_glob = np.zeros(self.area_points_coords.size)
-        
-        for list_points, condition in self.dirichlet_points.items():
-            for point in list_points:
-                if condition[0] == 2:
-                    K_glob, F_glob = base_func.bound_condition_dirichlet(K_glob, F_glob, self.dimTask, point, condition[1], 0)
-                    K_glob, F_glob = base_func.bound_condition_dirichlet(K_glob, F_glob, self.dimTask, point, condition[2], 1)
-                else:
-                    K_glob, F_glob = base_func.bound_condition_dirichlet(K_glob, F_glob, self.dimTask, point, condition[1], condition[0])
-    
-        for list_points, stress in self.neumann_points.items():
-            list_elements = [element for element in self.area_elements for x in combinations(list_points, 2) if all([i in element for i in x])]
-            for element in list_elements:
-                list_neumann_points = list(set(element) & set(list_points))
-                for dim in range(self.dimTask):
-                    F_glob = base_func.bound_condition_neumann(F_glob, list_neumann_points, self.dimTask, stress[dim], self.area_points_coords, dim)
-
-        residual_0 = np.linalg.norm(F_glob - np.dot(K_glob.toarray(), np.ravel(self.u)))
-
         while True:
             self.internal_init()
             for idv, subd in enumerate(self.subd_elements):
@@ -131,12 +110,8 @@ class schwarz_multiplicative(basic_method):
             
             self.interal_calculate_u()
 
-            residual = np.linalg.norm(F_glob - np.dot(K_glob.toarray(), np.ravel(self.u)))
-
-            #crit_convergence = base_func.calculate_crit_convergence(self.u, self.u_previous, self.area_points_coords, self.dimTask, self.relation_points_elements, self.coef_u)
-            crit_convergence = residual / residual_0
-            #print(f"{crit_convergence}", end = "\r")
-
+            crit_convergence = base_func.calculate_crit_convergence(self.u, self.u_previous, self.area_points_coords, self.dimTask, self.relation_points_elements, self.coef_u)
+            print(f"{crit_convergence:.3e}", end = "\r")
             if crit_convergence < self.coef_convergence:
                 break
 

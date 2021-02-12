@@ -10,17 +10,23 @@ from scipy.sparse import coo_matrix, lil_matrix
 
 def calculate_crit_convergence(u_current, u_previous, area_points_coords, dimTask, relation_PointsElements, coef_u):
     first_sum, second_sum, relative_error = 0, 0, 0
-    for idx, val in enumerate(u_current):
-        if val[1] and abs(val[0]) > abs(val[1]**2):
-            relative_error == np.linalg.norm(np.copy(val) - np.copy(u_previous[idx]))**2 / np.linalg.norm(np.copy(val))**2
+    for idx, value in enumerate(u_current):
+        if value[1] and abs(value[0]) > abs(value[1]**2):
+            relative_error = np.linalg.norm(value - u_previous[idx])**2 / np.linalg.norm(value)**2
             s = sum([calculate_local_matrix_stiffness(i, area_points_coords + u_current, dimTask)[1] for i in relation_PointsElements[idx]]) / 3
             first_sum += s * relative_error
             second_sum += s
-        if val[1]:
-            relative_error = np.linalg.norm(np.copy(val[1]) - np.copy(u_previous[idx, 1]))**2 / np.linalg.norm(np.copy(val[1]))**2
+        if value[1]:
+            relative_error = np.linalg.norm(np.copy(value[1]) - np.copy(u_previous[idx, 1]))**2 / np.linalg.norm(np.copy(value[1]))**2
             s = sum([calculate_local_matrix_stiffness(i, area_points_coords + u_current * coef_u, dimTask)[1] for i in relation_PointsElements[idx]]) / 3
             first_sum += s * relative_error
             second_sum += s
+    # for idx, value in enumerate(u_current):
+    #     if any(abs(value) > 1e-9):
+    #         relative_error = np.linalg.norm(value - u_previous[idx])**2 / np.linalg.norm(value)**2
+    #         s = sum([calculate_local_matrix_stiffness(i, area_points_coords + u_current, dimTask)[1] for i in relation_PointsElements[idx]]) / 3
+    #         first_sum += s * relative_error
+    #         second_sum += s
 
     return math.sqrt(first_sum / second_sum)
 

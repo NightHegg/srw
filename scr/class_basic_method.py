@@ -91,23 +91,27 @@ class basic_method:
         self.calculate_sigma()
 
 
-    def plot_displacements(self, plot_global_mesh = True):
+    def internal_plot_displacements(self, vector_u, area_points_coords, area_elements, plot_global_mesh = True):
         fig, ax = plt.subplots()
 
-        new_points = lambda dimension: self.u[:, dimension] * self.coef_u + self.area_points_coords[:, dimension]
+        new_points = lambda dimension: vector_u[:, dimension] * self.coef_u + area_points_coords[:, dimension]
 
-        ax.triplot(new_points(0), new_points(1), self.area_elements.copy())
+        ax.triplot(new_points(0), new_points(1), area_elements.copy())
         ax.plot(new_points(0), new_points(1), 'o')
         ax.plot(self.area_bounds[:, 0], self.area_bounds[:, 1], color = "brown")
 
         if plot_global_mesh:
-            ax.triplot(self.area_points_coords[:,0], self.area_points_coords[:,1], self.area_elements.copy())
+            ax.triplot(area_points_coords[:,0], area_points_coords[:,1], area_elements.copy())
 
         fig.set_figwidth(10)
         fig.set_figheight(7)
         fig.set_facecolor('mintcream')
 
         plt.show()
+
+
+    def plot_displacements(self, plot_global_mesh = True):
+        self.internal_plot_displacements(self.u, self.area_points_coords, self.area_elements, plot_global_mesh)
 
 
     def get_info(self):
@@ -119,7 +123,7 @@ class basic_method:
 
 
     def get_special_sigma(self):
-        return f"min = {abs(abs(min(self.Sigma[1])) - 2e+7):.2e}, max = {abs(abs(max(self.Sigma[1])) - 2e+7):.2e}"
+        return f"min = {abs(abs(min(self.Sigma[1])) - 2e+7) / 2e+7:.2e}, max = {abs(abs(max(self.Sigma[1])) - 2e+7) / 2e+7:.2e}"
 
 
 if __name__ == "__main__":
