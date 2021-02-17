@@ -113,6 +113,18 @@ class basic_method:
     def plot_displacements(self, plot_global_mesh = True):
         self.internal_plot_displacements(self.u, self.area_points_coords, self.area_elements, plot_global_mesh)
 
+    def plot_init_mesh(self):
+        fig, ax = plt.subplots()
+
+        ax.triplot(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements.copy())
+        ax.plot(self.area_bounds[:, 0], self.area_bounds[:, 1], color = "brown")
+
+        fig.set_figwidth(10)
+        fig.set_figheight(7)
+        fig.set_facecolor('mintcream')
+
+        plt.show()
+
 
     def get_info(self):
         message = (f"Method: {self.name_method}\n"

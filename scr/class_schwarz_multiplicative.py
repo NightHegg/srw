@@ -7,6 +7,7 @@ from itertools import combinations
 import numpy as np
 from scipy.sparse import linalg
 import matplotlib.pyplot as plt
+from numba import jit
 
 import scr.functions as base_func
 from scr.class_basic_method import basic_method
@@ -19,6 +20,8 @@ class schwarz_multiplicative(basic_method):
         self.name_method = "schwarz multiplicative method"
         self.cur_amnt_subds = cur_amnt_subds
         self.coef_convergence = coef_convergence
+
+        self.init_subd_params()
 
 
     def init_subd_params(self):
@@ -63,8 +66,6 @@ class schwarz_multiplicative(basic_method):
 
 
     def calculate_u(self):
-        self.init_subd_params()
-
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
         while True:

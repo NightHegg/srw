@@ -16,7 +16,7 @@ from scr.class_schwarz_additive import schwarz_additive
 
 class schwarz_two_level_additive(schwarz_additive):
     # TODO: Можно ли area_limits тоже сделать атрибутом класса?
-    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], coef_convergence = 1e-4, coef_alpha = 0.5, cur_coarse_mesh = 8, solve_function = linalg.spsolve):
+    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], coef_convergence = 1e-4, coef_alpha = 0.5, cur_coarse_mesh = 2e-3, solve_function = linalg.spsolve):
         super().__init__(cur_task, cur_mesh, cur_amnt_subds, coef_convergence, coef_alpha, solve_function)
 
         self.name_method = "schwarz additive two level method"
@@ -115,7 +115,6 @@ class schwarz_two_level_additive(schwarz_additive):
         fig, ax = plt.subplots()
 
         ax.triplot(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements.copy())
-        #ax.plot(self.area_points_coords[:, 0], self.area_points_coords[:, 1], 'o')
 
         ax.triplot(self.area_points_coords_coarse[:, 0], self.area_points_coords_coarse[:, 1], self.area_elements_coarse.copy())
         ax.plot(self.area_points_coords_coarse[:, 0], self.area_points_coords_coarse[:, 1], 'o', markersize = 10)

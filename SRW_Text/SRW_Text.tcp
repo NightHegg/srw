@@ -3,10 +3,10 @@ Type=TeXnicCenterProjectInformation
 Version=4
 
 [ProjectInfo]
-MainFile=SRW.tex
+MainFile=SRW_Text.tex
 UseBibTeX=0
 UseMakeIndex=0
 ActiveProfile=LaTeX ⇨ PDF
-ProjectLanguage=en
-ProjectDialect=US
+ProjectLanguage=ru
+ProjectDialect=RU
 
