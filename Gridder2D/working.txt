@@ -1,0 +1,6 @@
+D:\users\rodin\2008\Gridder2D\Gridder2D\examples\KONTUR_XY.DAT
+data/nodes.dat
+data/elems.dat
+data/border.dat
+0.08
+100

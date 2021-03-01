@@ -8,7 +8,6 @@ from scr.class_schwarz_two_level_additive import schwarz_two_level_additive
 
 if __name__ == "__main__":
     obj = schwarz_multiplicative(cur_task = 1, cur_mesh = 5e-04, cur_amnt_subds = [2, 1])
-    #obj.plot_init_mesh()
     obj.get_solution()
     print(obj.get_info())
     obj.plot_displacements()

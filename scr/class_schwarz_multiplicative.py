@@ -7,7 +7,6 @@ from itertools import combinations
 import numpy as np
 from scipy.sparse import linalg
 import matplotlib.pyplot as plt
-from numba import jit
 
 import scr.functions as base_func
 from scr.class_basic_method import basic_method

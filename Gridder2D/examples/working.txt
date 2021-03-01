@@ -1,0 +1,6 @@
+D:\users\rodin\2008\Gridder2D\Gridder2D\examples\volume2.txt
+data\nodes.dat
+data\elems.dat
+data\border.dat
+0.1
+100
