@@ -1,6 +1,7 @@
 import os
 import sys
 
+import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -82,5 +83,9 @@ def task_iters_sigma():
     df_sigma.to_csv(f'results/{data["area"]}/{data["task"]}/sigma/two_level.csv')
 
 
+def parallel():
+    print(mp.cpu_count())
+
+
 if __name__ == "__main__":
-    task_iters_sigma()
+    parallel()
