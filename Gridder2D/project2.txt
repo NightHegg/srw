@@ -1,6 +1,0 @@
-examples/volume7.txt
-data/nodes.dat
-data/elems.dat
-data/border.dat
-0.2
-100

@@ -13,18 +13,19 @@ from scr.class_basic_method import basic_method
 
 
 class schwarz_multiplicative(basic_method):
-    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], coef_convergence = 1e-3, solve_function = linalg.spsolve):
-        super().__init__(cur_task, cur_mesh, solve_function)
+    def __init__(self, data):
+        super().__init__(data)
 
         self.name_method = "schwarz multiplicative method"
-        self.cur_amnt_subds = cur_amnt_subds
-        self.coef_convergence = coef_convergence
+        self.cur_amnt_subds = data['amnt_subds']
+        self.coef_convergence = data['coef_convergence']
+        self.coef_overlap = data['coef_overlap']
 
         self.init_subd_params()
 
 
     def init_subd_params(self):
-        *arg, = base_func.calculate_subd_parameters(self.area_bounds, self.area_points_coords, self.area_elements, self.coef_overlap, self.cur_amnt_subds)
+        *arg, = base_func.calculate_subd_parameters(self.contour_points, self.area_points_coords, self.area_elements, self.coef_overlap, self.cur_amnt_subds)
 
         self.subd_elements                = arg[0]
         self.subd_points                  = arg[1]
@@ -38,15 +39,14 @@ class schwarz_multiplicative(basic_method):
             ratioPoints_GlobalLocal = {v: k for k, v in ratioPoints_LocalGlobal.items()}
 
             subd_elements_local = np.array([ratioPoints_GlobalLocal[x] for x in np.array(subd).ravel()]).reshape(len(subd), 3)
-            self.K_array.append(base_func.calculate_sparse_matrix_stiffness(subd_elements_local, self.subd_points_coords[idv], self.D, self.dimTask))
+            self.K_array.append(base_func.calculate_sparse_matrix_stiffness(subd_elements_local, self.subd_points_coords[idv], self.D, self.dim_task))
 
 
     def internal_condition_schwarz(self, K, F, idv, ratioPoints_GlobalLocal):
         listPoints_Schwarz = sum([list(set(self.subd_boundary_overlap_points[idv]) & set(subd)) for idx, subd in enumerate(self.subd_points) if idx != idv], [])
-
         for node in listPoints_Schwarz:
-            for dim in range(self.dimTask):
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dimTask, ratioPoints_GlobalLocal[node], self.u_current[node, dim], dim)
+            for dim in range(self.dim_task):
+                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, ratioPoints_GlobalLocal[node], self.u_current[node, dim], dim)
         
         return K, F
 
@@ -75,26 +75,24 @@ class schwarz_multiplicative(basic_method):
 
                 K = self.K_array[idv].copy()
                 F = np.zeros(self.subd_points_coords[idv].size)
-                
-                for list_points, condition in self.dirichlet_points.items():
-                    listPoints = list(set(list_points) & set(self.subd_points[idv]))
-                    for node in listPoints:
-                        if condition[0] == 2:
-                            K, F = base_func.bound_condition_dirichlet(K, F, self.dimTask, ratioPoints_GlobalLocal[node], condition[1], 0)
-                            K, F = base_func.bound_condition_dirichlet(K, F, self.dimTask, ratioPoints_GlobalLocal[node], condition[2], 1)
-                        else:
-                            K, F = base_func.bound_condition_dirichlet(K, F, self.dimTask, ratioPoints_GlobalLocal[node], condition[1], condition[0])
 
-                rpGL_Change = lambda L: [ratioPoints_GlobalLocal[x] for x in L]
+                list_dirichlet_points = list(set(self.dirichlet_points.keys()) & set(self.subd_points[idv]))
+                for point in list_dirichlet_points:
+                    if math.isnan(self.dirichlet_points[point][0]):
+                        K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, ratioPoints_GlobalLocal[point], self.dirichlet_points[point][1], 1)
+                    elif math.isnan(self.dirichlet_points[point][1]):
+                        K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, ratioPoints_GlobalLocal[point], self.dirichlet_points[point][0], 0)
+                    else:
+                        K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, ratioPoints_GlobalLocal[point], self.dirichlet_points[point][0], 0)
+                        K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, ratioPoints_GlobalLocal[point], self.dirichlet_points[point][1], 1)
 
-                for list_points, stress in self.neumann_points.items():
-                    listPoints = list(set(list_points) & set(self.subd_points[idv]))
-                    segmentPoints = list(combinations(listPoints, 2))
-                    list_elements = [element for element in subd for x in segmentPoints if x[0] in element and x[1] in element]
-                    for element in list_elements:
-                        list_neumann_points = list(set(rpGL_Change(element)) & set(rpGL_Change(listPoints))) 
-                        for dim in range(self.dimTask):
-                            F = base_func.bound_condition_neumann(F, list_neumann_points, self.dimTask, stress[dim], self.subd_points_coords[idv], dim)
+                list_local_neumann_points = list(set(self.neumann_points.keys()) & set(self.subd_points[idv]))
+                list_neumann_elements = [list(element) for element in subd for x in combinations(list_local_neumann_points, 2) if all([i in list(element) for i in x])]
+
+                for element in list_neumann_elements:
+                    list_neumann_points = list(set(element) & set(list_local_neumann_points))
+                    dict_neumann_points = {ratioPoints_GlobalLocal[point]: self.neumann_points[point] for point in list_neumann_points}
+                    F = base_func.bound_condition_neumann(F, dict_neumann_points, self.subd_points_coords[idv], self.dim_task)
 
                 K, F = self.internal_condition_schwarz(K, F, idv, ratioPoints_GlobalLocal)
 
@@ -110,8 +108,8 @@ class schwarz_multiplicative(basic_method):
             
             self.interal_calculate_u()
 
-            crit_convergence = base_func.calculate_crit_convergence(self.u, self.u_previous, self.area_points_coords, self.dimTask, self.relation_points_elements, self.coef_u)
-            print(f"{crit_convergence:.3e}", end = "\r")
+            crit_convergence = base_func.calculate_crit_convergence(self.u, self.u_previous, self.area_points_coords, self.dim_task, self.relation_points_elements, self.coef_u)
+            # print(f"{crit_convergence:.3e}", end = "\r")
             if crit_convergence < self.coef_convergence:
                 break
 
@@ -126,7 +124,7 @@ class schwarz_multiplicative(basic_method):
 
             listPoints_Schwarz = sum([list(set(self.subd_boundary_overlap_points[num]) & set(subd)) for idx, subd in enumerate(self.subd_points) if idx != num], [])
             ax_spec.plot(self.area_points_coords[listPoints_Schwarz, 0], self.area_points_coords[listPoints_Schwarz, 1], marker = "X", markersize = 15, linewidth = 0)
-            ax_spec.plot(self.area_bounds[:, 0], self.area_bounds[:, 1], color = "brown")
+            ax_spec.plot(self.contour_points[:, 0], self.contour_points[:, 1], color = "brown")
             ax_spec.triplot(self.area_points_coords[:,0], self.area_points_coords[:,1], subd.copy())
             ax_spec.set(title = f"Подобласть №{num}")
 

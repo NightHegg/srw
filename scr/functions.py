@@ -7,6 +7,8 @@ from itertools import groupby
 import numpy as np
 import scipy
 from scipy.sparse import coo_matrix, lil_matrix
+import math
+
 
 def calculate_crit_convergence(u_current, u_previous, area_points_coords, dimTask, relation_PointsElements, coef_u):
     first_sum, second_sum, relative_error = 0, 0, 0
@@ -69,10 +71,17 @@ def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, D, dimT
     return coo_matrix((data, (row, col)), shape = (area_points_coords.size, area_points_coords.size)).tolil()        
 
 
-def bound_condition_neumann(F, list_neumann_points, dimTask, value, points, dim):  
-    len = np.linalg.norm(np.array(points[list_neumann_points[0]]) - np.array(points[list_neumann_points[1]]))
-    for node in list_neumann_points:
-        F[node * dimTask + dim] += value * len / 2
+def bound_condition_neumann(F, dict_neumann_points, points_coords, dim_task):
+    points = list(dict_neumann_points.keys())
+    len = np.linalg.norm(np.array(points_coords[points[1]]) - np.array(points_coords[points[0]]))
+    for point, condition in dict_neumann_points.items():
+        if math.isnan(condition[0]):
+            F[point * dim_task + 1] += condition[1] * len / 2
+        elif math.isnan(condition[1]):
+            F[point * dim_task] += condition[0] * len / 2
+        else:
+            F[point * dim_task] += condition[0] * len / 2
+            F[point * dim_task + 1] += condition[1] * len / 2
     return F
 
 
@@ -85,6 +94,7 @@ def bound_condition_dirichlet(K, F, dimTask, node, value, dim):
     value - значение \n
     dim - по какой координате \n
     '''
+    
     if scipy.sparse.issparse(K):
         K_col = K.getcol(node * dimTask + dim).toarray()
     else:
@@ -155,20 +165,20 @@ def calculate_subd_parameters(area_bounds, area_points_coords, area_elements, co
         subd_elements.append([element for element in area_elements if condition_overlap(0, element, -3, -1) and condition_overlap(1, element, -3, -1)])
 
     for subd in subd_elements:
-        subd_points.append([el for el, _ in groupby(sorted(sum([i for i in subd], [])))])
-    
+        subd_points.append(np.unique(subd))
+
     for subd in subd_points:
         subd_points_coords.append(np.array([area_points_coords[i].tolist() for i in subd]))
 
     for idx, val in enumerate(area_points_coords):
-        relation_points_elements[idx] = [element for element in area_elements if idx in element]
-    
+        relation_points_elements[idx] = [list(element) for element in area_elements if idx in element]
+
     for idv, subd in enumerate(subd_elements):
         temp_list = []
         temp_list_overlap = []
         relation_points_elements_coords = {}
         for point in subd_points[idv]:
-            relation_points_elements_coords[point] = [element for element in subd if point in element]
+            relation_points_elements_coords[point] = [list(element) for element in subd if point in element]
         for idx, val in relation_points_elements_coords.items():
             if val != relation_points_elements[idx]:
                 temp_list.append(idx)

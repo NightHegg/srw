@@ -11,11 +11,11 @@ from scr.class_schwarz_multiplicative import schwarz_multiplicative
 
 
 class schwarz_additive(schwarz_multiplicative):
-    def __init__(self, cur_task, cur_mesh, cur_amnt_subds = [2, 1], coef_convergence = 1e-3, coef_alpha = 0.5, solve_function = linalg.spsolve):
-        super().__init__(cur_task, cur_mesh, cur_amnt_subds, coef_convergence, solve_function)
+    def __init__(self, data):
+        super().__init__(data)
         
         self.name_method = "schwarz additive method"
-        self.coef_alpha = coef_alpha
+        self.coef_alpha = data['coef_alpha']
 
 
     def internal_init(self):
@@ -33,8 +33,8 @@ class schwarz_additive(schwarz_multiplicative):
         listPoints_Schwarz = sum([list(set(self.subd_boundary_overlap_points[idv]) & set(subd)) for idx, subd in enumerate(self.subd_points) if idx != idv], [])
 
         for node in listPoints_Schwarz:
-            for dim in range(self.dimTask):
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dimTask, ratioPoints_GlobalLocal[node], self.u_previous[node, dim], dim)
+            for dim in range(self.dim_task):
+                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, ratioPoints_GlobalLocal[node], self.u_previous[node, dim], dim)
         
         return K, F
 
