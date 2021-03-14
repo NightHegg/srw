@@ -3,34 +3,12 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
+import time
 from itertools import groupby
 import numpy as np
 import scipy
 from scipy.sparse import coo_matrix, lil_matrix
 import math
-
-
-def calculate_crit_convergence(u_current, u_previous, area_points_coords, dimTask, relation_PointsElements, coef_u):
-    first_sum, second_sum, relative_error = 0, 0, 0
-    for idx, value in enumerate(u_current):
-        if value[1] and abs(value[0]) > abs(value[1]**2):
-            relative_error = np.linalg.norm(value - u_previous[idx])**2 / np.linalg.norm(value)**2
-            s = sum([calculate_local_matrix_stiffness(i, area_points_coords + u_current, dimTask)[1] for i in relation_PointsElements[idx]]) / 3
-            first_sum += s * relative_error
-            second_sum += s
-        if value[1]:
-            relative_error = np.linalg.norm(np.copy(value[1]) - np.copy(u_previous[idx, 1]))**2 / np.linalg.norm(np.copy(value[1]))**2
-            s = sum([calculate_local_matrix_stiffness(i, area_points_coords + u_current * coef_u, dimTask)[1] for i in relation_PointsElements[idx]]) / 3
-            first_sum += s * relative_error
-            second_sum += s
-    # for idx, value in enumerate(u_current):
-    #     if any(abs(value) > 1e-9):
-    #         relative_error = np.linalg.norm(value - u_previous[idx])**2 / np.linalg.norm(value)**2
-    #         s = sum([calculate_local_matrix_stiffness(i, area_points_coords + u_current, dimTask)[1] for i in relation_PointsElements[idx]]) / 3
-    #         first_sum += s * relative_error
-    #         second_sum += s
-
-    return math.sqrt(first_sum / second_sum)
 
 
 def calculate_local_matrix_stiffness(element, points, dimTask):
@@ -71,129 +49,131 @@ def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, D, dimT
     return coo_matrix((data, (row, col)), shape = (area_points_coords.size, area_points_coords.size)).tolil()        
 
 
-def bound_condition_neumann(F, dict_neumann_points, points_coords, dim_task):
-    points = list(dict_neumann_points.keys())
-    len = np.linalg.norm(np.array(points_coords[points[1]]) - np.array(points_coords[points[0]]))
-    for point, condition in dict_neumann_points.items():
-        if math.isnan(condition[0]):
-            F[point * dim_task + 1] += condition[1] * len / 2
-        elif math.isnan(condition[1]):
-            F[point * dim_task] += condition[0] * len / 2
-        else:
-            F[point * dim_task] += condition[0] * len / 2
-            F[point * dim_task + 1] += condition[1] * len / 2
-    return F
-
-
-def bound_condition_dirichlet(K, F, dimTask, node, value, dim):
-    '''
-    K - матрица жёсткости \n
-    F - матрица правой части \n
-    dimTask - размерность задачи \n
-    node - номер узла \n
-    value - значение \n
-    dim - по какой координате \n
-    '''
-    
-    if scipy.sparse.issparse(K):
-        K_col = K.getcol(node * dimTask + dim).toarray()
-    else:
-        K_col = K[:, node * dimTask + dim]
-    F -= np.ravel(K_col) * value
-    K[node * dimTask + dim, :] = 0
-    K[:, node * dimTask + dim] = 0
-
-    K[node * dimTask + dim, node * dimTask + dim] = 1
-    F[node * dimTask + dim] = value
-
-    return K, F
-
-
 def calculate_subd_parameters(area_bounds, area_points_coords, area_elements, coef_overlap, cur_amnt_subds):
+    time_list = []
+
+    init_time = time.time()
     temp_cond = lambda val, i: val[i] in [area_bounds[0, i], area_bounds[i + 1, i]]
     area_boundary_points = [idx for idx, val in enumerate(area_points_coords) if temp_cond(val, 0) or temp_cond(val, 1)]
+    area_points = [num for num, _ in enumerate(area_points_coords)]
+    time_list.append(time.time() - init_time)
 
     subd_bounds = []
     overlap_bounds = []
-    subd_elements = []
-    subd_points = []
-    relation_points_elements = {}
+    list_subd_elements = []
+    list_subd_points = []
+    dict_elements_contain_point = {}
     subd_boundary_overlap_points = []
     subd_boundary_points = []
     subd_internal_points = []
-    subd_points_coords = []
+    list_subd_points_coords = []
+    list_full_subd_elements = []
 
+    init_time = time.time()
     for idx, val in enumerate(cur_amnt_subds):
         temp_bounds = [area_bounds[idx, idx] + i*(area_bounds[idx + 1, idx] - area_bounds[idx, idx])/val for i in range(1, val)]
         subd_bounds.append([area_bounds[idx, idx]] + temp_bounds + [area_bounds[idx + 1, idx]])
+    time_list.append(time.time() - init_time)
 
+    init_time = time.time()
     subd_limit = lambda x, func, type: func[x] + type * (func[x] - func[x - 1]) * coef_overlap
     for subd in subd_bounds:
         temp_bounds = sum([[subd_limit(x, subd, -1), subd_limit(x, subd, 1)] for x in range(1, len(subd)-1)], [])
         overlap_bounds.append([subd[0]] + temp_bounds + [subd[-1]])
+    time_list.append(time.time() - init_time)
+
 
     condition_overlap = lambda type, element, coef_1, coef_2: overlap_bounds[type][coef_1] < sum([area_points_coords[element[i], type] for i in range(3)])/3 < overlap_bounds[type][coef_2]
 
+    init_time = time.time()
     if len(overlap_bounds[0]) == 2:
-        subd_elements.append([element for element in area_elements if condition_overlap(1, element, 0, 2)])     
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(1, element, 0, 2)])     
         for i in range(1, len(overlap_bounds[1]) - 3, 2):
-            subd_elements.append([element for element in area_elements if condition_overlap(1, element, i, i + 3)])
-        subd_elements.append([element for element in area_elements if condition_overlap(1, element, -3, -1)])
+            list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(1, element, i, i + 3)])
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(1, element, -3, -1)])
     elif len(overlap_bounds[1]) == 2:
-        subd_elements.append([element for element in area_elements if condition_overlap(0, element, 0, 2)])
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, 0, 2)])
         for i in range(1, len(overlap_bounds[0]) - 3, 2):
-            subd_elements.append([element for element in area_elements if condition_overlap(0, element, i, i + 3)])
-        subd_elements.append([element for element in area_elements if condition_overlap(0, element, -3, -1)])
+            list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, i, i + 3)])
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, -3, -1)])
     else:
         
-        subd_elements.append([element for element in area_elements if condition_overlap(0, element, 0, 2) and condition_overlap(1, element, 0, 2)])
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, 0, 2) and condition_overlap(1, element, 0, 2)])
         for i in range(1, len(overlap_bounds[1]) - 3, 2):
-            subd_elements.append([element for element in area_elements if condition_overlap(0, element, 0, 2) and condition_overlap(1, element, i, i + 3)])
-        subd_elements.append([element for element in area_elements if condition_overlap(0, element, 0, 2) and condition_overlap(1, element, -3, -1)])
+            list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, 0, 2) and condition_overlap(1, element, i, i + 3)])
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, 0, 2) and condition_overlap(1, element, -3, -1)])
 
         for i in range(1, len(overlap_bounds[0]) - 3, 2):
-            subd_elements.append([element for element in area_elements if condition_overlap(0, element, i, i + 3) and condition_overlap(1, element, 0, 2)])
+            list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, i, i + 3) and condition_overlap(1, element, 0, 2)])
         for i in range(1, len(overlap_bounds[0]) - 3, 2):
             for j in range(1, len(overlap_bounds[1]) - 3, 2):
-                subd_elements.append([element for element in area_elements if condition_overlap(0, element, i, i + 3) and condition_overlap(1, element, j, j + 3)])
+                list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, i, i + 3) and condition_overlap(1, element, j, j + 3)])
         for i in range(1, len(overlap_bounds[0]) - 3, 2):
-            subd_elements.append([element for element in area_elements if condition_overlap(0, element, i, i + 3) and condition_overlap(1, element, -3, -1)])
+            list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, i, i + 3) and condition_overlap(1, element, -3, -1)])
 
-        subd_elements.append([element for element in area_elements if condition_overlap(0, element, -3, -1) and condition_overlap(1, element, 0, 2)])
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, -3, -1) and condition_overlap(1, element, 0, 2)])
         for i in range(1, len(overlap_bounds[1]) - 3, 2):
-            subd_elements.append([element for element in area_elements if condition_overlap(0, element, -3, -1) and condition_overlap(1, element, i, i + 3)])
-        subd_elements.append([element for element in area_elements if condition_overlap(0, element, -3, -1) and condition_overlap(1, element, -3, -1)])
+            list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, -3, -1) and condition_overlap(1, element, i, i + 3)])
+        list_subd_elements.append([idx for idx, element in enumerate(area_elements) if condition_overlap(0, element, -3, -1) and condition_overlap(1, element, -3, -1)])
 
-    for subd in subd_elements:
-        subd_points.append(np.unique(subd))
+    time_list.append(time.time() - init_time)
 
-    for subd in subd_points:
-        subd_points_coords.append(np.array([area_points_coords[i].tolist() for i in subd]))
+    init_time = time.time()
+    for list_elements in list_subd_elements:
+        list_full_subd_elements.append([area_elements[element] for element in list_elements])
+    time_list.append(time.time() - init_time)
 
-    for idx, val in enumerate(area_points_coords):
-        relation_points_elements[idx] = [list(element) for element in area_elements if idx in element]
+    init_time = time.time()
+    for list_elements in list_full_subd_elements:
+        list_subd_points.append(np.unique(list_elements))
+    time_list.append(time.time() - init_time)
 
-    for idv, subd in enumerate(subd_elements):
+    init_time = time.time()
+    for list_points in list_subd_points:
+        list_subd_points_coords.append(np.array([area_points_coords[i].tolist() for i in list_points]))
+    time_list.append(time.time() - init_time)
+
+    init_time = time.time()
+    for element, list_element_points in enumerate(area_elements):
+        for point in list_element_points:
+            if point in dict_elements_contain_point.keys():
+                dict_elements_contain_point[point].append(element)
+            else:
+                dict_elements_contain_point[point] = [element]
+    time_list.append(time.time() - init_time)
+
+    init_time = time.time()
+    for index_subd, list_elements in enumerate(list_subd_elements):
         temp_list = []
         temp_list_overlap = []
-        relation_points_elements_coords = {}
-        for point in subd_points[idv]:
-            relation_points_elements_coords[point] = [list(element) for element in subd if point in element]
-        for idx, val in relation_points_elements_coords.items():
-            if val != relation_points_elements[idx]:
-                temp_list.append(idx)
-                temp_list_overlap.append(idx)
+        dict_elements_contain_point_subd = {}
+        
+        for element in list_elements:
+            for point in area_elements[element]:
+                if point in dict_elements_contain_point_subd.keys():
+                    dict_elements_contain_point_subd[point].append(element)
+                else:
+                    dict_elements_contain_point_subd[point] = [element]
+
+        for point, list_elements in dict_elements_contain_point_subd.items():
+            if list_elements != dict_elements_contain_point[point]:
+                temp_list.append(point)
+                temp_list_overlap.append(point)
         for point in area_boundary_points:
-            if point in subd_points[idv]:
+            if point in list_subd_points[index_subd]:
                 temp_list.append(point)
 
         subd_boundary_points.append(list(set(temp_list)))
         subd_boundary_overlap_points.append(list(set(temp_list_overlap)))
+    time_list.append(time.time() - init_time)
 
-    for idx, subd in enumerate(subd_elements):
-        subd_internal_points.append(list(set(subd_points[idx]) - set(subd_boundary_points[idx])))
-    
-    return subd_elements, subd_points, subd_points_coords, subd_boundary_overlap_points, relation_points_elements
+    # for idx, subd in enumerate(list_subd_elements):
+    #     subd_internal_points.append(list(set(list_subd_points[idx]) - set(subd_boundary_points[idx])))
+
+    # for idx, cur_time in enumerate(time_list):
+    #     print(idx, cur_time)
+
+    return list_full_subd_elements, list_subd_elements, list_subd_points, list_subd_points_coords, subd_boundary_overlap_points, dict_elements_contain_point
 
 
 def calculate_element_area(p_1, p_2, p_3):

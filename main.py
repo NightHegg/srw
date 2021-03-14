@@ -11,28 +11,32 @@ from scr.class_schwarz_multiplicative import schwarz_multiplicative
 from scr.class_schwarz_additive import schwarz_additive
 from scr.class_schwarz_two_level_additive import schwarz_two_level_additive
 
+
 def test():
     example_data = {
         'area':             'area_01',
         'task':             'task_01',
-        'mesh':             '7.5e-04',
-        'amnt_subds':       [2, 1],
-        'coef_convergence': 1e-3,
+        'mesh':             '5.0e-04',
+        'amnt_subds':       [4, 1],
+        'coef_convergence': 1e-4,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
         'coarse_mesh':      '1.5e-03'
     }
-    obj = schwarz_two_level_additive(example_data)
+    obj = schwarz_multiplicative(example_data)
     obj.get_solution()
-    print(obj.get_info())
+    print(*obj.get_info())
+    obj.plot_displacements(False)
 
 
 def task_iters_sigma():
     data = {
+        'method':          schwarz_additive,
+        'text':            'additive',
         'area':            'area_01',
         'task':            'task_01',
         'mesh_list':       ["5.0e-04", "2.5e-04", "1.3e-04"],
-        'amnt_subds_list': [[2, 1], [4, 1], [8, 1]],
+        'amnt_subds_list': [[2, 1], [4, 1], [8, 1]]
     }
 
     if not os.path.exists(f'results/{data["area"]}'):
@@ -61,7 +65,7 @@ def task_iters_sigma():
             add_data = {'mesh': cur_mesh, 'amnt_subds': cur_amnt_subds}
             basic_data.update(add_data)
 
-            obj = schwarz_two_level_additive(basic_data)
+            obj = data['method'](basic_data)
             obj.get_solution()
 
             array_amnt_subds = np.prod(np.array(cur_amnt_subds))
@@ -79,8 +83,8 @@ def task_iters_sigma():
     print(df_iters)
     print(df_sigma)
 
-    df_iters.to_csv(f'results/{data["area"]}/{data["task"]}/iterations/two_level.csv')
-    df_sigma.to_csv(f'results/{data["area"]}/{data["task"]}/sigma/two_level.csv')
+    df_iters.to_csv(f'results/{data["area"]}/{data["task"]}/iterations/{data["text"]}.csv')
+    df_sigma.to_csv(f'results/{data["area"]}/{data["task"]}/sigma/{data["text"]}.csv')
 
 
 def parallel():
@@ -88,4 +92,4 @@ def parallel():
 
 
 if __name__ == "__main__":
-    parallel()
+    task_iters_sigma()

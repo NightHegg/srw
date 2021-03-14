@@ -9,7 +9,7 @@ from scipy.sparse import linalg
 from itertools import combinations
 import meshio
 import math
-from scipy.spatial import ConvexHull, convex_hull_plot_2d
+import scipy
 
 import scr.functions as base_func
 
@@ -32,7 +32,6 @@ class basic_method:
         mesh = meshio.read(f'data/{data["area"]}/meshes/{data["mesh"]}.dat')
         
         self.contour_points = np.append(np.array(temp_contour), [temp_contour[0]], axis = 0)
-        # self.contour_points = np.array(temp_contour)
         self.area_points_coords = mesh.points
         self.area_points = [num for num, _ in enumerate(self.area_points_coords)]
         self.area_elements = mesh.cells_dict["triangle"]
@@ -79,26 +78,42 @@ class basic_method:
                         self.neumann_points[point] = [row[2], row[3]]
 
 
+    def set_condition_dirichlet(self):
+        for point in self.dirichlet_points.keys():
+            for idx, cur_condition in enumerate(self.dirichlet_points[point]):
+                if not math.isnan(cur_condition):
+                    if scipy.sparse.issparse(self.K):
+                        K_col = self.K.getcol(point * self.dim_task + idx).toarray()
+                    else:
+                        K_col = self.K[:, point * self.dim_task + idx]
+                    self.F -= np.ravel(K_col) * cur_condition
+                    self.K[point * self.dim_task + idx, :] = 0
+                    self.K[:, point * self.dim_task + idx] = 0
+
+                    self.K[point * self.dim_task + idx, point * self.dim_task + idx] = 1
+                    self.F[point * self.dim_task + idx] = cur_condition
+
+
+    def set_condition_neumann(self):
+        list_elements = [element for element in self.area_elements for x in combinations(self.neumann_points.keys(), 2) if all([i in element for i in x])]
+        for element in list_elements:
+            points = list(set(element) & set(self.neumann_points.keys()))
+            points_coords = [self.area_points_coords[point] for point in points]
+            len = np.linalg.norm(np.array(points_coords[1]) - np.array(points_coords[0]))
+            for cur_point in points:
+                for idx, cur_condition in enumerate(self.neumann_points[cur_point]):
+                    if not math.isnan(cur_condition):
+                        self.F[cur_point * self.dim_task + idx] += cur_condition * len / 2
+
+        
     def calculate_u(self):
-        K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
-        F = np.zeros(self.area_points_coords.size)
+        self.K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
+        self.F = np.zeros(self.area_points_coords.size)
 
-        for point, condition in self.dirichlet_points.items():
-            if math.isnan(condition[0]):
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[1], 1)
-            elif math.isnan(condition[1]):
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[0], 0)
-            else:
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[0], 0)
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[1], 1)
+        self.set_condition_dirichlet()
+        self.set_condition_neumann()
 
-        list_neumann_elements = [element for element in self.area_elements for x in combinations(self.neumann_points.keys(), 2) if all([i in element for i in x])]
-        for element in list_neumann_elements:
-            list_neumann_points = list(set(element) & set(self.neumann_points.keys()))
-            dict_neumann_points = {point: self.neumann_points[point] for point in list_neumann_points}
-            F = base_func.bound_condition_neumann(F, dict_neumann_points, self.area_points_coords, self.dim_task)
-
-        *arg, = self.solve_function(K.tocsr(), F)
+        *arg, = self.solve_function(self.K.tocsr(), self.F)
         self.u = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
 
 
@@ -119,7 +134,7 @@ class basic_method:
     def get_solution(self):
         init_time = time.time()
         self.calculate_u()
-        self.time_execution = time.time() - init_time
+        self.time_full_u = time.time() - init_time
 
         self.calculate_eps()
         self.calculate_sigma()
@@ -147,6 +162,7 @@ class basic_method:
     def plot_displacements(self, plot_global_mesh = True):
         self.internal_plot_displacements(self.u, self.area_points_coords, self.area_elements, plot_global_mesh)
 
+
     def plot_init_mesh(self):
         fig, ax = plt.subplots()
 
@@ -159,12 +175,19 @@ class basic_method:
 
         plt.show()
 
+    
+    def construct_info(self, message):
+        message.append(f' Method: {self.name_method}\n')
+        message.append(f'{"-" * 5}\n')
+        message.append(f'Time of calculation displacements: {self.time_full_u}\n')
+        message.append(f'{"-" * 5}\n')
+        message.append(f'Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n')
+        message.append(f'Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n')
+        message.append(f'{"-" * 5}\n')
 
     def get_info(self):
-        message = (f"Method: {self.name_method}\n"
-                   f"Time of execution: {self.time_execution}\n"
-                   f"Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7):.2e}\n"
-                   f"Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7):.2e}")
+        message = []
+        self.construct_info(message)
         return message
 
 
