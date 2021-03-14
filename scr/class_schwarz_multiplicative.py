@@ -48,26 +48,27 @@ class schwarz_multiplicative(basic_method):
         self.u_current = np.copy(self.u)
 
 
-    def set_condition_dirichlet(self, idv):
+    def set_condition_dirichlet_sub(self, idv):
         for point in self.list_dirichlet_points[idv]:
             for idx, cur_condition in enumerate(self.dirichlet_points[point]):
                 modified_point = self.dict_points_global_to_local[point]
                 if not math.isnan(cur_condition):
-
-                    init_time = time.time()  
-                    K_col = self.K.tocsr().getcol(modified_point * self.dim_task + idx).toarray()
-                    self.time_dirichlet_kcol += time.time() - init_time
-                    
                     init_time = time.time()
-                    self.F -= np.ravel(K_col) * cur_condition
+                    indices = np.array(self.K.rows[modified_point * self.dim_task + idx])
+                    self.time_dirichlet_indices += time.time() - init_time
+
+                    init_time = time.time()   
+                    self.F[indices] -= np.array(self.K.data[modified_point * self.dim_task + idx]) * cur_condition
                     self.time_dirichlet_1 += time.time() - init_time
                     
                     init_time = time.time()
-                    self.K[modified_point * self.dim_task + idx, :] = 0
+                    for index in indices:
+                        self.K[modified_point * self.dim_task + idx, index] = 0
                     self.time_dirichlet_2 += time.time() - init_time
                     
                     init_time = time.time()
-                    self.K[:, modified_point * self.dim_task + idx] = 0
+                    for index in indices:
+                        self.K[index, modified_point * self.dim_task + idx] = 0
                     self.time_dirichlet_3 += time.time() - init_time
 
                     init_time = time.time()
@@ -79,7 +80,7 @@ class schwarz_multiplicative(basic_method):
                     self.time_dirichlet_5 += time.time() - init_time
 
 
-    def set_condition_neumann(self, idv):
+    def set_condition_neumann_sub(self, idv):
         for element in self.list_neumann_elements_subd[idv]:
             points = list(set(element) & set(self.neumann_points.keys()))
             points_coords = [self.area_points_coords[point] for point in points]
@@ -91,26 +92,28 @@ class schwarz_multiplicative(basic_method):
                         self.F[modified_point * self.dim_task + idx] += cur_condition * len / 2
 
 
-    def set_condition_schwarz(self, idv, array_condition): 
+    def set_condition_schwarz_sub(self, idv, array_condition):
         for point in self.list_schwarz_points[idv]:
             modified_point = self.dict_points_global_to_local[point]
             for cur_dim in range(self.dim_task):
                 value = array_condition[point, cur_dim]
-                
-                init_time = time.time()
-                K_col = self.K.tocsr().getcol(modified_point * self.dim_task + cur_dim).toarray()
-                self.time_schwarz_kcol += time.time() - init_time
 
                 init_time = time.time()
-                self.F -= np.ravel(K_col) * value
+                indices = np.array(self.K.rows[modified_point * self.dim_task + cur_dim])
+                self.time_schwarz_indices += time.time() - init_time
+
+                init_time = time.time()
+                self.F[indices] -= np.array(self.K.data[modified_point * self.dim_task + cur_dim]) * value
                 self.time_schwarz_1 += time.time() - init_time
 
                 init_time = time.time()
-                self.K[modified_point * self.dim_task + cur_dim, :] = 0
+                for index in indices:
+                    self.K[modified_point * self.dim_task + cur_dim, index] = 0
                 self.time_schwarz_2 += time.time() - init_time
 
                 init_time = time.time()
-                self.K[:, modified_point * self.dim_task + cur_dim] = 0
+                for index in indices:
+                    self.K[index, modified_point * self.dim_task + cur_dim] = 0
                 self.time_schwarz_3 += time.time() - init_time
 
                 init_time = time.time()
@@ -131,27 +134,28 @@ class schwarz_multiplicative(basic_method):
 
 
     def calculate_crit_convergence(self):
+        init_time = time.time()
+        dict_u = {idx : value for idx, value in enumerate(self.u) if not np.all((np.isclose(value, np.zeros_like(value))))}
+        self.time_conv_1 += time.time() - init_time
+
         divisible, divisor, relative_error = 0, 0, 0
-        for idx, value in enumerate(self.u):
+        for idx, value in dict_u.items():
+
             init_time = time.time()
-            condition = np.allclose(value, np.zeros_like(value))
-            self.time_conv_result += time.time() - init_time
-            if not condition:
-                init_time = time.time()
-                relative_error = np.linalg.norm(value - self.u_previous[idx])**2 / np.linalg.norm(value)**2
-                self.time_conv_relative += time.time() - init_time
+            relative_error = np.linalg.norm(value - self.u_previous[idx])**2 / np.linalg.norm(value)**2
+            self.time_conv_2 += time.time() - init_time
 
-                init_time = time.time()
-                sum_elements = [self.list_sum_elements[cur_element] for cur_element in self.dict_elements_contain_point[idx]]
-                self.time_conv_sum += time.time() - init_time
+            init_time = time.time()
+            sum_elements = [self.list_sum_elements[cur_element] for cur_element in self.dict_elements_contain_point[idx]]
+            self.time_conv_3 += time.time() - init_time
 
-                init_time = time.time()
-                divisible += (sum(sum_elements) / 3) * relative_error
-                self.time_conv_divisible += time.time() - init_time
+            init_time = time.time()
+            divisible += (sum(sum_elements) / 3) * relative_error
+            self.time_conv_4 += time.time() - init_time
 
-                init_time = time.time()
-                divisor += (sum(sum_elements) / 3)
-                self.time_conv_division += time.time() - init_time
+            init_time = time.time()
+            divisor += (sum(sum_elements) / 3)
+            self.time_conv_5 += time.time() - init_time
         return math.sqrt(divisible / divisor)
 
 
@@ -168,25 +172,25 @@ class schwarz_multiplicative(basic_method):
         self.time_sum_elements = 0
         self.time_conv = 0
 
-        self.time_schwarz_kcol = 0
+        self.time_schwarz_indices = 0
         self.time_schwarz_1 = 0
         self.time_schwarz_2 = 0
         self.time_schwarz_3 = 0
         self.time_schwarz_4 = 0
         self.time_schwarz_5 = 0
 
-        self.time_dirichlet_kcol = 0
+        self.time_dirichlet_indices = 0
         self.time_dirichlet_1 = 0
         self.time_dirichlet_2 = 0
         self.time_dirichlet_3 = 0
         self.time_dirichlet_4 = 0
         self.time_dirichlet_5 = 0
 
-        self.time_conv_relative = 0
-        self.time_conv_sum = 0
-        self.time_conv_divisible = 0
-        self.time_conv_division = 0
-        self.time_conv_result = 0
+        self.time_conv_1 = 0
+        self.time_conv_2 = 0
+        self.time_conv_3 = 0
+        self.time_conv_4 = 0
+        self.time_conv_5 = 0
 
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
@@ -226,15 +230,15 @@ class schwarz_multiplicative(basic_method):
                 self.time_init_data += time.time() - init_time
 
                 init_time = time.time()
-                self.set_condition_dirichlet(idv)
+                self.set_condition_dirichlet_sub(idv)
                 self.time_dirichlet += time.time() - init_time
 
                 init_time = time.time()
-                self.set_condition_neumann(idv)
+                self.set_condition_neumann_sub(idv)
                 self.time_neumann += time.time() - init_time
 
                 init_time = time.time()
-                self.set_condition_schwarz(idv, self.u_current)
+                self.set_condition_schwarz_sub(idv, self.u_current)
                 self.time_schwarz += time.time() - init_time
 
                 init_time = time.time()
@@ -307,20 +311,20 @@ class schwarz_multiplicative(basic_method):
         # message.append(f'Time for sum elements: {self.time_sum_elements} ({self.time_sum_elements / self.time_full_u:.2%})\n')
         # message.append(f'Time for convergence: {self.time_conv} ({self.time_conv / self.time_full_u:.2%})\n')
         # message.append(f'{"-" * 5}\n')
-        # message.append(f'Time for convergence relative: {self.time_conv_relative} ({self.time_conv_relative / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence sum: {self.time_conv_sum} ({self.time_conv_sum / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence divisible: {self.time_conv_divisible} ({self.time_conv_divisible / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence division: {self.time_conv_division} ({self.time_conv_division / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence result: {self.time_conv_result} ({self.time_conv_result / self.time_full_u:.2%})\n')
+        # message.append(f'Time for convergence 1: {self.time_conv_1} ({self.time_conv_1 / self.time_full_u:.2%})\n')
+        # message.append(f'Time for convergence 2: {self.time_conv_2} ({self.time_conv_2 / self.time_full_u:.2%})\n')
+        # message.append(f'Time for convergence 3: {self.time_conv_3} ({self.time_conv_3 / self.time_full_u:.2%})\n')
+        # message.append(f'Time for convergence 4: {self.time_conv_4} ({self.time_conv_4 / self.time_full_u:.2%})\n')
+        # message.append(f'Time for convergence 5: {self.time_conv_5} ({self.time_conv_5 / self.time_full_u:.2%})\n')
         # message.append(f'{"-" * 5}\n')
-        # message.append(f'Time for setting schwarz kcol: {self.time_schwarz_kcol} ({self.time_schwarz_kcol / self.time_full_u:.2%})\n')
+        # message.append(f'Time for setting schwarz indices: {self.time_schwarz_indices} ({self.time_schwarz_indices / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting schwarz 1: {self.time_schwarz_1} ({self.time_schwarz_1 / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting schwarz 2: {self.time_schwarz_2} ({self.time_schwarz_2 / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting schwarz 3: {self.time_schwarz_3} ({self.time_schwarz_3 / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting schwarz 4: {self.time_schwarz_4} ({self.time_schwarz_4 / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting schwarz 5: {self.time_schwarz_5} ({self.time_schwarz_5 / self.time_full_u:.2%})\n')
         # message.append(f'{"-" * 5}\n')
-        # message.append(f'Time for setting dirichlet kcol: {self.time_dirichlet_kcol} ({self.time_dirichlet_kcol / self.time_full_u:.2%})\n')
+        # message.append(f'Time for setting dirichlet indices: {self.time_dirichlet_indices} ({self.time_dirichlet_indices / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting dirichlet 1: {self.time_dirichlet_1} ({self.time_dirichlet_1 / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting dirichlet 2: {self.time_dirichlet_2} ({self.time_dirichlet_2 / self.time_full_u:.2%})\n')
         # message.append(f'Time for setting dirichlet 3: {self.time_dirichlet_3} ({self.time_dirichlet_3 / self.time_full_u:.2%})\n')

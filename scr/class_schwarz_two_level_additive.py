@@ -10,12 +10,32 @@ from itertools import combinations
 import numpy as np
 from scipy.sparse import linalg
 import meshio
+import time
 
 import scr.functions as base_func
 from scr.class_schwarz_additive import schwarz_additive
 
+
+def check_point_in_elements(point_coords):
+    def temp(element, area_points_coords):
+        S_element = base_func.calculate_element_area(area_points_coords[element[0]], area_points_coords[element[1]], area_points_coords[element[2]])
+        S_1 = base_func.calculate_element_area(point_coords, area_points_coords[element[1]], area_points_coords[element[2]])
+        S_2 = base_func.calculate_element_area(area_points_coords[element[0]], point_coords, area_points_coords[element[2]])
+        S_3 = base_func.calculate_element_area(area_points_coords[element[0]], area_points_coords[element[1]], point_coords)
+        return S_1 + S_2 + S_3 - S_element < 1e-9
+    return temp
+
+def check_point_in_elements_reverse(element, area_points_coords):
+    def temp(point_coords):
+        S_element = base_func.calculate_element_area(area_points_coords[element[0]], area_points_coords[element[1]], area_points_coords[element[2]])
+        S_1 = base_func.calculate_element_area(point_coords, area_points_coords[element[1]], area_points_coords[element[2]])
+        S_2 = base_func.calculate_element_area(area_points_coords[element[0]], point_coords, area_points_coords[element[2]])
+        S_3 = base_func.calculate_element_area(area_points_coords[element[0]], area_points_coords[element[1]], point_coords)
+        return S_1 + S_2 + S_3 - S_element < 1e-9
+    return temp
+
+
 class schwarz_two_level_additive(schwarz_additive):
-    # TODO: Можно ли area_limits тоже сделать атрибутом класса?
     def __init__(self, data):
         super().__init__(data)
 
@@ -56,82 +76,48 @@ class schwarz_two_level_additive(schwarz_additive):
                     else:
                         self.neumann_coarse_points[point] = [row[2], row[3]]
 
+        self.K_special = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
+        self.F_special = np.zeros(self.area_points_coords.size)
 
-    def interal_calculate_u(self):
+        self.set_condition_dirichlet(self.K_special, self.F_special, self.dirichlet_points)
+        self.set_condition_neumann(self.F_special)
+
+        self.dict_point_in_coarse_elements = {}
+        for num_point, point_coords in enumerate(self.area_points_coords):
+            bool_check = check_point_in_elements(point_coords)
+            for element in self.area_coarse_elements:
+                if bool_check(element, self.area_coarse_points_coords):
+                    self.dict_point_in_coarse_elements[num_point] = element
+                    break
+
+
+    def interal_final_calculate_u(self):
         u_special = np.ravel(np.zeros_like(self.u))
 
-        K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
-        F = np.zeros(self.area_points_coords.size)
-
-        for point, condition in self.dirichlet_points.items():
-            if math.isnan(condition[0]):
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[1], 1)
-            elif math.isnan(condition[1]):
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[0], 0)
-            else:
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[0], 0)
-                K, F = base_func.bound_condition_dirichlet(K, F, self.dim_task, point, condition[1], 1)
-
-        list_neumann_elements = [element for element in self.area_elements for x in combinations(self.neumann_points.keys(), 2) if all([i in element for i in x])]
-        for element in list_neumann_elements:
-            list_neumann_points = list(set(element) & set(self.neumann_points.keys()))
-            dict_neumann_points = {point: self.neumann_points[point] for point in list_neumann_points}
-            F = base_func.bound_condition_neumann(F, dict_neumann_points, self.area_points_coords, self.dim_task)
-
-        F_test = np.dot(K.toarray(), np.ravel(self.u_previous))     
-        residual = F - F_test
+        F_test = self.K_special.dot(np.ravel(self.u_previous))
+        residual = self.F_special - F_test
 
         K_coarse = base_func.calculate_sparse_matrix_stiffness(self.area_coarse_elements, self.area_coarse_points_coords, self.D, self.dim_task)
         F_coarse = np.zeros(self.area_coarse_points_coords.size)
 
-        chosen_element = []
-        for num_point, point_coords in enumerate(self.area_points_coords):
-            chosen_element = []
-            for element in self.area_coarse_elements:
-                S_element = base_func.calculate_element_area(self.area_coarse_points_coords[element[0]], self.area_coarse_points_coords[element[1]], self.area_coarse_points_coords[element[2]])
-                S_1 = base_func.calculate_element_area(point_coords, self.area_coarse_points_coords[element[1]], self.area_coarse_points_coords[element[2]])
-                S_2 = base_func.calculate_element_area(self.area_coarse_points_coords[element[0]], point_coords, self.area_coarse_points_coords[element[2]])
-                S_3 = base_func.calculate_element_area(self.area_coarse_points_coords[element[0]], self.area_coarse_points_coords[element[1]], point_coords)
-                if S_1 + S_2 + S_3 - S_element < 1e-9:
-                        chosen_element = element
-                        break
-
-            local_coords = base_func.calculate_local_functions(chosen_element, self.area_coarse_points_coords)
-
+        for point, element in self.dict_point_in_coarse_elements.items():
+            point_coords = self.area_points_coords[point]
+            local_coords = base_func.calculate_local_functions(element, self.area_coarse_points_coords)
             for i in range(3):
-                for dim in range(self.dim_task):
-                    F_coarse[chosen_element[i] * self.dim_task + dim] += local_coords(point_coords, i) * residual[num_point * self.dim_task + dim]
+                F_coarse[element[i] * self.dim_task : (element[i] + 1) * self.dim_task] += local_coords(point_coords, i) * residual[point * self.dim_task : (point + 1) * self.dim_task]
         
-        for point, condition in self.dirichlet_coarse_points.items():
-            if math.isnan(condition[0]):
-                K_coarse, F_coarse = base_func.bound_condition_dirichlet(K_coarse, F_coarse, self.dim_task, point, condition[1], 1)
-            elif math.isnan(condition[1]):
-                K_coarse, F_coarse = base_func.bound_condition_dirichlet(K_coarse, F_coarse, self.dim_task, point, condition[0], 0)
-            else:
-                K_coarse, F_coarse = base_func.bound_condition_dirichlet(K_coarse, F_coarse, self.dim_task, point, condition[0], 0)
-                K_coarse, F_coarse = base_func.bound_condition_dirichlet(K_coarse, F_coarse, self.dim_task, point, condition[1], 1)
+        self.set_condition_dirichlet(K_coarse, F_coarse, self.dirichlet_coarse_points)
 
         [*arg,] = self.solve_function(K_coarse.tocsr(), F_coarse)
         u_coarse = np.ravel(np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2)))
 
-        for num_point, point_coords in enumerate(self.area_points_coords):
-            chosen_element = []
-            for element in self.area_coarse_elements:
-                S_element = base_func.calculate_element_area(self.area_coarse_points_coords[element[0]], self.area_coarse_points_coords[element[1]], self.area_coarse_points_coords[element[2]])
-                S_1 = base_func.calculate_element_area(point_coords, self.area_coarse_points_coords[element[1]], self.area_coarse_points_coords[element[2]])
-                S_2 = base_func.calculate_element_area(self.area_coarse_points_coords[element[0]], point_coords, self.area_coarse_points_coords[element[2]])
-                S_3 = base_func.calculate_element_area(self.area_coarse_points_coords[element[0]], self.area_coarse_points_coords[element[1]], point_coords)
-                if S_1 + S_2 + S_3 - S_element < 1e-9:
-                        chosen_element = element
-                        break
-
-            function = base_func.calculate_local_functions(chosen_element, self.area_coarse_points_coords)
-
+        for point, element in self.dict_point_in_coarse_elements.items():
+            point_coords = self.area_points_coords[point]
+            function = base_func.calculate_local_functions(element, self.area_coarse_points_coords)
             for i in range(3):
-                for dim in range(self.dim_task):
-                    u_special[num_point * self.dim_task + dim] += function(point_coords, i) * u_coarse[chosen_element[i] * self.dim_task + dim]
+                u_special[point * self.dim_task: (point + 1) * self.dim_task] += function(point_coords, i) * u_coarse[element[i] * self.dim_task : (element[i] + 1) * self.dim_task]
 
-        self.u = self.u_previous + (self.coef_alpha * self.u_sum) + (self.coef_alpha * u_special.reshape(-1, 2))
+        self.u = np.copy(self.u_previous) + (self.coef_alpha * self.u_sum) + (self.coef_alpha * u_special.reshape(-1, 2))
 
 
     def plot_init_mesh(self):

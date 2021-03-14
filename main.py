@@ -1,6 +1,7 @@
 import os
 import sys
 
+import time
 import multiprocessing as mp
 import numpy as np
 import pandas as pd
@@ -17,13 +18,13 @@ def test():
         'area':             'area_01',
         'task':             'task_01',
         'mesh':             '5.0e-04',
-        'amnt_subds':       [4, 1],
+        'amnt_subds':       [2, 1],
         'coef_convergence': 1e-4,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
         'coarse_mesh':      '1.5e-03'
     }
-    obj = schwarz_multiplicative(example_data)
+    obj = schwarz_two_level_additive(example_data)
     obj.get_solution()
     print(*obj.get_info())
     obj.plot_displacements(False)
@@ -31,8 +32,8 @@ def test():
 
 def task_iters_sigma():
     data = {
-        'method':          schwarz_additive,
-        'text':            'additive',
+        'method':          schwarz_multiplicative,
+        'text':            'multiplicative',
         'area':            'area_01',
         'task':            'task_01',
         'mesh_list':       ["5.0e-04", "2.5e-04", "1.3e-04"],
@@ -46,13 +47,16 @@ def task_iters_sigma():
         os.makedirs(f'results/{data["area"]}/{data["task"]}')
         os.makedirs(f'results/{data["area"]}/{data["task"]}/iterations')
         os.makedirs(f'results/{data["area"]}/{data["task"]}/sigma')
+        os.makedirs(f'results/{data["area"]}/{data["task"]}/time')
 
     dict_iters = {}
     dict_sigma = {}
+    dict_time = {}
 
     for cur_mesh in tqdm(data["mesh_list"]):
         dict_iters_temp = {}
         dict_sigma_temp = {}
+        dict_time_temp = {}
         for cur_amnt_subds in tqdm(data["amnt_subds_list"]):
             basic_data = {
                 'area':             data['area'],
@@ -73,18 +77,23 @@ def task_iters_sigma():
 
             dict_iters_temp[styled_amnt_subds] = obj.amnt_iterations
             dict_sigma_temp[styled_amnt_subds] = obj.get_special_sigma()
+            dict_time_temp[styled_amnt_subds] = f'{obj.time_global:.2f}'
         
         dict_iters[f"h={cur_mesh}"] = dict_iters_temp
         dict_sigma[f"h={cur_mesh}"] = dict_sigma_temp
+        dict_time[f"h={cur_mesh}"] = dict_time_temp
     
     df_iters = pd.DataFrame.from_dict(dict_iters)
     df_sigma = pd.DataFrame.from_dict(dict_sigma)
+    df_time = pd.DataFrame.from_dict(dict_time)
 
     print(df_iters)
     print(df_sigma)
+    print(df_time)
 
     df_iters.to_csv(f'results/{data["area"]}/{data["task"]}/iterations/{data["text"]}.csv')
     df_sigma.to_csv(f'results/{data["area"]}/{data["task"]}/sigma/{data["text"]}.csv')
+    df_time.to_csv(f'results/{data["area"]}/{data["task"]}/time/{data["text"]}.csv')
 
 
 def parallel():
@@ -92,4 +101,4 @@ def parallel():
 
 
 if __name__ == "__main__":
-    task_iters_sigma()
+    test()

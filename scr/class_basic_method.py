@@ -78,23 +78,21 @@ class basic_method:
                         self.neumann_points[point] = [row[2], row[3]]
 
 
-    def set_condition_dirichlet(self):
-        for point in self.dirichlet_points.keys():
-            for idx, cur_condition in enumerate(self.dirichlet_points[point]):
+    def set_condition_dirichlet(self, K, F, dirichlet_points):
+        for point in dirichlet_points.keys():
+            for idx, cur_condition in enumerate(dirichlet_points[point]):
                 if not math.isnan(cur_condition):
-                    if scipy.sparse.issparse(self.K):
-                        K_col = self.K.getcol(point * self.dim_task + idx).toarray()
-                    else:
-                        K_col = self.K[:, point * self.dim_task + idx]
-                    self.F -= np.ravel(K_col) * cur_condition
-                    self.K[point * self.dim_task + idx, :] = 0
-                    self.K[:, point * self.dim_task + idx] = 0
-
-                    self.K[point * self.dim_task + idx, point * self.dim_task + idx] = 1
-                    self.F[point * self.dim_task + idx] = cur_condition
+                    indices = np.array(K.rows[point * self.dim_task + idx])
+                    F[indices] -= np.array(K.data[point * self.dim_task + idx]) * cur_condition
+                    for index in indices:
+                        K[point * self.dim_task + idx, index] = 0
+                    for index in indices:
+                        K[index, point * self.dim_task + idx] = 0
+                    K[point * self.dim_task + idx, point * self.dim_task + idx] = 1
+                    F[point * self.dim_task + idx] = cur_condition
 
 
-    def set_condition_neumann(self):
+    def set_condition_neumann(self, F):
         list_elements = [element for element in self.area_elements for x in combinations(self.neumann_points.keys(), 2) if all([i in element for i in x])]
         for element in list_elements:
             points = list(set(element) & set(self.neumann_points.keys()))
@@ -103,15 +101,15 @@ class basic_method:
             for cur_point in points:
                 for idx, cur_condition in enumerate(self.neumann_points[cur_point]):
                     if not math.isnan(cur_condition):
-                        self.F[cur_point * self.dim_task + idx] += cur_condition * len / 2
+                        F[cur_point * self.dim_task + idx] += cur_condition * len / 2
 
         
     def calculate_u(self):
         self.K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
         self.F = np.zeros(self.area_points_coords.size)
 
-        self.set_condition_dirichlet()
-        self.set_condition_neumann()
+        self.set_condition_dirichlet(self.K, self.F, self.dirichlet_points)
+        self.set_condition_neumann(self.F)
 
         *arg, = self.solve_function(self.K.tocsr(), self.F)
         self.u = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
@@ -132,13 +130,16 @@ class basic_method:
 
 
     def get_solution(self):
+        init_global = time.time()
         init_time = time.time()
         self.calculate_u()
         self.time_full_u = time.time() - init_time
 
+        init_time = time.time()
         self.calculate_eps()
         self.calculate_sigma()
-
+        self.time_eps_sigma = time.time() - init_time
+        self.time_global = time.time() - init_global
 
     def internal_plot_displacements(self, vector_u, area_points_coords, area_elements, plot_global_mesh = True):
         fig, ax = plt.subplots()
@@ -179,7 +180,9 @@ class basic_method:
     def construct_info(self, message):
         message.append(f' Method: {self.name_method}\n')
         message.append(f'{"-" * 5}\n')
+        message.append(f'Time of calculation global: {self.time_global:.2f}\n')
         message.append(f'Time of calculation displacements: {self.time_full_u}\n')
+        message.append(f'Time of calculation eps+sigma: {self.time_eps_sigma}\n')
         message.append(f'{"-" * 5}\n')
         message.append(f'Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n')
         message.append(f'Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n')
