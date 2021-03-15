@@ -47,7 +47,7 @@ class Task:
         dmsh.helpers.show(self.X, self.cells, self.geo)
 
     def write_mesh(self, edge_size):
-        name_file = f'data/{self.area_params["folder_name"]}/meshes/{edge_size:.1e}.dat'
+        name_file = f'data/{self.area_params["folder_name"]}/meshes/{edge_size:.2e}.dat'
         meshio.write_points_cells(name_file, self.X, {"triangle": self.cells})
 
 
@@ -75,13 +75,13 @@ if __name__ == "__main__":
             'neumann_conditions':   [[2, 3, math.nan, -2e+7]]
         }
     ]
-    list_edge_size = [0.0015]
+    list_edge_size = [0.00035]
 
     for cur_area in area_params:
         obj = Task(cur_area)
 
-        for cur_task in tasks:
-            obj.create_task(cur_task)
+        # for cur_task in tasks:
+        #     obj.create_task(cur_task)
 
         for cur_edge_size in list_edge_size:
             obj.create_mesh(cur_edge_size)

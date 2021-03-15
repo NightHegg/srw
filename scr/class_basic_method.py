@@ -76,6 +76,10 @@ class basic_method:
                             self.neumann_points[point] = [self.neumann_points[point][0], row[3]]
                     else:
                         self.neumann_points[point] = [row[2], row[3]]
+        self.list_neumann_elements = []
+        for element in self.area_elements:
+            if len(set(element) & set(self.neumann_points.keys())) == 2:
+                self.list_neumann_elements.append(element)
 
 
     def set_condition_dirichlet(self, K, F, dirichlet_points):
@@ -93,8 +97,7 @@ class basic_method:
 
 
     def set_condition_neumann(self, F):
-        list_elements = [element for element in self.area_elements for x in combinations(self.neumann_points.keys(), 2) if all([i in element for i in x])]
-        for element in list_elements:
+        for element in self.list_neumann_elements:
             points = list(set(element) & set(self.neumann_points.keys()))
             points_coords = [self.area_points_coords[point] for point in points]
             len = np.linalg.norm(np.array(points_coords[1]) - np.array(points_coords[0]))

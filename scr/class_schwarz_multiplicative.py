@@ -53,31 +53,18 @@ class schwarz_multiplicative(basic_method):
             for idx, cur_condition in enumerate(self.dirichlet_points[point]):
                 modified_point = self.dict_points_global_to_local[point]
                 if not math.isnan(cur_condition):
-                    init_time = time.time()
                     indices = np.array(self.K.rows[modified_point * self.dim_task + idx])
-                    self.time_dirichlet_indices += time.time() - init_time
 
-                    init_time = time.time()   
                     self.F[indices] -= np.array(self.K.data[modified_point * self.dim_task + idx]) * cur_condition
-                    self.time_dirichlet_1 += time.time() - init_time
                     
-                    init_time = time.time()
                     for index in indices:
                         self.K[modified_point * self.dim_task + idx, index] = 0
-                    self.time_dirichlet_2 += time.time() - init_time
                     
-                    init_time = time.time()
                     for index in indices:
                         self.K[index, modified_point * self.dim_task + idx] = 0
-                    self.time_dirichlet_3 += time.time() - init_time
 
-                    init_time = time.time()
                     self.K[modified_point * self.dim_task + idx, modified_point * self.dim_task + idx] = 1
-                    self.time_dirichlet_4 += time.time() - init_time
-
-                    init_time = time.time()
                     self.F[modified_point * self.dim_task + idx] = cur_condition
-                    self.time_dirichlet_5 += time.time() - init_time
 
 
     def set_condition_neumann_sub(self, idv):
@@ -98,31 +85,18 @@ class schwarz_multiplicative(basic_method):
             for cur_dim in range(self.dim_task):
                 value = array_condition[point, cur_dim]
 
-                init_time = time.time()
                 indices = np.array(self.K.rows[modified_point * self.dim_task + cur_dim])
-                self.time_schwarz_indices += time.time() - init_time
 
-                init_time = time.time()
                 self.F[indices] -= np.array(self.K.data[modified_point * self.dim_task + cur_dim]) * value
-                self.time_schwarz_1 += time.time() - init_time
 
-                init_time = time.time()
                 for index in indices:
                     self.K[modified_point * self.dim_task + cur_dim, index] = 0
-                self.time_schwarz_2 += time.time() - init_time
 
-                init_time = time.time()
                 for index in indices:
                     self.K[index, modified_point * self.dim_task + cur_dim] = 0
-                self.time_schwarz_3 += time.time() - init_time
 
-                init_time = time.time()
                 self.K[modified_point * self.dim_task + cur_dim, modified_point * self.dim_task + cur_dim] = 1
-                self.time_schwarz_4 += time.time() - init_time
-
-                init_time = time.time()
                 self.F[modified_point * self.dim_task + cur_dim] = value
-                self.time_schwarz_5 += time.time() - init_time
 
 
     def internal_additional_calculations(self):
@@ -134,79 +108,29 @@ class schwarz_multiplicative(basic_method):
 
 
     def calculate_crit_convergence(self):
-        init_time = time.time()
         dict_u = {idx : value for idx, value in enumerate(self.u) if not np.all((np.isclose(value, np.zeros_like(value))))}
-        self.time_conv_1 += time.time() - init_time
 
         divisible, divisor, relative_error = 0, 0, 0
         for idx, value in dict_u.items():
 
-            init_time = time.time()
             relative_error = np.linalg.norm(value - self.u_previous[idx])**2 / np.linalg.norm(value)**2
-            self.time_conv_2 += time.time() - init_time
 
-            init_time = time.time()
             sum_elements = [self.list_sum_elements[cur_element] for cur_element in self.dict_elements_contain_point[idx]]
-            self.time_conv_3 += time.time() - init_time
-
-            init_time = time.time()
             divisible += (sum(sum_elements) / 3) * relative_error
-            self.time_conv_4 += time.time() - init_time
-
-            init_time = time.time()
             divisor += (sum(sum_elements) / 3)
-            self.time_conv_5 += time.time() - init_time
         return math.sqrt(divisible / divisor)
 
 
     def calculate_u(self):
-        self.time_init_subd_params = 0
-        self.time_init_data = 0
-        self.time_init_lists = 0
-        self.time_dirichlet = 0
-        self.time_neumann = 0
-        self.time_schwarz = 0
-        self.time_get_u = 0
-        self.time_internal_plus_insert = 0
-        self.time_final = 0
-        self.time_sum_elements = 0
-        self.time_conv = 0
-
-        self.time_schwarz_indices = 0
-        self.time_schwarz_1 = 0
-        self.time_schwarz_2 = 0
-        self.time_schwarz_3 = 0
-        self.time_schwarz_4 = 0
-        self.time_schwarz_5 = 0
-
-        self.time_dirichlet_indices = 0
-        self.time_dirichlet_1 = 0
-        self.time_dirichlet_2 = 0
-        self.time_dirichlet_3 = 0
-        self.time_dirichlet_4 = 0
-        self.time_dirichlet_5 = 0
-
-        self.time_conv_1 = 0
-        self.time_conv_2 = 0
-        self.time_conv_3 = 0
-        self.time_conv_4 = 0
-        self.time_conv_5 = 0
-
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
+        self.list_sum_elements = [base_func.calculate_local_matrix_stiffness(i, self.area_points_coords, self.dim_task)[1] for i in self.area_elements]
 
-        init_time = time.time()
         self.init_subd_params()
-        self.time_init_subd_params += time.time() - init_time
-
         self.list_neumann_elements_subd = []
         self.list_schwarz_points = []
         self.list_dirichlet_points = []
-
-        self.list_sum_elements = [base_func.calculate_local_matrix_stiffness(i, self.area_points_coords, self.dim_task)[1] for i in self.area_elements]
-        
-        
-        init_time = time.time()
+          
         for idv in range(len(self.list_full_subd_elements)):          
             temp = []
             for element in self.list_subd_elements[idv]:
@@ -216,56 +140,31 @@ class schwarz_multiplicative(basic_method):
 
             self.list_schwarz_points.append(sum([list(set(self.subd_boundary_overlap_points[idv]) & set(subd)) for idx, subd in enumerate(self.list_subd_points) if idx != idv], []))
             self.list_dirichlet_points.append(list(set(self.dirichlet_points.keys()) & set(self.list_subd_points[idv])))
-        self.time_init_lists += time.time() - init_time
 
         while True:
             self.internal_initialize_displacements()
             for idv in range(len(self.list_full_subd_elements)):
-                init_time = time.time()
                 self.dict_points_local_to_global = dict(zip(range(len(self.list_subd_points[idv])), self.list_subd_points[idv]))
                 self.dict_points_global_to_local = {v: k for k, v in self.dict_points_local_to_global.items()}
                 
                 self.K = self.K_array[idv].copy()
                 self.F = np.zeros(self.list_subd_points_coords[idv].size)
-                self.time_init_data += time.time() - init_time
 
-                init_time = time.time()
                 self.set_condition_dirichlet_sub(idv)
-                self.time_dirichlet += time.time() - init_time
-
-                init_time = time.time()
                 self.set_condition_neumann_sub(idv)
-                self.time_neumann += time.time() - init_time
-
-                init_time = time.time()
                 self.set_condition_schwarz_sub(idv, self.u_current)
-                self.time_schwarz += time.time() - init_time
 
-                init_time = time.time()
                 [*arg,] = self.solve_function(self.K.tocsr(), self.F)
                 u_subd = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
-                self.time_get_u += time.time() - init_time
 
-                init_time = time.time()
                 for x in list(self.dict_points_local_to_global.keys()):
                     self.u_current[self.dict_points_local_to_global[x], :] = np.copy(u_subd[x, :])
 
                 self.internal_additional_calculations()
-                self.time_internal_plus_insert += time.time() - init_time
 
             self.amnt_iterations += 1
-            
-            init_time = time.time()
             self.interal_final_calculate_u()
-            self.time_final += time.time() - init_time
-
-            init_time = time.time()
-            # self.list_sum_elements = [base_func.calculate_local_matrix_stiffness(i, self.area_points_coords + self.u * self.coef_u, self.dim_task)[1] for i in self.area_elements]
-            self.time_sum_elements += time.time() - init_time
-
-            init_time = time.time()
             crit_convergence = self.calculate_crit_convergence()
-            self.time_conv += time.time() - init_time
 
             # print(f"{crit_convergence:.3e}", end = "\r")
             if crit_convergence < self.coef_convergence:

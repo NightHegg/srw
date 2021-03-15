@@ -17,12 +17,12 @@ def test():
     example_data = {
         'area':             'area_01',
         'task':             'task_01',
-        'mesh':             '5.0e-04',
+        'mesh':             '2.00e-04',
         'amnt_subds':       [2, 1],
-        'coef_convergence': 1e-4,
+        'coef_convergence': 1e-5,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
-        'coarse_mesh':      '1.5e-03'
+        'coarse_mesh':      '5.0e-03'
     }
     obj = schwarz_two_level_additive(example_data)
     obj.get_solution()
@@ -32,11 +32,11 @@ def test():
 
 def task_iters_sigma():
     data = {
-        'method':          schwarz_multiplicative,
-        'text':            'multiplicative',
+        'method':          schwarz_two_level_additive,
+        'text':            'two_level_additive',
         'area':            'area_01',
-        'task':            'task_01',
-        'mesh_list':       ["5.0e-04", "2.5e-04", "1.3e-04"],
+        'task':            'task_02',
+        'mesh_list':       ["4.00e-04", "2.00e-04", "1.00e-04"],
         'amnt_subds_list': [[2, 1], [4, 1], [8, 1]]
     }
 
@@ -91,9 +91,9 @@ def task_iters_sigma():
     print(df_sigma)
     print(df_time)
 
-    df_iters.to_csv(f'results/{data["area"]}/{data["task"]}/iterations/{data["text"]}.csv')
-    df_sigma.to_csv(f'results/{data["area"]}/{data["task"]}/sigma/{data["text"]}.csv')
-    df_time.to_csv(f'results/{data["area"]}/{data["task"]}/time/{data["text"]}.csv')
+    df_iters.to_csv(f'results/{data["area"]}/{data["task"]}/iterations/{data["text"]}.csv', index = False)
+    df_sigma.to_csv(f'results/{data["area"]}/{data["task"]}/sigma/{data["text"]}.csv', index = False)
+    df_time.to_csv(f'results/{data["area"]}/{data["task"]}/time/{data["text"]}.csv', index = False)
 
 
 def parallel():
@@ -101,4 +101,6 @@ def parallel():
 
 
 if __name__ == "__main__":
-    test()
+    init_time = time.time()
+    task_iters_sigma()
+    print(time.time() - init_time)

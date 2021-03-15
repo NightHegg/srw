@@ -42,11 +42,11 @@ class schwarz_two_level_additive(schwarz_additive):
         self.name_method = "schwarz additive two level method"
 
         coarse_mesh = meshio.read(f'data/{data["area"]}/meshes/{data["coarse_mesh"]}.dat')
-        
+
         self.area_coarse_points_coords = coarse_mesh.points
         self.area_coarse_points = [num for num, _ in enumerate(self.area_coarse_points_coords)]
         self.area_coarse_elements = coarse_mesh.cells_dict["triangle"]
- 
+
         self.dirichlet_coarse_points = {}
         self.neumann_coarse_points = {}
 
@@ -62,19 +62,6 @@ class schwarz_two_level_additive(schwarz_additive):
                             self.dirichlet_coarse_points[point] = [self.dirichlet_coarse_points[point][0], row[3]]
                     else:
                         self.dirichlet_coarse_points[point] = [row[2], row[3]]
-                   
-        for row in self.neumann_conditions:
-            a, b = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
-            for point in self.area_coarse_points:
-                point_coords = np.array(self.area_coarse_points_coords[point])
-                if abs(np.cross(b-a, point_coords - a)) < 1e-15 and np.dot(b-a, point_coords - a) >= 0 and np.dot(b-a, point_coords - a) < np.linalg.norm(a-b):
-                    if point in self.neumann_coarse_points:
-                        if math.isnan(self.neumann_points[point][0]) and not math.isnan(row[2]):
-                            self.neumann_coarse_points[point] = [row[2], self.neumann_coarse_points[point][1]]
-                        else:
-                            self.neumann_coarse_points[point] = [self.neumann_coarse_points[point][0], row[3]]
-                    else:
-                        self.neumann_coarse_points[point] = [row[2], row[3]]
 
         self.K_special = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
         self.F_special = np.zeros(self.area_points_coords.size)
@@ -107,7 +94,6 @@ class schwarz_two_level_additive(schwarz_additive):
                 F_coarse[element[i] * self.dim_task : (element[i] + 1) * self.dim_task] += local_coords(point_coords, i) * residual[point * self.dim_task : (point + 1) * self.dim_task]
         
         self.set_condition_dirichlet(K_coarse, F_coarse, self.dirichlet_coarse_points)
-
         [*arg,] = self.solve_function(K_coarse.tocsr(), F_coarse)
         u_coarse = np.ravel(np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2)))
 
