@@ -17,14 +17,14 @@ def test():
     example_data = {
         'area':             'area_01',
         'task':             'task_01',
-        'mesh':             '2.00e-04',
+        'mesh':             '4.00e-04',
         'amnt_subds':       [2, 1],
-        'coef_convergence': 1e-5,
+        'coef_convergence': 1e-4,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
-        'coarse_mesh':      '5.0e-03'
+        'coarse_mesh':      '9.5e-04'
     }
-    obj = schwarz_two_level_additive(example_data)
+    obj = schwarz_multiplicative(example_data)
     obj.get_solution()
     print(*obj.get_info())
     obj.plot_displacements(False)
@@ -101,6 +101,4 @@ def parallel():
 
 
 if __name__ == "__main__":
-    init_time = time.time()
-    task_iters_sigma()
-    print(time.time() - init_time)
+    test()

@@ -179,26 +179,19 @@ def calculate_subd_parameters(area_bounds, area_points_coords, area_elements, co
 def calculate_element_area(p_1, p_2, p_3):
     return abs((p_1[0] - p_3[0]) * (p_2[1] - p_3[1]) - (p_2[0] - p_3[0]) * (p_1[1] - p_3[1])) / 2
 
+def create_barycentric_coords(element, points):
+    x_points = np.array([points[element[i], 0] for i in range(3)])
+    y_points = np.array([points[element[i], 1] for i in range(3)])
 
-def calculate_local_functions(element, points):
-    def temp(chosen_point, i):
-        '''
-        element - элемент, в котором идёт расчёт \n
-        points - массив координат \n
-        dimTask - размерность \n
-        '''
-        x_points = np.array([points[element[i], 0] for i in range(3)])
-        y_points = np.array([points[element[i], 1] for i in range(3)])
+    a = np.array([x_points[1] * y_points[2] - x_points[2] * y_points[1], 
+                    x_points[2] * y_points[0] - x_points[0] * y_points[2],
+                    x_points[0] * y_points[1] - x_points[1] * y_points[0]] )
+    b = np.array([y_points[1]-y_points[2], y_points[2]-y_points[0], y_points[0]-y_points[1]])
+    c = np.array([x_points[2]-x_points[1], x_points[0]-x_points[2], x_points[1]-x_points[0]])
 
-        a = np.array([x_points[1] * y_points[2] - x_points[2] * y_points[1], 
-                      x_points[2] * y_points[0] - x_points[0] * y_points[2],
-                      x_points[0] * y_points[1] - x_points[1] * y_points[0]] )
-        b = np.array([y_points[1]-y_points[2], y_points[2]-y_points[0], y_points[0]-y_points[1]])
-        c = np.array([x_points[2]-x_points[1], x_points[0]-x_points[2], x_points[1]-x_points[0]])
-
-        A = 0.5 * np.linalg.det(np.vstack((np.ones_like(x_points), x_points, y_points)))
-        return (a[i] + b[i] * chosen_point[0] + c[i] * chosen_point[1]) / 2 / A
-    return temp
+    A = 0.5 * np.linalg.det(np.vstack((np.ones_like(x_points), x_points, y_points)))
+    dict_temp = {'barycentric_coords': np.vstack((a, b, c)), 'area_of_element': A}
+    return dict_temp
 
 
 if __name__ == "__main__":

@@ -16,12 +16,14 @@ from scr.class_basic_method import basic_method
 
 class schwarz_multiplicative(basic_method):
     def __init__(self, data):
+        init_time = time.time()
         super().__init__(data)
 
         self.name_method = "schwarz multiplicative method"
         self.cur_amnt_subds = data['amnt_subds']
         self.coef_convergence = data['coef_convergence']
         self.coef_overlap = data['coef_overlap']
+        self.time_init = time.time() - init_time
 
 
     def init_subd_params(self):
@@ -48,55 +50,26 @@ class schwarz_multiplicative(basic_method):
         self.u_current = np.copy(self.u)
 
 
-    def set_condition_dirichlet_sub(self, idv):
-        for point in self.list_dirichlet_points[idv]:
-            for idx, cur_condition in enumerate(self.dirichlet_points[point]):
-                modified_point = self.dict_points_global_to_local[point]
-                if not math.isnan(cur_condition):
-                    indices = np.array(self.K.rows[modified_point * self.dim_task + idx])
+    def get_condition_schwarz(self, K, F, list_schwarz_points, modifier):
+        def temp(array_condition):
+            for point in list_schwarz_points:
+                modified_point = modifier[point]
+                for cur_dim in range(self.dim_task):
+                    value = array_condition[point, cur_dim]
+                    indices = np.array(K.rows[modified_point * self.dim_task + cur_dim])
 
-                    self.F[indices] -= np.array(self.K.data[modified_point * self.dim_task + idx]) * cur_condition
-                    
+                    F[indices] -= np.array(K.data[modified_point * self.dim_task + cur_dim]) * value
                     for index in indices:
-                        self.K[modified_point * self.dim_task + idx, index] = 0
-                    
+                        K[modified_point * self.dim_task + cur_dim, index] = 0
                     for index in indices:
-                        self.K[index, modified_point * self.dim_task + idx] = 0
-
-                    self.K[modified_point * self.dim_task + idx, modified_point * self.dim_task + idx] = 1
-                    self.F[modified_point * self.dim_task + idx] = cur_condition
-
-
-    def set_condition_neumann_sub(self, idv):
-        for element in self.list_neumann_elements_subd[idv]:
-            points = list(set(element) & set(self.neumann_points.keys()))
-            points_coords = [self.area_points_coords[point] for point in points]
-            len = np.linalg.norm(np.array(points_coords[1]) - np.array(points_coords[0]))
-            for point in points:
-                for idx, cur_condition in enumerate(self.neumann_points[point]):
-                    modified_point = self.dict_points_global_to_local[point]
-                    if not math.isnan(cur_condition):
-                        self.F[modified_point * self.dim_task + idx] += cur_condition * len / 2
+                        K[index, modified_point * self.dim_task + cur_dim] = 0
+                    K[modified_point * self.dim_task + cur_dim, modified_point * self.dim_task + cur_dim] = 1
+                    F[modified_point * self.dim_task + cur_dim] = value
+        return temp
 
 
-    def set_condition_schwarz_sub(self, idv, array_condition):
-        for point in self.list_schwarz_points[idv]:
-            modified_point = self.dict_points_global_to_local[point]
-            for cur_dim in range(self.dim_task):
-                value = array_condition[point, cur_dim]
-
-                indices = np.array(self.K.rows[modified_point * self.dim_task + cur_dim])
-
-                self.F[indices] -= np.array(self.K.data[modified_point * self.dim_task + cur_dim]) * value
-
-                for index in indices:
-                    self.K[modified_point * self.dim_task + cur_dim, index] = 0
-
-                for index in indices:
-                    self.K[index, modified_point * self.dim_task + cur_dim] = 0
-
-                self.K[modified_point * self.dim_task + cur_dim, modified_point * self.dim_task + cur_dim] = 1
-                self.F[modified_point * self.dim_task + cur_dim] = value
+    def set_condition_schwarz(self, function_condition_schwarz):
+        function_condition_schwarz(self.u_current)
 
 
     def internal_additional_calculations(self):
@@ -122,24 +95,30 @@ class schwarz_multiplicative(basic_method):
 
 
     def calculate_u(self):
+        self.time_final_u_calculations = 0
+        self.time_final_1 = 0
+        self.time_final_2 = 0
+        self.time_final_3 = 0
+        self.time_final_4 = 0
+
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
         self.list_sum_elements = [base_func.calculate_local_matrix_stiffness(i, self.area_points_coords, self.dim_task)[1] for i in self.area_elements]
 
         self.init_subd_params()
-        self.list_neumann_elements_subd = []
-        self.list_schwarz_points = []
-        self.list_dirichlet_points = []
+        list_subd_neumann_points = []
+        list_subd_schwarz_points = []
+        list_subd_dirichlet_points = []
           
         for idv in range(len(self.list_full_subd_elements)):          
             temp = []
             for element in self.list_subd_elements[idv]:
-                if len(set(self.area_elements[element]) & set(self.neumann_points.keys())) == 2:
+                if len(set(self.area_elements[element]) & set(self.dict_area_neumann_points.keys())) == 2:
                     temp.append(self.area_elements[element])
-            self.list_neumann_elements_subd.append(temp)
+            list_subd_neumann_points.append(temp)
 
-            self.list_schwarz_points.append(sum([list(set(self.subd_boundary_overlap_points[idv]) & set(subd)) for idx, subd in enumerate(self.list_subd_points) if idx != idv], []))
-            self.list_dirichlet_points.append(list(set(self.dirichlet_points.keys()) & set(self.list_subd_points[idv])))
+            list_subd_schwarz_points.append(sum([list(set(self.subd_boundary_overlap_points[idv]) & set(subd)) for idx, subd in enumerate(self.list_subd_points) if idx != idv], []))
+            list_subd_dirichlet_points.append(list(set(self.dict_area_dirichlet_points.keys()) & set(self.list_subd_points[idv])))
 
         while True:
             self.internal_initialize_displacements()
@@ -147,25 +126,26 @@ class schwarz_multiplicative(basic_method):
                 self.dict_points_local_to_global = dict(zip(range(len(self.list_subd_points[idv])), self.list_subd_points[idv]))
                 self.dict_points_global_to_local = {v: k for k, v in self.dict_points_local_to_global.items()}
                 
-                self.K = self.K_array[idv].copy()
-                self.F = np.zeros(self.list_subd_points_coords[idv].size)
+                K = self.K_array[idv].copy()
+                F = np.zeros(self.list_subd_points_coords[idv].size)
 
-                self.set_condition_dirichlet_sub(idv)
-                self.set_condition_neumann_sub(idv)
-                self.set_condition_schwarz_sub(idv, self.u_current)
+                self.set_condition_dirichlet(K, F, list_subd_dirichlet_points[idv], self.dict_points_global_to_local)
+                self.set_condition_neumann(F, list_subd_neumann_points[idv], self.dict_points_global_to_local)
 
-                [*arg,] = self.solve_function(self.K.tocsr(), self.F)
+                function_condition_schwarz = self.get_condition_schwarz(K, F, list_subd_schwarz_points[idv], self.dict_points_global_to_local)
+                self.set_condition_schwarz(function_condition_schwarz)
+
+                [*arg,] = self.solve_function(K.tocsr(), F)
                 u_subd = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
 
                 for x in list(self.dict_points_local_to_global.keys()):
                     self.u_current[self.dict_points_local_to_global[x], :] = np.copy(u_subd[x, :])
-
                 self.internal_additional_calculations()
 
             self.amnt_iterations += 1
             self.interal_final_calculate_u()
-            crit_convergence = self.calculate_crit_convergence()
 
+            crit_convergence = self.calculate_crit_convergence()
             # print(f"{crit_convergence:.3e}", end = "\r")
             if crit_convergence < self.coef_convergence:
                 break
@@ -193,49 +173,12 @@ class schwarz_multiplicative(basic_method):
         plt.show()
 
 
-    def get_info(self):
-        message = []
-        super().construct_info(message)
-        message.append(f'Amount of iterations: {self.amnt_iterations}\n')
-        message.append(f'{"-" * 5}\n')
-        # message.append(f'Time for getting subd params: {self.time_init_subd_params} ({self.time_init_subd_params / self.time_full_u:.2%})\n')
-        # message.append(f'Time for getting lists: {self.time_init_lists} ({self.time_init_lists / self.time_full_u:.2%})\n')
-        # message.append(f'Time for getting K, F, dicts: {self.time_init_data} ({self.time_init_data / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting dirichlet: {self.time_dirichlet} ({self.time_dirichlet / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting neumann: {self.time_neumann} ({self.time_neumann / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting schwarz: {self.time_schwarz} ({self.time_schwarz / self.time_full_u:.2%})\n')
-        # message.append(f'Time for getting u: {self.time_get_u} ({self.time_get_u / self.time_full_u:.2%})\n')
-        # message.append(f'Time for internal additional: {self.time_internal_plus_insert} ({self.time_internal_plus_insert / self.time_full_u:.2%})\n')
-        # message.append(f'Time for final calculations: {self.time_final} ({self.time_final / self.time_full_u:.2%})\n')
-        # message.append(f'Time for sum elements: {self.time_sum_elements} ({self.time_sum_elements / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence: {self.time_conv} ({self.time_conv / self.time_full_u:.2%})\n')
-        # message.append(f'{"-" * 5}\n')
-        # message.append(f'Time for convergence 1: {self.time_conv_1} ({self.time_conv_1 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence 2: {self.time_conv_2} ({self.time_conv_2 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence 3: {self.time_conv_3} ({self.time_conv_3 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence 4: {self.time_conv_4} ({self.time_conv_4 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for convergence 5: {self.time_conv_5} ({self.time_conv_5 / self.time_full_u:.2%})\n')
-        # message.append(f'{"-" * 5}\n')
-        # message.append(f'Time for setting schwarz indices: {self.time_schwarz_indices} ({self.time_schwarz_indices / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting schwarz 1: {self.time_schwarz_1} ({self.time_schwarz_1 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting schwarz 2: {self.time_schwarz_2} ({self.time_schwarz_2 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting schwarz 3: {self.time_schwarz_3} ({self.time_schwarz_3 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting schwarz 4: {self.time_schwarz_4} ({self.time_schwarz_4 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting schwarz 5: {self.time_schwarz_5} ({self.time_schwarz_5 / self.time_full_u:.2%})\n')
-        # message.append(f'{"-" * 5}\n')
-        # message.append(f'Time for setting dirichlet indices: {self.time_dirichlet_indices} ({self.time_dirichlet_indices / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting dirichlet 1: {self.time_dirichlet_1} ({self.time_dirichlet_1 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting dirichlet 2: {self.time_dirichlet_2} ({self.time_dirichlet_2 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting dirichlet 3: {self.time_dirichlet_3} ({self.time_dirichlet_3 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting dirichlet 4: {self.time_dirichlet_4} ({self.time_dirichlet_4 / self.time_full_u:.2%})\n')
-        # message.append(f'Time for setting dirichlet 5: {self.time_dirichlet_5} ({self.time_dirichlet_5 / self.time_full_u:.2%})\n')
-        # message.append(f'{"-" * 5}\n')
-
-        return message
-
-    
-    def time(self):
-        print(f'Solver time = {self.time_execution_solver / self.time_execution:.2%}')
+    def construct_info(self):
+        super().construct_info()
+        self.message['iterations'] = [
+            f'Amount of iterations: {self.amnt_iterations}\n',
+            f'{"-" * 5}\n'
+        ]
 
 
 if __name__ == "__main__":

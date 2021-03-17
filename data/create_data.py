@@ -39,9 +39,22 @@ class Task:
                 f.write(f'{cond[0]:g} {cond[1]:g} {cond[2]:g} {cond[3]:g}\n')
 
     def create_mesh(self, edge_size):
-        self.geo = dmsh.Polygon(self.contour)
-        self.X, self.cells = dmsh.generate(self.geo, edge_size)
-        self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (full)", 1.0e-10, 100)
+        if self.area_params['folder_name'] == 'area_01':
+            self.geo = dmsh.Polygon(self.contour)
+            self.X, self.cells = dmsh.generate(self.geo, edge_size)
+            self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (full)", 1.0e-10, 100)
+        elif self.area_params['folder_name'] == 'area_02':
+            low_r = dmsh.Rectangle(-2.0, 0, 0, 2.0)
+            left_r = dmsh.Rectangle(-2.0, 2.0, -2.0, 0.0)
+            full_polygon = dmsh.Union([low_r, left_r])
+
+            big_c = dmsh.Circle([0.0, 0.0], 2)
+            small_c = dmsh.Circle([0.0, 0.0], 1)        
+            quarter = dmsh.Difference(big_c, small_c)
+      
+            self.geo = dmsh.Difference(quarter, full_polygon)
+            self.X, self.cells = dmsh.generate(self.geo, edge_size)
+            # self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (full)", 1.0e-10, 100)
 
     def show_mesh(self):
         dmsh.helpers.show(self.X, self.cells, self.geo)
@@ -53,8 +66,17 @@ class Task:
 
 if __name__ == "__main__":
     area_params = [
+        # {
+        #     'folder_name': 'area_01',
+        #     'points':      [[0.01, 0], [0.02, 0], [0.02, 0.01], [0.01, 0.01]],
+        #     'dim_task':    2,
+        #     'E':           70e+9,
+        #     'nyu':         0.34,
+        #     'coef_u':      1000,
+        #     'coef_sigma':  1e-3
+        # },
         {
-            'folder_name': 'area_01',
+            'folder_name': 'area_02',
             'points':      [[0.01, 0], [0.02, 0], [0.02, 0.01], [0.01, 0.01]],
             'dim_task':    2,
             'E':           70e+9,
@@ -75,7 +97,7 @@ if __name__ == "__main__":
             'neumann_conditions':   [[2, 3, math.nan, -2e+7]]
         }
     ]
-    list_edge_size = [0.00035]
+    list_edge_size = [0.1]
 
     for cur_area in area_params:
         obj = Task(cur_area)
@@ -85,4 +107,5 @@ if __name__ == "__main__":
 
         for cur_edge_size in list_edge_size:
             obj.create_mesh(cur_edge_size)
-            obj.write_mesh(cur_edge_size)
+            obj.show_mesh()
+            # obj.write_mesh(cur_edge_size)

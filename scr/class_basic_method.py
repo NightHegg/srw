@@ -13,23 +13,25 @@ import scipy
 
 import scr.functions as base_func
 
-def check(a, b):
-    return a
 
 class basic_method:
     def __init__(self, data):
+        init_time = time.time()
         self.name_method = "basic method"
+        self.message = {}
+        self.data = data
+
         self.solve_function = linalg.spsolve
         temp_contour = []
 
-        with open(f'data/{data["area"]}/contour.dat', 'r') as f:
+        with open(f'data/{self.data["area"]}/contour.dat', 'r') as f:
             for _ in range(int(f.readline())):
                 temp_contour.append([float(x) for x in f.readline().split()])
             self.dim_task = int(f.readline())
             E, nyu = list(map(float, f.readline().split()))
             self.coef_u, self.coef_sigma = list(map(float, f.readline().split()))
 
-        mesh = meshio.read(f'data/{data["area"]}/meshes/{data["mesh"]}.dat')
+        mesh = meshio.read(f'data/{self.data["area"]}/meshes/{self.data["mesh"]}.dat')
         
         self.contour_points = np.append(np.array(temp_contour), [temp_contour[0]], axis = 0)
         self.area_points_coords = mesh.points
@@ -42,10 +44,10 @@ class basic_method:
  
         self.dirichlet_conditions = []
         self.neumann_conditions = []
-        self.dirichlet_points = {}
-        self.neumann_points = {}
+        self.dict_area_dirichlet_points = {}
+        self.dict_area_neumann_points = {}
 
-        with open(f'data/{data["area"]}/tasks/{data["task"]}.dat', 'r') as f:
+        with open(f'data/{self.data["area"]}/tasks/{self.data["task"]}.dat', 'r') as f:
             for _ in range(int(f.readline())):
                 self.dirichlet_conditions.append([int(val) if idx in [0, 1] else float(val) for idx, val in enumerate(f.readline().split())])
             for _ in range(int(f.readline())):
@@ -56,63 +58,67 @@ class basic_method:
             for point in self.area_points:
                 point_coords = np.array(self.area_points_coords[point])
                 if abs(np.cross(b-a, point_coords - a)) < 1e-15 and np.dot(b-a, point_coords - a) >= 0 and np.dot(b-a, point_coords - a) < np.linalg.norm(a-b):
-                    if point in self.dirichlet_points:
-                        if math.isnan(self.dirichlet_points[point][0]) and not math.isnan(row[2]):
-                            self.dirichlet_points[point] = [row[2], self.dirichlet_points[point][1]]
+                    if point in self.dict_area_dirichlet_points:
+                        if math.isnan(self.dict_area_dirichlet_points[point][0]) and not math.isnan(row[2]):
+                            self.dict_area_dirichlet_points[point] = [row[2], self.dict_area_dirichlet_points[point][1]]
                         else:
-                            self.dirichlet_points[point] = [self.dirichlet_points[point][0], row[3]]
+                            self.dict_area_dirichlet_points[point] = [self.dict_area_dirichlet_points[point][0], row[3]]
                     else:
-                        self.dirichlet_points[point] = [row[2], row[3]]
+                        self.dict_area_dirichlet_points[point] = [row[2], row[3]]
                    
         for row in self.neumann_conditions:
             a, b = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
             for point in self.area_points:
                 point_coords = np.array(self.area_points_coords[point])
                 if abs(np.cross(b-a, point_coords - a)) < 1e-15 and np.dot(b-a, point_coords - a) >= 0 and np.dot(b-a, point_coords - a) < np.linalg.norm(a-b):
-                    if point in self.neumann_points:
-                        if math.isnan(self.neumann_points[point][0]) and not math.isnan(row[2]):
-                            self.neumann_points[point] = [row[2], self.neumann_points[point][1]]
+                    if point in self.dict_area_neumann_points:
+                        if math.isnan(self.dict_area_neumann_points[point][0]) and not math.isnan(row[2]):
+                            self.dict_area_neumann_points[point] = [row[2], self.dict_area_neumann_points[point][1]]
                         else:
-                            self.neumann_points[point] = [self.neumann_points[point][0], row[3]]
+                            self.dict_area_neumann_points[point] = [self.dict_area_neumann_points[point][0], row[3]]
                     else:
-                        self.neumann_points[point] = [row[2], row[3]]
-        self.list_neumann_elements = []
+                        self.dict_area_neumann_points[point] = [row[2], row[3]]
+        
+        self.list_area_neumann_elements = []
         for element in self.area_elements:
-            if len(set(element) & set(self.neumann_points.keys())) == 2:
-                self.list_neumann_elements.append(element)
+            if len(set(element) & set(self.dict_area_neumann_points.keys())) == 2:
+                self.list_area_neumann_elements.append(element)
+        self.time_init = time.time() - init_time
 
 
-    def set_condition_dirichlet(self, K, F, dirichlet_points):
-        for point in dirichlet_points.keys():
-            for idx, cur_condition in enumerate(dirichlet_points[point]):
+    def set_condition_dirichlet(self, K, F, list_dirichlet_points, modifier = {}):
+        for point in list_dirichlet_points:
+            for idx, cur_condition in enumerate(self.dict_area_dirichlet_points[point]):
+                modified_point = modifier[point] if modifier else point
                 if not math.isnan(cur_condition):
-                    indices = np.array(K.rows[point * self.dim_task + idx])
-                    F[indices] -= np.array(K.data[point * self.dim_task + idx]) * cur_condition
+                    indices = np.array(K.rows[modified_point * self.dim_task + idx])
+                    F[indices] -= np.array(K.data[modified_point * self.dim_task + idx]) * cur_condition
                     for index in indices:
-                        K[point * self.dim_task + idx, index] = 0
+                        K[modified_point * self.dim_task + idx, index] = 0
                     for index in indices:
-                        K[index, point * self.dim_task + idx] = 0
-                    K[point * self.dim_task + idx, point * self.dim_task + idx] = 1
-                    F[point * self.dim_task + idx] = cur_condition
+                        K[index, modified_point * self.dim_task + idx] = 0
+                    K[modified_point * self.dim_task + idx, modified_point * self.dim_task + idx] = 1
+                    F[modified_point * self.dim_task + idx] = cur_condition
 
 
-    def set_condition_neumann(self, F):
-        for element in self.list_neumann_elements:
-            points = list(set(element) & set(self.neumann_points.keys()))
+    def set_condition_neumann(self, F, list_neumann_points, modifier = {}):
+        for element in list_neumann_points:
+            points = list(set(element) & set(self.dict_area_neumann_points.keys()))
             points_coords = [self.area_points_coords[point] for point in points]
             len = np.linalg.norm(np.array(points_coords[1]) - np.array(points_coords[0]))
-            for cur_point in points:
-                for idx, cur_condition in enumerate(self.neumann_points[cur_point]):
+            for point in points:
+                for idx, cur_condition in enumerate(self.dict_area_neumann_points[point]):
+                    modified_point = modifier[point] if modifier else point
                     if not math.isnan(cur_condition):
-                        F[cur_point * self.dim_task + idx] += cur_condition * len / 2
+                        F[modified_point * self.dim_task + idx] += cur_condition * len / 2
 
         
     def calculate_u(self):
         self.K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
         self.F = np.zeros(self.area_points_coords.size)
 
-        self.set_condition_dirichlet(self.K, self.F, self.dirichlet_points)
-        self.set_condition_neumann(self.F)
+        self.set_condition_dirichlet(self.K, self.F, self.dict_area_dirichlet_points.keys())
+        self.set_condition_neumann(self.F, self.list_area_neumann_elements)
 
         *arg, = self.solve_function(self.K.tocsr(), self.F)
         self.u = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
@@ -123,7 +129,8 @@ class basic_method:
 
         for element in self.area_elements:
             B, _ = base_func.calculate_local_matrix_stiffness(element, self.area_points_coords, self.dim_task)
-            temp_array.append(np.dot(B, np.ravel(np.array([self.u[element[0]], self.u[element[1]], self.u[element[2]]])).transpose()))
+            # temp_array.append(np.dot(B, np.ravel(np.array([self.u[element[0]], self.u[element[1]], self.u[element[2]]])).T))
+            temp_array.append(np.dot(B, np.ravel([self.u[element[idx]] for idx in range(len(element))]).T))
 
         self.Eps = np.array(temp_array)
 
@@ -136,13 +143,14 @@ class basic_method:
         init_global = time.time()
         init_time = time.time()
         self.calculate_u()
-        self.time_full_u = time.time() - init_time
+        self.time_u = time.time() - init_time
 
         init_time = time.time()
         self.calculate_eps()
         self.calculate_sigma()
         self.time_eps_sigma = time.time() - init_time
-        self.time_global = time.time() - init_global
+        self.time_getting_solution = time.time() - init_global
+        self.time_global = self.time_getting_solution + self.time_init
 
     def internal_plot_displacements(self, vector_u, area_points_coords, area_elements, plot_global_mesh = True):
         fig, ax = plt.subplots()
@@ -180,21 +188,30 @@ class basic_method:
         plt.show()
 
     
-    def construct_info(self, message):
-        message.append(f' Method: {self.name_method}\n')
-        message.append(f'{"-" * 5}\n')
-        message.append(f'Time of calculation global: {self.time_global:.2f}\n')
-        message.append(f'Time of calculation displacements: {self.time_full_u}\n')
-        message.append(f'Time of calculation eps+sigma: {self.time_eps_sigma}\n')
-        message.append(f'{"-" * 5}\n')
-        message.append(f'Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n')
-        message.append(f'Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n')
-        message.append(f'{"-" * 5}\n')
+    def construct_info(self):
+        self.message['main_info'] = [
+            f' area: {self.data["area"]}\n',
+            f'task: {self.data["task"]}\n',
+            f'mesh: {self.data["mesh"]}\n',
+            f'method: {self.name_method}\n',
+            f'{"-" * 5}\n'
+        ]
+        self.message['time'] = [
+            f'Global time: {self.time_global:.2f}\n',
+            f'Time of initialization: {self.time_init:.2f} ({self.time_init / self.time_global:.2%})\n',
+            f'Time of calculation displacements: {self.time_u} ({self.time_u / self.time_global:.2%})\n',
+            f'Time of calculation eps+sigma: {self.time_eps_sigma} ({self.time_eps_sigma / self.time_global:.2%})\n',
+            f'{"-" * 5}\n'
+        ]
+        self.message['diff_stress'] = [
+            f'Minimal difference for stress: {abs(abs(min(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n',
+            f'Maximal difference for stress: {abs(abs(max(self.Sigma[1])) - 2e+7) / 2e+7:.2e}\n',
+            f'{"-" * 5}\n'
+        ]
 
     def get_info(self):
-        message = []
-        self.construct_info(message)
-        return message
+        self.construct_info()
+        return sum(list(self.message.values()), [])
 
 
     def get_special_sigma(self):
