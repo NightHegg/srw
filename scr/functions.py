@@ -167,12 +167,6 @@ def calculate_subd_parameters(area_bounds, area_points_coords, area_elements, co
         subd_boundary_overlap_points.append(list(set(temp_list_overlap)))
     time_list.append(time.time() - init_time)
 
-    # for idx, subd in enumerate(list_subd_elements):
-    #     subd_internal_points.append(list(set(list_subd_points[idx]) - set(subd_boundary_points[idx])))
-
-    # for idx, cur_time in enumerate(time_list):
-    #     print(idx, cur_time)
-
     return list_full_subd_elements, list_subd_elements, list_subd_points, list_subd_points_coords, subd_boundary_overlap_points, dict_elements_contain_point
 
 

@@ -1,8 +1,6 @@
 import os
 import sys
 
-import time
-import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
@@ -13,20 +11,21 @@ from scr.class_schwarz_additive import schwarz_additive
 from scr.class_schwarz_two_level_additive import schwarz_two_level_additive
 
 
-def test():
+def test(cur_area, cur_task):
     example_data = {
-        'area':             'area_01',
-        'task':             'task_01',
-        'mesh':             '4.00e-04',
+        'area':             cur_area,
+        'task':             cur_task,
+        'mesh':             '1.0e-01',
         'amnt_subds':       [2, 1],
         'coef_convergence': 1e-4,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
         'coarse_mesh':      '9.5e-04'
     }
-    obj = schwarz_multiplicative(example_data)
+    obj = basic_method(example_data)
+    # obj.plot_init_mesh(False)
     obj.get_solution()
-    print(*obj.get_info())
+    # print(*obj.get_info())
     obj.plot_displacements(False)
 
 
@@ -96,9 +95,8 @@ def task_iters_sigma():
     df_time.to_csv(f'results/{data["area"]}/{data["task"]}/time/{data["text"]}.csv', index = False)
 
 
-def parallel():
-    print(mp.cpu_count())
-
-
 if __name__ == "__main__":
-    test()
+    area_names = ['rectangle', 'thick_walled_cylinder']
+    tasks = {'rectangle': ['3_bindings', '2_bindings'], 'thick_walled_cylinder': ['outer_pressure_only', 'inner_pressure_only', 'both_pressures']}
+    cur_area = area_names[1]
+    test(cur_area, tasks[cur_area][0])

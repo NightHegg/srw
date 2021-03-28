@@ -103,7 +103,6 @@ class schwarz_multiplicative(basic_method):
 
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
-        self.list_sum_elements = [base_func.calculate_local_matrix_stiffness(i, self.area_points_coords, self.dim_task)[1] for i in self.area_elements]
 
         self.init_subd_params()
         list_subd_neumann_points = []
@@ -128,10 +127,10 @@ class schwarz_multiplicative(basic_method):
                 
                 K = self.K_array[idv].copy()
                 F = np.zeros(self.list_subd_points_coords[idv].size)
-
+                
                 self.set_condition_dirichlet(K, F, list_subd_dirichlet_points[idv], self.dict_points_global_to_local)
                 self.set_condition_neumann(F, list_subd_neumann_points[idv], self.dict_points_global_to_local)
-
+                
                 function_condition_schwarz = self.get_condition_schwarz(K, F, list_subd_schwarz_points[idv], self.dict_points_global_to_local)
                 self.set_condition_schwarz(function_condition_schwarz)
 
