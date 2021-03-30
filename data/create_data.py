@@ -5,8 +5,6 @@ from itertools import chain, product
 import matplotlib.pyplot as plt
 
 import numpy as np
-from scipy.spatial import Delaunay
-
 import dmsh, meshio, optimesh
 
 class Task:
@@ -122,7 +120,7 @@ if __name__ == "__main__":
         {
             'outer_pressure_only': {
                 'dirichlet_conditions': {
-                    'inner_side': 0,
+                    'inner_side': math.nan,
                     'outer_side': -2e-4,
                     'other': [[0, 1, math.nan, 0], [2, 3, 0, math.nan]]
                     },

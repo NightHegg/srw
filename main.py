@@ -15,7 +15,7 @@ def test(cur_area, cur_task):
     example_data = {
         'area':             cur_area,
         'task':             cur_task,
-        'mesh':             '1.0e-01',
+        'mesh':             '5.0e-01',
         'amnt_subds':       [2, 1],
         'coef_convergence': 1e-4,
         'coef_overlap':     0.35,
@@ -27,6 +27,7 @@ def test(cur_area, cur_task):
     obj.get_solution()
     # print(*obj.get_info())
     obj.plot_displacements(False)
+    obj.plot_polar()
 
 
 def task_iters_sigma():

@@ -19,14 +19,13 @@ import scr.functions as base_func
 
 
 class basic_method:
-    
     def __init__(self, data):
         init_time = time.time()
         self.name_method = "basic method"
         self.message = {}
         self.data = data
 
-        self.solve_function = linalg.spsolve
+        self.solve_function = linalg.cg
         temp_contour = []
 
         with open(f'data/{self.data["area"]}/area_info.dat', 'r') as f:
@@ -45,7 +44,8 @@ class basic_method:
 
         self.D = np.array([[1, nyu/(1 - nyu), 0],
                         [nyu/(1 - nyu), 1, 0], 
-                        [0, 0, (1 - 2 * nyu) / 2 / (1 - nyu)]]) * E * (1 - nyu) / (1 - 2 * nyu) / (1 + nyu)
+                        [0, 0, (1 - 2 * nyu) / (1 - nyu)]]
+                        ) * E * (1 - nyu) / (1 - 2 * nyu) / (1 + nyu)
  
         dirichlet_conditions = []
         neumann_conditions = []
@@ -55,24 +55,31 @@ class basic_method:
         with open(f'data/{self.data["area"]}/tasks/{self.data["task"]}.dat', 'r') as f:
             if self.data['area'] == 'rectangle':
                 for _ in range(int(f.readline())):
-                    dirichlet_conditions.append([int(val) if idx in [0, 1] else float(val) for idx, val in enumerate(f.readline().split())])
+                    dirichlet_conditions.append([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())])
 
                 for _ in range(int(f.readline())):
-                    neumann_conditions.append([int(val) if idx in [0, 1] else float(val) for idx, val in enumerate(f.readline().split())])
+                    neumann_conditions.append([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())])
             elif self.data['area'] == 'thick_walled_cylinder':
                 self.inner_radius = self.contour_points[0, 0]
                 self.outer_radius = self.contour_points[1, 0]
 
-                dirichlet_conditions.append([self.inner_radius, float(f.readline())])
-                dirichlet_conditions.append([self.outer_radius, float(f.readline())])
+                self.inner_displacement = float(f.readline())
+                self.outer_displacement = float(f.readline())
+                dirichlet_conditions.append([self.inner_radius, self.inner_displacement])
+                dirichlet_conditions.append([self.outer_radius, self.outer_displacement])
+
                 for _ in range(int(f.readline())):
-                    dirichlet_conditions.append([int(val) if idx in [0, 1] else float(val) for idx, val in enumerate(f.readline().split())])
+                    dirichlet_conditions.append([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())])
 
                 self.inner_pressure = float(f.readline())
                 self.outer_pressure = float(f.readline())
                 neumann_conditions.append([self.inner_radius, self.inner_pressure])
                 neumann_conditions.append([self.outer_radius, self.outer_pressure])
+        
+        self.inner_radius_points = np.isclose(self.inner_radius, np.linalg.norm(self.area_points_coords, axis = 1))
+        self.outer_radius_points = np.isclose(self.outer_radius, np.linalg.norm(self.area_points_coords, axis = 1))
 
+        dirichlet_radius_points = []
         if self.data['area'] == 'rectangle':
             for row in dirichlet_conditions:
                 a, b = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
@@ -98,14 +105,14 @@ class basic_method:
                                 self.dict_area_neumann_points[point] = [self.dict_area_neumann_points[point][0], row[3]]
                         else:
                             self.dict_area_neumann_points[point] = [row[2], row[3]]
-        elif self.data['area'] == 'thick_walled_cylinder':
-            for index, row in enumerate(dirichlet_conditions):
-                if index in [0, 1]:
-                    radius, condition = row[0], row[1]
+        elif self.data['area'] == 'thick_walled_cylinder':    
+            for ind, row in enumerate(dirichlet_conditions):
+                if ind in [0, 1]:
+                    radius, displacement = row[0], row[1]
                     for point in self.area_points:
                         point_coords = np.array(self.area_points_coords[point])
                         if np.isclose(np.linalg.norm(point_coords), radius):
-                            self.dict_area_dirichlet_points[point] = point_coords * (condition / radius)
+                            self.dict_area_dirichlet_points[point] = point_coords * (displacement / radius)
                 else:
                     a, b = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
                     for point in self.area_points:
@@ -126,17 +133,15 @@ class basic_method:
                 for point in self.area_points:
                     point_coords = np.array(self.area_points_coords[point])
                     if np.isclose(np.linalg.norm(point_coords), radius):
-                        self.dict_area_neumann_points[point] = point_coords * (pressure / radius)
+                        self.dict_area_neumann_points[point] = pressure
         
         coef_lambda = nyu * E / (1 + nyu) / (1 - 2 * nyu)
         coef_myu = nyu / 2 / (1 + nyu)
 
-        self.outer_radius_points = np.isclose(self.outer_radius, np.linalg.norm(self.area_points_coords, axis = 1))
+        # A = (self.inner_pressure * self.inner_radius ** 2 - self.outer_pressure * self.outer_radius ** 2) / 2 / (coef_lambda + coef_myu) / (self.outer_radius ** 2 - self.inner_radius ** 2)
+        # B = (self.inner_pressure - self.outer_pressure) * self.inner_radius ** 2 * self.outer_radius ** 2 / 2 / coef_myu / (self.outer_radius ** 2 - self.inner_radius ** 2)
 
-        A = (self.inner_pressure * self.inner_radius ** 2 - self.outer_pressure * self.outer_radius ** 2) / 2 / (coef_lambda + coef_myu) / (self.outer_radius ** 2 - self.inner_radius ** 2)
-        B = (self.inner_pressure - self.outer_pressure) * self.inner_radius ** 2 * self.outer_radius ** 2 / 2 / coef_myu / (self.outer_radius ** 2 - self.inner_radius ** 2)
-
-        self.u_exact = (A + 1/B) * np.linalg.norm(self.area_points_coords, axis = 1)
+        # self.u_exact = (A + 1/B) * np.linalg.norm(self.area_points_coords, axis = 1)            
 
         self.list_area_neumann_elements = []
         for index_element, element in enumerate(self.area_elements):
@@ -149,17 +154,17 @@ class basic_method:
 
     def set_condition_dirichlet(self, K, F, list_dirichlet_points, modifier = {}):
         for point in list_dirichlet_points:
-            for idx, cur_condition in enumerate(self.dict_area_dirichlet_points[point]):
+            for cur_dimension, cur_condition in enumerate(self.dict_area_dirichlet_points[point]):
                 modified_point = modifier[point] if modifier else point
                 if not math.isnan(cur_condition):
-                    indices = np.array(K.rows[modified_point * self.dim_task + idx])
-                    F[indices] -= np.array(K.data[modified_point * self.dim_task + idx]) * cur_condition
+                    indices = np.array(K.rows[modified_point * self.dim_task + cur_dimension])
+                    F[indices] -= np.array(K.data[modified_point * self.dim_task + cur_dimension]) * cur_condition
                     for index in indices:
-                        K[modified_point * self.dim_task + idx, index] = 0
+                        K[modified_point * self.dim_task + cur_dimension, index] = 0
                     for index in indices:
-                        K[index, modified_point * self.dim_task + idx] = 0
-                    K[modified_point * self.dim_task + idx, modified_point * self.dim_task + idx] = 1
-                    F[modified_point * self.dim_task + idx] = cur_condition
+                        K[index, modified_point * self.dim_task + cur_dimension] = 0
+                    K[modified_point * self.dim_task + cur_dimension, modified_point * self.dim_task + cur_dimension] = 1
+                    F[modified_point * self.dim_task + cur_dimension] = cur_condition
 
 
     def set_condition_neumann(self, F, list_neumann_elements, modifier = {}):
@@ -167,35 +172,48 @@ class basic_method:
             element = self.area_elements[index_element]   
             points = list(set(element) & set(self.dict_area_neumann_points.keys()))
             len = np.linalg.norm(np.diff(self.area_points_coords[points], axis = 0))
+            value = np.flip(np.ravel(np.abs((np.diff(self.area_points_coords[points], axis = 0)))))
             for point in points:
                 modified_point = modifier[point] if modifier else point
                 pressure = self.dict_area_neumann_points[point]
-                F[modified_point * self.dim_task: (modified_point + 1) * self.dim_task] += pressure * len / 2
+                F[modified_point * self.dim_task: (modified_point + 1) * self.dim_task] += value * (pressure / len) * len / 2
 
 
     def calculate_u(self):
         K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.D, self.dim_task)
         F = np.zeros(self.area_points_coords.size)
 
+        # self.set_condition_neumann(F, self.list_area_neumann_elements)
         self.set_condition_dirichlet(K, F, self.dict_area_dirichlet_points.keys())
-        self.set_condition_neumann(F, self.list_area_neumann_elements)
 
         *arg, = self.solve_function(K.tocsr(), F)
         self.u = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
-        self.u_r = np.linalg.norm(self.u, axis = 1)
-        print(self.u_r[self.outer_radius_points])
-        print(self.u_exact[self.outer_radius_points])
-        plt.plot(range(self.u_r[self.outer_radius_points].size), self.u_r[self.outer_radius_points])
-        plt.show()
 
+        self.area_point_coords_modified = self.u * self.coef_u + self.area_points_coords
+        self.u_polar = np.hstack(
+            (
+                np.linalg.norm(self.area_point_coords_modified, axis = 1).reshape(-1, 1), 
+                np.arctan2(self.area_point_coords_modified[:, 1], self.area_point_coords_modified[:, 0]).reshape(-1, 1)
+            )
+        )
+
+        print(self.u_polar[self.inner_radius_points, 0])
+        # assert np.allclose(
+        #     self.u_polar[self.outer_radius_points, 0],
+        #     np.amax(self.u_polar[self.outer_radius_points, 0])
+        #     ),'Error: unsymmetric outer boundary'
+
+        # assert np.allclose(
+        #     self.u_polar[self.inner_radius_points, 0],
+        #     np.amax(self.u_polar[self.inner_radius_points, 0])
+        #     ),'Error: unsymmetric inner boundary'
+                
 
     def calculate_eps(self):
         temp_array = []
-
         for element in self.area_elements:
             B, _ = base_func.calculate_local_matrix_stiffness(element, self.area_points_coords, self.dim_task)
-            temp_array.append(np.dot(B, np.ravel([self.u[element[idx]] for idx in range(len(element))]).T))
-
+            temp_array.append(np.dot(B, np.ravel([self.u[element[index]] for index in range(len(element))]).T))
         self.eps = np.array(temp_array)
 
 
@@ -244,8 +262,8 @@ class basic_method:
         if plot_global_mesh:
             ax.triplot(area_points_coords[:,0], area_points_coords[:,1], area_elements.copy())
 
-        fig.set_figwidth(7)
-        fig.set_figheight(7)
+        fig.set_figwidth(8)
+        fig.set_figheight(8)
         fig.set_facecolor('mintcream')
 
         plt.show()
@@ -276,13 +294,19 @@ class basic_method:
 
         ax.triplot(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements.copy())
 
-        fig.set_figwidth(7)
-        fig.set_figheight(7)
+        fig.set_figwidth(8)
+        fig.set_figheight(8)
         fig.set_facecolor('mintcream')
 
         plt.show()
 
-    
+
+    def plot_polar(self):
+        plt.polar(self.u_polar[self.inner_radius_points, 1], self.u_polar[self.inner_radius_points, 0], 'o')
+        plt.polar(self.u_polar[self.outer_radius_points, 1], self.u_polar[self.outer_radius_points, 0], 'o')
+        plt.show()
+
+
     def construct_info(self):
         self.message['main_info'] = [
             f' area: {self.data["area"]}\n',
