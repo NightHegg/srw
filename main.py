@@ -26,8 +26,8 @@ def test(cur_area, cur_task):
     # obj.plot_init_mesh(False)
     obj.get_solution()
     # print(*obj.get_info())
-    obj.plot_displacements(False)
-    obj.plot_polar()
+    # obj.plot_displacements(False)
+    # obj.plot_polar()
 
 
 def task_iters_sigma():
@@ -98,6 +98,9 @@ def task_iters_sigma():
 
 if __name__ == "__main__":
     area_names = ['rectangle', 'thick_walled_cylinder']
-    tasks = {'rectangle': ['3_bindings', '2_bindings'], 'thick_walled_cylinder': ['outer_pressure_only', 'inner_pressure_only', 'both_pressures']}
+    tasks = {
+        'rectangle': ['3_bindings', '2_bindings'], 
+        'thick_walled_cylinder': ['outer_pressure_only', 'inner_pressure_only', 'outer_displacements_only']
+    }
     cur_area = area_names[1]
-    test(cur_area, tasks[cur_area][0])
+    test(cur_area, tasks[cur_area][2])

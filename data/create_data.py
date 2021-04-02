@@ -121,12 +121,12 @@ if __name__ == "__main__":
             'outer_pressure_only': {
                 'dirichlet_conditions': {
                     'inner_side': math.nan,
-                    'outer_side': -2e-4,
+                    'outer_side': math.nan,
                     'other': [[0, 1, math.nan, 0], [2, 3, 0, math.nan]]
                     },
                 'neumann_conditions': {
                     'inner_side': 0,
-                    'outer_side': 0
+                    'outer_side': -2e+7
                     }
                 },
             'inner_pressure_only': {
@@ -140,6 +140,17 @@ if __name__ == "__main__":
                     'outer_side': 0
                     }
                 },
+            'outer_displacements_only': {
+                'dirichlet_conditions': {
+                    'inner_side': math.nan,
+                    'outer_side': -2e-4,
+                    'other': [[0, 1, math.nan, 0], [2, 3, 0, math.nan]]
+                    },
+                'neumann_conditions': {
+                    'inner_side': 0,
+                    'outer_side': 0
+                    }
+                }
         }
     }
     area_names = list(area_parameters.keys())

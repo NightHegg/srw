@@ -25,7 +25,7 @@ class basic_method:
         self.message = {}
         self.data = data
 
-        self.solve_function = linalg.cg
+        self.solve_function = linalg.spsolve
         temp_contour = []
 
         with open(f'data/{self.data["area"]}/area_info.dat', 'r') as f:
@@ -44,7 +44,7 @@ class basic_method:
 
         self.D = np.array([[1, nyu/(1 - nyu), 0],
                         [nyu/(1 - nyu), 1, 0], 
-                        [0, 0, (1 - 2 * nyu) / (1 - nyu)]]
+                        [0, 0, (1 - 2 * nyu)  / 2 / (1 - nyu)]]
                         ) * E * (1 - nyu) / (1 - 2 * nyu) / (1 + nyu)
  
         dirichlet_conditions = []
@@ -137,7 +137,6 @@ class basic_method:
         
         coef_lambda = nyu * E / (1 + nyu) / (1 - 2 * nyu)
         coef_myu = nyu / 2 / (1 + nyu)
-
         # A = (self.inner_pressure * self.inner_radius ** 2 - self.outer_pressure * self.outer_radius ** 2) / 2 / (coef_lambda + coef_myu) / (self.outer_radius ** 2 - self.inner_radius ** 2)
         # B = (self.inner_pressure - self.outer_pressure) * self.inner_radius ** 2 * self.outer_radius ** 2 / 2 / coef_myu / (self.outer_radius ** 2 - self.inner_radius ** 2)
 
