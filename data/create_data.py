@@ -56,7 +56,7 @@ class Task:
         if self.cur_area == 'rectangle':
             self.geo = dmsh.Polygon(self.contour)
             self.X, self.cells = dmsh.generate(self.geo, edge_size)
-            self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (full)", 1.0e-10, 100)
+            # self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (full)", 1.0e-10, 200)
 
         elif self.cur_area == 'thick_walled_cylinder':
             inner_border = self.contour[0][0]
@@ -72,14 +72,14 @@ class Task:
       
             self.geo = dmsh.Difference(quarter, full_polygon)
             self.X, self.cells = dmsh.generate(self.geo, edge_size)
-            self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (full)", 1.0e-10, 100)
+            self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (block-diagonal)", 1.0e-10, 50)
 
     def show_mesh(self):
         dmsh.helpers.show(self.X, self.cells, self.geo)
 
     def write_mesh(self, edge_size, fine_mesh = True):
         folder = 'fine_meshes' if fine_mesh else 'coarse_meshes'
-        name_file = f'data/{self.cur_area}/meshes/{folder}/{edge_size:.1e}.dat'
+        name_file = f'data/{self.cur_area}/meshes/{folder}/{edge_size:.2e}.dat'
         meshio.write_points_cells(name_file, self.X, {"triangle": self.cells})
 
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
             'E':           70e+9,
             'nyu':         0.34,
             'coef_u':      1000,
-            'coef_sigma':  1e-3
+            'coef_sigma':  1e-6
         }
     }
     tasks = {
@@ -125,18 +125,18 @@ if __name__ == "__main__":
                     'other': [[0, 1, math.nan, 0], [2, 3, 0, math.nan]]
                     },
                 'neumann_conditions': {
-                    'inner_side': 0,
-                    'outer_side': -2e+7
+                    'inner_side': 5e+6,
+                    'outer_side': -1e+7
                     }
                 },
             'inner_pressure_only': {
                 'dirichlet_conditions': {
                     'inner_side': math.nan,
-                    'outer_side': 0,
+                    'outer_side': math.nan,
                     'other': [[0, 1, math.nan, 0], [2, 3, 0, math.nan]]
                     },
                 'neumann_conditions': {
-                    'inner_side': 2e+7,
+                    'inner_side': 5e+6,
                     'outer_side': 0
                     }
                 },
@@ -155,8 +155,8 @@ if __name__ == "__main__":
     }
     area_names = list(area_parameters.keys())
 
-    coarse_edge_size = [0.005, 0.004, 0.003, 0.002]
-    fine_edge_size = [0.08, 0.06, 0.04, 0.02, 0.01]
+    coarse_edge_size = [1]
+    fine_edge_size = [1]
 
     cur_area = area_names[1]
     obj = Task(cur_area, area_parameters[cur_area])
@@ -166,8 +166,8 @@ if __name__ == "__main__":
 
     # for cur_edge_size in coarse_edge_size:
     #     obj.create_mesh(cur_edge_size)
-    #     obj.show_mesh()
-    #     # obj.write_mesh(cur_edge_size, False)
+    #     # obj.show_mesh()
+    #     obj.write_mesh(cur_edge_size, False)
 
     # for cur_edge_size in fine_edge_size:
     #     obj.create_mesh(cur_edge_size)

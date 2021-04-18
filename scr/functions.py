@@ -11,43 +11,56 @@ from scipy.sparse import coo_matrix, lil_matrix
 import math
 
 def create_barycentric_coords(element, points):
-    x_points = np.array([points[element[i], 0] for i in range(3)])
-    y_points = np.array([points[element[i], 1] for i in range(3)])
+    x_points = points[element, 0]
+    y_points = points[element, 1]
 
-    a = np.array([x_points[1] * y_points[2] - x_points[2] * y_points[1], 
-                    x_points[2] * y_points[0] - x_points[0] * y_points[2],
-                    x_points[0] * y_points[1] - x_points[1] * y_points[0]] )
-    b = np.array([y_points[1]-y_points[2], y_points[2]-y_points[0], y_points[0]-y_points[1]])
-    c = np.array([x_points[2]-x_points[1], x_points[0]-x_points[2], x_points[1]-x_points[0]])
+    a = np.array(
+        [
+            x_points[1] * y_points[2] - x_points[2] * y_points[1], 
+            x_points[2] * y_points[0] - x_points[0] * y_points[2],
+            x_points[0] * y_points[1] - x_points[1] * y_points[0]
+        ]
+    )
+    b = np.array(
+        [
+            y_points[1]-y_points[2], 
+            y_points[2]-y_points[0], 
+            y_points[0]-y_points[1]
+        ]
+    )
+    c = np.array(
+        [
+            x_points[2]-x_points[1], 
+            x_points[0]-x_points[2], 
+            x_points[1]-x_points[0]
+        ]
+    )
     A = 0.5 * np.linalg.det(np.vstack((np.ones_like(x_points), x_points, y_points)))
     return np.vstack((a, b, c)), A
 
 
 def calculate_local_matrix_stiffness(element, points, dim_task):
-    B = np.zeros((3, 6))
     [a, b, c], A = create_barycentric_coords(element, points)
-    for i in range(len(element)):
-        B[:, i * dim_task : (i + 1) * dim_task] += np.array(
-            [[b[i], 0],
-            [0, c[i]],
-            [c[i]/2, b[i]/2]]) / (2 * A)
+    B = np.hstack(list(map(lambda x, y, z: [[y, 0], [0, z], [z/2, y/2]], a, b, c))) / 2 / A
     return B, A
 
 
-def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, D, dimTask):
+def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, amnt_area_points, D, dim_task, modifier = {}):
     row, col, data = [], [], []
     for element in area_elements:
-                B, A = calculate_local_matrix_stiffness(element, area_points_coords, dimTask)
+                B, A = calculate_local_matrix_stiffness(element, area_points_coords, dim_task)
                 K_element = B.T @ D @ B * A
                 for i in range(3):
                     for j in range(3):
-                        for k in range(dimTask):
-                            for z in range(dimTask):
-                                row.append(element[i] * dimTask + k)
-                                col.append(element[j] * dimTask + z)
-                                data.append(K_element[i * dimTask + k, j * dimTask + z])
+                        point_1 = modifier[element[i]] if modifier else element[i]
+                        point_2 = modifier[element[j]] if modifier else element[j]
+                        for k in range(dim_task):
+                            for z in range(dim_task):
+                                row.append(point_1 * dim_task + k)
+                                col.append(point_2 * dim_task + z)
+                                data.append(K_element[i * dim_task + k, j * dim_task + z])
 
-    return coo_matrix((data, (row, col)), shape = (area_points_coords.size, area_points_coords.size)).tolil()        
+    return coo_matrix((data, (row, col)), shape = (amnt_area_points * dim_task, amnt_area_points * dim_task)).tolil()        
 
 
 def calculate_subd_parameters(area_bounds, area_points_coords, area_elements, coef_overlap, cur_amnt_subds):
