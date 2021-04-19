@@ -19,8 +19,6 @@ import scr.functions as base_func
 
 class class_template:
     def __init__(self, data):
-        
-        self.name_method = "basic method"
         self.message = {}
         self.data = data
 

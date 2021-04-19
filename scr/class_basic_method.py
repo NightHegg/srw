@@ -18,7 +18,7 @@ class basic_method(class_template):
     def __init__(self, data):
         init_time = time.time()
         super().__init__(data)
-        
+        self.name_method = "basic_method"
         self.time_init = time.time() - init_time
 
     def calculate_u(self):

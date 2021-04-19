@@ -25,8 +25,6 @@ def test_task(cur_area, cur_task):
     obj = schwarz_two_level_additive(example_data)
     # obj.plot_init_mesh()
     obj.get_solution()
-    print()
-    print(f'{obj.amnt_iterations:.0f}')
     # obj.plot_disp_strain_graphs()
     # print(*obj.get_info())
     obj.plot_displacements()
@@ -63,13 +61,13 @@ def special_error_table(cur_area, cur_task):
         amnt_iters = obj.amnt_iterations
         df_rel[f'{cur_coef_convergence:.2e}'] = {
             'Количество итераций': amnt_iters,
-            'Ошибка численного решения для sigma_r': f'{error_sigma[0]:.0e}',
-            'Ошибка численного решения для sigma_phi': f'{error_sigma[1]:.0e}'
+            'Ошибка численного решения для sigma_r': f'{error_sigma[0]:.2e}',
+            'Ошибка численного решения для sigma_phi': f'{error_sigma[1]:.2e}'
         }
     df_errors_rel = pd.DataFrame.from_dict(df_rel).T
     print(df_errors_rel)
 
-    df_errors_rel.to_csv(f'results/{cur_area}/{cur_task}/errors_specal/{name}.csv', index = False)
+    df_errors_rel.to_csv(f'results/{cur_area}/{cur_task}/errors_special/{name}.csv', index = False)
 
 
 def simple_error_table(cur_area, cur_task):
@@ -93,13 +91,13 @@ def simple_error_table(cur_area, cur_task):
         'area':             cur_area,
         'task':             cur_task,
         'mesh':             cur_mesh,
-        'amnt_subds':       4,
+        'amnt_subds':       2,
         'coef_convergence': 1e-5,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
         'coarse_mesh':      '1.00e+00'
         }
-        obj = schwarz_additive(example_data)
+        obj = basic_method(example_data)
         name = obj.name_method
         obj.get_solution()
         error_u = obj.get_numerical_error_displacement()
@@ -145,7 +143,7 @@ def get_iters_time_tables(cur_area, cur_task):
 
     dict_iters = {}
     dict_time = {}
-    list_mesh = ['5.00e-02']
+    list_mesh = ['5.00e-02', '2.50e-02', '1.25e-02']
     list_amnt_subds = [2, 4, 8]
 
     for cur_mesh in list_mesh:
@@ -180,8 +178,8 @@ def get_iters_time_tables(cur_area, cur_task):
     print(df_iters)
     print(df_time)
 
-    # df_iters.to_csv(f'results/{cur_area}/{cur_task}/iterations/{name}.csv', index = False)
-    # df_time.to_csv(f'results/{cur_area}/{cur_task}/time/{name}.csv', index = False)
+    df_iters.to_csv(f'results/{cur_area}/{cur_task}/iterations/{name}.csv', index = False)
+    df_time.to_csv(f'results/{cur_area}/{cur_task}/time/{name}.csv', index = False)
 
 
 if __name__ == "__main__":
@@ -191,4 +189,4 @@ if __name__ == "__main__":
         'thick_walled_cylinder': ['outer_pressure_only', 'inner_pressure_only', 'outer_displacements_only']
     }
     cur_area = area_names[1]
-    test_task(cur_area, tasks[cur_area][0])
+    simple_error_table(cur_area, tasks[cur_area][0])
