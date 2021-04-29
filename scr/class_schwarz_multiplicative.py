@@ -44,7 +44,7 @@ class schwarz_multiplicative(class_template):
             else:
                 self.dict_subd_elements[i] = np.where((list_angles[i * 2 - 1] < self.element_centroid_points_angles) & (self.element_centroid_points_angles < list_angles[i * 2 + 2]))[0]
                 
-        # self.dict_subd_elements = {i: np.where((list_angles[i] < self.element_centroid_points_angles) & (self.element_centroid_points_angles < list_angles[i + 2])) for i in range(self.cur_amnt_subds)}
+        
         # for value in self.dict_subd_elements.values():
         #     self.internal_plot_displacements(self.area_points_coords, self.area_elements[value])
 

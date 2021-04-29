@@ -11,26 +11,24 @@ from scr.class_schwarz_additive import schwarz_additive
 from scr.class_schwarz_two_level_additive import schwarz_two_level_additive
 
 
-def test_task(cur_area, cur_task):
+def test_task(method, cur_area, cur_task):
     example_data = {
         'area':             cur_area,
         'task':             cur_task,
-        'mesh':             '5.00e-02',
-        'amnt_subds':       2,
+        'mesh':             0.1,
+        'amnt_subds':       4,
         'coef_convergence': 1e-4,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
-        'coarse_mesh':      '1.00e+00'
+        'coarse_mesh':      1
     }
-    obj = schwarz_two_level_additive(example_data)
+    obj = method(example_data)
+    obj.plot_init_coarse_mesh()
     # obj.plot_init_mesh()
     obj.get_solution()
-    # obj.plot_disp_strain_graphs()
-    # print(*obj.get_info())
     obj.plot_displacements()
-    # obj.plot_polar()
 
-def special_error_table(cur_area, cur_task):
+def special_error_table(method, cur_area, cur_task, bool_simplified):
 
     if not os.path.exists(f'results/{cur_area}'):
         os.makedirs(f'results/{cur_area}')
@@ -47,19 +45,19 @@ def special_error_table(cur_area, cur_task):
         example_data = {
         'area':             cur_area,
         'task':             cur_task,
-        'mesh':             '2.50e-02',
+        'mesh':             0.025,
         'amnt_subds':       8,
         'coef_convergence': cur_coef_convergence,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
-        'coarse_mesh':      '1.00e+00'
+        'coarse_mesh':      1
         }
-        obj = schwarz_two_level_additive(example_data)
+        obj = method(example_data)
         name = obj.name_method
         obj.get_solution()
         error_sigma = obj.get_numerical_error_sigma()
         amnt_iters = obj.amnt_iterations
-        df_rel[f'{cur_coef_convergence:.2e}'] = {
+        df_rel[f'{cur_coef_convergence:.0e}'] = {
             'Количество итераций': amnt_iters,
             'Ошибка численного решения для sigma_r': f'{error_sigma[0]:.2e}',
             'Ошибка численного решения для sigma_phi': f'{error_sigma[1]:.2e}'
@@ -67,10 +65,14 @@ def special_error_table(cur_area, cur_task):
     df_errors_rel = pd.DataFrame.from_dict(df_rel).T
     print(df_errors_rel)
 
-    df_errors_rel.to_csv(f'results/{cur_area}/{cur_task}/errors_special/{name}.csv', index = False)
+    df_errors_rel.index.names = ['eps_0']
+    
+    name_file = name + '_simplified' if bool_simplified and name == 'schwarz_additive_two_level' else name
+    route = f'results/{cur_area}/{cur_task}/errors_special/{name_file}.csv'
+    df_errors_rel.to_csv(route, index = True)
 
 
-def simple_error_table(cur_area, cur_task):
+def simple_error_table(method, cur_area, cur_task, bool_simplified):
     if not os.path.exists(f'results/{cur_area}'):
         os.makedirs(f'results/{cur_area}')
 
@@ -85,7 +87,7 @@ def simple_error_table(cur_area, cur_task):
 
     df = {}
     df_rel = {}
-    mesh = ['5.00e-02', '2.50e-02', '1.25e-02']
+    mesh = [0.05, 0.025, 0.0125]
     for cur_mesh in mesh:
         example_data = {
         'area':             cur_area,
@@ -95,9 +97,9 @@ def simple_error_table(cur_area, cur_task):
         'coef_convergence': 1e-5,
         'coef_overlap':     0.35,
         'coef_alpha':       0.5,
-        'coarse_mesh':      '1.00e+00'
+        'coarse_mesh':      1
         }
-        obj = basic_method(example_data)
+        obj = method(example_data)
         name = obj.name_method
         obj.get_solution()
         error_u = obj.get_numerical_error_displacement()
@@ -121,14 +123,21 @@ def simple_error_table(cur_area, cur_task):
     df_errors = pd.DataFrame.from_dict(df).T
     df_errors_rel = pd.DataFrame.from_dict(df_rel).T
 
+    df_errors.index.names = ['Шаг сетки h']
+    df_errors_rel.index.names = ['Шаг сетки h']
+
     print(df_errors)
     print(df_errors_rel)
 
-    df_errors.to_csv(f'results/{cur_area}/{cur_task}/errors/{name}.csv', index = False)
-    df_errors_rel.to_csv(f'results/{cur_area}/{cur_task}/errors_rel/{name}.csv', index = False)
+    name_file = name + '_simplified' if bool_simplified and name == 'schwarz_additive_two_level' else name
+    route = f'results/{cur_area}/{cur_task}/errors/{name_file}.csv'
+    route_rel = f'results/{cur_area}/{cur_task}/errors_rel/{name_file}.csv'
+
+    df_errors.to_csv(route, index = True)
+    df_errors_rel.to_csv(route_rel, index = True)
 
 
-def get_iters_time_tables(cur_area, cur_task):
+def get_iters_time_tables(method, cur_area, cur_task, bool_simplified):
     if not os.path.exists(f'results/{cur_area}'):
         os.makedirs(f'results/{cur_area}')
 
@@ -143,7 +152,7 @@ def get_iters_time_tables(cur_area, cur_task):
 
     dict_iters = {}
     dict_time = {}
-    list_mesh = ['5.00e-02', '2.50e-02', '1.25e-02']
+    list_mesh = [0.05, 0.025, 0.0125]
     list_amnt_subds = [2, 4, 8]
 
     for cur_mesh in list_mesh:
@@ -158,9 +167,9 @@ def get_iters_time_tables(cur_area, cur_task):
             'coef_convergence': 1e-5,
             'coef_overlap':     0.35,
             'coef_alpha':       0.5,
-            'coarse_mesh':      '1.00e+00'
+            'coarse_mesh':      1
             }
-            obj = schwarz_two_level_additive(example_data)
+            obj = method(example_data)
             name = obj.name_method
             obj.get_solution()
             amnt_iters = obj.amnt_iterations
@@ -175,18 +184,33 @@ def get_iters_time_tables(cur_area, cur_task):
     df_iters = pd.DataFrame.from_dict(dict_iters)
     df_time = pd.DataFrame.from_dict(dict_time)
 
+    df_iters.index.names = ['Количество подобластей']
+    df_time.index.names = ['Количество подобластей']
+
     print(df_iters)
     print(df_time)
 
-    df_iters.to_csv(f'results/{cur_area}/{cur_task}/iterations/{name}.csv', index = False)
-    df_time.to_csv(f'results/{cur_area}/{cur_task}/time/{name}.csv', index = False)
+    name_file = name + '_simplified' if bool_simplified and name == 'schwarz_additive_two_level' else name
+    route_iters = f'results/{cur_area}/{cur_task}/iterations/{name_file}.csv'
+    route_time = f'results/{cur_area}/{cur_task}/time/{name_file}.csv'
+
+    df_iters.to_csv(route_iters, index = True)
+    df_time.to_csv(route_time, index = True)
 
 
 if __name__ == "__main__":
-    area_names = ['rectangle', 'thick_walled_cylinder']
+    methods = [schwarz_multiplicative, schwarz_additive, schwarz_two_level_additive]
     tasks = {
         'rectangle': ['3_bindings', '2_bindings'], 
-        'thick_walled_cylinder': ['outer_pressure_only', 'inner_pressure_only', 'outer_displacements_only']
+        'thick_walled_cylinder': ['pressure_only', 'displacements_only']
     }
-    cur_area = area_names[1]
-    simple_error_table(cur_area, tasks[cur_area][0])
+    cur_area = 'thick_walled_cylinder'
+    cur_task = tasks[cur_area][0]
+
+    # for cur_method in methods:
+    #     bool_simplified = False
+    #     special_error_table(cur_method, cur_area, cur_task, bool_simplified)
+    #     print(f'Method {cur_method} finished!')
+    
+    bool_simplified = True
+    simple_error_table(schwarz_two_level_additive, cur_area, cur_task, bool_simplified)

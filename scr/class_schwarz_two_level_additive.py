@@ -42,8 +42,10 @@ class schwarz_two_level_additive(schwarz_additive):
         super().__init__(data)
 
         self.name_method = "schwarz_additive_two_level"
-
-        coarse_mesh = meshio.read(f'data/{self.data["area"]}/meshes/coarse_meshes/{data["coarse_mesh"]}.dat')
+        
+        coarse_area = "simplified_cylinder"
+        # coarse_area = data["area"]
+        coarse_mesh = meshio.read(f'data/meshes/coarse/{coarse_area}/{data["coarse_mesh"]:.3e}.dat')
 
         self.area_coarse_points_coords = coarse_mesh.points
         self.area_coarse_points = np.array([num for num, _ in enumerate(self.area_coarse_points_coords)])
@@ -154,6 +156,8 @@ class schwarz_two_level_additive(schwarz_additive):
 
         self.u = self.u_previous.copy() + (self.coef_alpha * self.u_sum.copy()) + (self.coef_alpha * u_special.reshape(-1, 2))
 
+    def plot_init_coarse_mesh(self):
+        self.internal_plot_displacements(self.area_coarse_points_coords, self.area_coarse_elements)
 
 if __name__ == "__main__":
     pass

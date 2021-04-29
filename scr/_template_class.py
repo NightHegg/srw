@@ -25,14 +25,14 @@ class class_template:
         self.solve_function = linalg.spsolve
         temp_contour = []
 
-        with open(f'data/{self.data["area"]}/area_info.dat', 'r') as f:
+        with open(f'data/area_info.dat', 'r') as f:
             for _ in range(int(f.readline())):
                 temp_contour.append([float(x) for x in f.readline().split()])
             self.dim_task = int(f.readline())
             self.E, self.nyu = list(map(float, f.readline().split()))
             self.coef_u, self.coef_sigma = list(map(float, f.readline().split()))
 
-        mesh = meshio.read(f'data/{self.data["area"]}/meshes/fine_meshes/{self.data["mesh"]}.dat')
+        mesh = meshio.read(f'data/meshes/fine/{self.data["area"]}/{self.data["mesh"]:.3e}.dat')
         
         self.contour_points = np.append(np.array(temp_contour), [temp_contour[0]], axis = 0)
         self.area_points_coords = mesh.points
@@ -52,7 +52,7 @@ class class_template:
         self.dict_area_dirichlet_points = {}
         self.dict_area_neumann_points = {}
 
-        with open(f'data/{self.data["area"]}/tasks/{self.data["task"]}.dat', 'r') as f:
+        with open(f'data/tasks/{self.data["task"]}.dat', 'r') as f:
             self.inner_radius = self.contour_points[0, 0]
             self.outer_radius = self.contour_points[1, 0]
 
