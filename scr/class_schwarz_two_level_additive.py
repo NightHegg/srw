@@ -43,8 +43,8 @@ class schwarz_two_level_additive(schwarz_additive):
 
         self.name_method = "schwarz_additive_two_level"
         
-        coarse_area = "simplified_cylinder"
-        # coarse_area = data["area"]
+        # coarse_area = "simplified_cylinder"
+        coarse_area = data["area"]
         coarse_mesh = meshio.read(f'data/meshes/coarse/{coarse_area}/{data["coarse_mesh"]:.3e}.dat')
 
         self.area_coarse_points_coords = coarse_mesh.points

@@ -58,8 +58,8 @@ class Task:
             left_r = dmsh.Rectangle(-outer_border, outer_border, -outer_border, 0.0)
             full_polygon = dmsh.Union([low_r, left_r])
 
-            big_c = dmsh.Circle([0.0, 0.0], outer_border)
-            small_c = dmsh.Circle([0.0, 0.0], inner_border)        
+            small_c = dmsh.Circle([0.0, 0.0], inner_border)
+            big_c = dmsh.Circle([0.0, 0.0], outer_border)      
             quarter = dmsh.Difference(big_c, small_c)
       
             self.geo = dmsh.Difference(quarter, full_polygon)
@@ -74,11 +74,53 @@ class Task:
             big_c = dmsh.Circle([0.0, 0.0], outer_border)       
       
             self.geo = dmsh.Difference(big_c, full_polygon)
+        
+        elif self.cur_area == 'bearing':
+            inner_border = self.contour[0][0]
+            outer_border = self.contour[1][0]
 
+            full_polygon = dmsh.Polygon(
+                [
+                    [-2.0, -2.0],
+                    [-2.0, 2.0],
+                    [0.0, 2.0],
+                    [0.0, 0.0],
+                    [2.0, 0.0],
+                    [2.0, -2.0]
+                ]
+            )
+
+            inner_small_c = dmsh.Circle([0.0, 0.0], inner_border)
+            inner_big_c = dmsh.Circle([0.0, 0.0], inner_border + (outer_border - inner_border) / 4)
+            inner_c = dmsh.Difference(inner_big_c, inner_small_c)
+
+            outer_small_c = dmsh.Circle([0.0, 0.0], inner_border + 3 * (outer_border - inner_border) / 4)
+            outer_big_c = dmsh.Circle([0.0, 0.0], outer_border)
+            outer_c = dmsh.Difference(outer_big_c, outer_small_c)
+
+
+            r = (outer_border - inner_border) / 4
+            center = inner_border + (outer_border - inner_border) / 2
+            M = 1
+            list_circles = []
+            for i in range(4):
+                r_main = i * np.pi / 2
+                for j in range(M):
+                    r_add = (i * np.pi / 2) + ((j + 1) * (np.pi / 2 / (M + 1)))
+                    list_circles.append(dmsh.Circle([center * math.cos(r_add), center * math.sin(r_add)], r))
+                list_circles.append(dmsh.Circle([center * math.cos(r_main), center * math.sin(r_main)], r))
+
+            inner_circles = dmsh.Union(list_circles)
+            full_circle = dmsh.Union([inner_circles, outer_c])
+            full_circle = dmsh.Union([full_circle, inner_c])
+
+            self.geo = dmsh.Difference(full_circle, full_polygon)
+        
         self.X, self.cells = dmsh.generate(self.geo, edge_size)
         self.X, self.cells = optimesh.optimize_points_cells(self.X, self.cells, "CVT (block-diagonal)", 1.0e-10, 50)
 
     def show_mesh(self):
+        # self.geo.show(False)
         dmsh.helpers.show(self.X, self.cells, self.geo)
 
     def write_mesh(self, mesh_type, edge_size):
@@ -90,7 +132,7 @@ if __name__ == "__main__":
     area_names = ['thick_walled_cylinder', 'simplified_cylinder', 'bearing']
 
     area_parameters = {
-            'area':        'thick_walled_cylinder',
+            'area':        'bearing',
             'contour':     [[1, 0], [2, 0], [0, 2], [0, 1]],
             'dim_task':    2,
             'E':           70e+9,
@@ -106,8 +148,8 @@ if __name__ == "__main__":
                 'other': [[0, 1, math.nan, 0], [2, 3, 0, math.nan]]
                 },
             'neumann_conditions': {
-                'inner_side': 5e+6,
-                'outer_side': -1e+7
+                'inner_side': 0,
+                'outer_side': -1e+6
                 }
             },
         'displacements_only': {
@@ -123,8 +165,8 @@ if __name__ == "__main__":
             }
     }
     meshes = {
-        "coarse": [0.1, 0.5, 1],
-        "fine": [0.1, 0.05, 0.025, 0.0125, 0.00625]
+        "coarse": [],
+        "fine": [0.05]
     }
 
     obj = Task(**area_parameters)
@@ -132,9 +174,9 @@ if __name__ == "__main__":
     for task_name, params in tasks.items():
         obj.create_task(task_name, params)
 
-    for mesh_type, params in meshes.items():
-        if not (mesh_type == 'fine' and area_parameters['area'] == 'simplified_cylinder'):
-            for edge_size in params:
-                obj.create_mesh(edge_size)
-                # obj.show_mesh()
-                obj.write_mesh(mesh_type, edge_size)
+    # for mesh_type, params in meshes.items():
+    #     if not (mesh_type == 'fine' and area_parameters['area'] == 'simplified_cylinder'):
+    #         for edge_size in params:
+    #             obj.create_mesh(edge_size)
+    #             obj.show_mesh()
+    #             obj.write_mesh(mesh_type, edge_size)
