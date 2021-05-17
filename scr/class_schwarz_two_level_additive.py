@@ -43,11 +43,12 @@ class schwarz_two_level_additive(schwarz_additive):
 
         self.name_method = "schwarz_additive_two_level"
         
-        # coarse_area = "simplified_cylinder"
-        coarse_area = data["area"]
-        coarse_mesh = meshio.read(f'data/meshes/coarse/{coarse_area}/{data["coarse_mesh"]:.3e}.dat')
+        coarse_area = "simplified_cylinder"
+        # coarse_area = data["area"]
+        coarse_mesh = meshio.read(f'data/meshes/coarse/{coarse_area}/{data["coarse_mesh"]:.3e}.msh')
 
         self.area_coarse_points_coords = coarse_mesh.points
+        self.area_coarse_points_coords = np.delete(self.area_coarse_points_coords, -1, axis = 1)
         self.area_coarse_points = np.array([num for num, _ in enumerate(self.area_coarse_points_coords)])
         self.area_coarse_elements = coarse_mesh.cells_dict["triangle"]
 

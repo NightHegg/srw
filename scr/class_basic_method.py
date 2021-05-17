@@ -1,13 +1,9 @@
 import os
 import sys
-from numpy.core.defchararray import index
-
-from numpy.core.numeric import outer
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import time
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import numpy as np
-from scipy.sparse import linalg
 import matplotlib.pyplot as plt
 
 import scr.functions as base_func
@@ -20,6 +16,7 @@ class basic_method(class_template):
         super().__init__(data)
         self.name_method = "basic_method"
         self.time_init = time.time() - init_time
+
 
     def calculate_u(self):
         K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.area_points.size, self.D, self.dim_task)

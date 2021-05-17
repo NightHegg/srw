@@ -1,17 +1,14 @@
 import os
 import sys
-from numpy.core.defchararray import index
-
-from numpy.core.numeric import outer
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import time
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import matplotlib.pyplot as plt
+import matplotlib.tri as mtri
 import numpy as np
 from scipy.sparse import linalg
 import meshio
 import math
-import scipy
 import matplotlib.patches as mpatches
 
 import scr.functions as base_func
@@ -32,10 +29,11 @@ class class_template:
             self.E, self.nyu = list(map(float, f.readline().split()))
             self.coef_u, self.coef_sigma = list(map(float, f.readline().split()))
 
-        mesh = meshio.read(f'data/meshes/fine/{self.data["area"]}/{self.data["mesh"]:.3e}.dat')
+        mesh = meshio.read(f'data/meshes/fine/{self.data["area"]}/{self.data["mesh"]:.3e}.msh')
         
         self.contour_points = np.append(np.array(temp_contour), [temp_contour[0]], axis = 0)
         self.area_points_coords = mesh.points
+        self.area_points_coords = np.delete(self.area_points_coords, -1, axis = 1)
         self.area_points = np.array([num for num, _ in enumerate(self.area_points_coords)])
         self.area_elements = mesh.cells_dict["triangle"]
 
@@ -80,10 +78,10 @@ class class_template:
                     if np.isclose(np.linalg.norm(point_coords), radius):
                         self.dict_area_dirichlet_points[point] = point_coords * (displacement / radius)
             else:
-                a, b = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
+                b, a = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
                 for point in self.area_points:
                     point_coords = np.array(self.area_points_coords[point])
-                    if (abs(np.cross(b-a, point_coords - a)) < 1e-15 and np.dot(b-a, point_coords - a) >= 0 and np.dot(b-a, point_coords - a) < np.linalg.norm(a-b)) or np.allclose(point_coords, a) or np.allclose(point_coords, b):
+                    if np.isclose(abs(np.cross(b-a, point_coords - a)), 0):
                         if point in self.dict_area_dirichlet_points:
                             if math.isnan(self.dict_area_dirichlet_points[point][0]) and math.isnan(self.dict_area_dirichlet_points[point][1]):
                                 self.dict_area_dirichlet_points[point] = [row[2], row[3]]
@@ -245,12 +243,12 @@ class class_template:
         return value
 
 
-    def internal_plot_displacements(self, points_coords, elements, draw_points = False):
+    def internal_plot_displacements(self, point_coords, elements, special_points = None, draw_points = False):
         fig, ax = plt.subplots()
+
+        ax.triplot(point_coords[:, 0], point_coords[:, 1], elements)
         if draw_points:
-            ax.plot(points_coords[:, 0], points_coords[:, 1], 'o')
-        else:
-            ax.triplot(points_coords[:, 0], points_coords[:, 1], elements.copy())
+            ax.plot(point_coords[special_points, 0], point_coords[special_points, 1], 'o')
 
         if self.data['area'] == 'rectangle':
             ax.plot(self.contour_points[:, 0], self.contour_points[:, 1], color = "brown")
@@ -267,12 +265,11 @@ class class_template:
             ax.set_xlim([-self.outer_radius/8, self.outer_radius * 9 / 8])
             ax.set_ylim([-self.outer_radius/8, self.outer_radius * 9 / 8])
 
-        fig.set_figwidth(10)
-        fig.set_figheight(10)
+        fig.set_figwidth(12)
+        fig.set_figheight(12)
         fig.set_facecolor('mintcream')
 
         plt.show()
-
 
     def internal_plot_displacements_coarse(self, points_coords, coarse_element, elements):
         fig, ax = plt.subplots()
@@ -299,15 +296,19 @@ class class_template:
         fig.set_facecolor('mintcream')
 
         plt.show()
+        return fig
 
 
-    def plot_displacements(self):
-        self.internal_plot_displacements(self.area_points_coords_modified, self.area_elements)
+    def plot_displacements(self, save_route = None):
+        fig = self.internal_plot_displacements(self.area_points_coords_modified, self.area_elements)
+        if save_route:
+            fig.savefig(save_route)
 
 
-    def plot_init_mesh(self):
-        self.internal_plot_displacements(self.area_points_coords, self.area_elements)
-
+    def plot_init_mesh(self, save_route = None):
+        fig = self.internal_plot_displacements(self.area_points_coords, self.area_elements)
+        if save_route:
+            fig.savefig(save_route)
 
     def plot_polar(self):
         plt.polar(self.u_polar[self.inner_radius_points, 1], self.u_polar[self.inner_radius_points, 0], 'o')
@@ -340,6 +341,13 @@ class class_template:
     def get_info(self):
         self.construct_info()
         return sum(list(self.message.values()), [])
+
+    def pcolormesh(self):
+        triang = mtri.Triangulation(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements)
+        plt.tricontourf(triang, np.linalg.norm(self.u, axis = 1) * self.coef_u)
+        plt.colorbar()
+        plt.axis('equal')
+        plt.show()
 
 if __name__ == "__main__":
     pass
