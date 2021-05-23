@@ -45,7 +45,7 @@ class schwarz_two_level_additive(schwarz_additive):
         
         coarse_area = "simplified_cylinder"
         # coarse_area = data["area"]
-        coarse_mesh = meshio.read(f'data/meshes/coarse/{coarse_area}/{data["coarse_mesh"]:.3e}.msh')
+        coarse_mesh = meshio.read(f'data/{coarse_area}/meshes_coarse/{self.data["coarse_mesh"]:.3e}.msh')
 
         self.area_coarse_points_coords = coarse_mesh.points
         self.area_coarse_points_coords = np.delete(self.area_coarse_points_coords, -1, axis = 1)
@@ -55,34 +55,41 @@ class schwarz_two_level_additive(schwarz_additive):
         self.dict_area_coarse_dirichlet_points = {}
         self.dict_area_coarse_neumann_points = {}
 
-        for ind, row in enumerate(self.dirichlet_conditions):
-            if ind in [0, 1]:
-                radius, displacement = row[0], row[1]
-                for point in self.area_coarse_points:
-                    point_coords = np.array(self.area_coarse_points_coords[point])
-                    if np.isclose(np.linalg.norm(point_coords), radius):
-                        self.dict_area_coarse_dirichlet_points[point] = point_coords * (displacement / radius)
-            else:
-                a, b = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
-                for point in self.area_coarse_points:
-                    point_coords = np.array(self.area_coarse_points_coords[point])
-                    if (abs(np.cross(b-a, point_coords - a)) < 1e-15 and np.dot(b-a, point_coords - a) >= 0 and np.dot(b-a, point_coords - a) < np.linalg.norm(a-b)) or np.allclose(point_coords, a) or np.allclose(point_coords, b):
-                        if point in self.dict_area_coarse_dirichlet_points:
-                            if math.isnan(self.dict_area_coarse_dirichlet_points[point][0]) and math.isnan(self.dict_area_coarse_dirichlet_points[point][1]):
-                                self.dict_area_coarse_dirichlet_points[point] = [row[2], row[3]]
-                            else:
-                                if math.isnan(row[2]):
-                                    self.dict_area_coarse_dirichlet_points[point] = [self.dict_area_coarse_dirichlet_points[point][0], row[3]]
-                                elif math.isnan(row[3]):
-                                    self.dict_area_coarse_dirichlet_points[point] = [row[2], self.dict_area_coarse_dirichlet_points[point][1]]
+        if self.data["area"] == 'rectangle':
+            for point_num, point_coords in enumerate(self.area_coarse_points_coords):
+                for row in self.dirichlet_conditions:
+                    contour_points = self.contour_points[row[:2].astype(int)]
+                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                        if point_num in self.dict_area_coarse_dirichlet_points:
+                            template_nan = np.isnan(self.dict_area_coarse_dirichlet_points[point_num])
+                            self.dict_area_coarse_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
                         else:
-                            self.dict_area_coarse_dirichlet_points[point] = [row[2], row[3]]
-        for row in self.neumann_conditions:
-            radius, pressure = row[0], row[1]
-            for point in self.area_coarse_points:
-                point_coords = np.array(self.area_coarse_points_coords[point])
-                if np.isclose(np.linalg.norm(point_coords), radius):
-                    self.dict_area_coarse_neumann_points[point] = pressure
+                            self.dict_area_coarse_dirichlet_points[point_num] = np.copy(row)[2:]
+                
+                for row in self.neumann_conditions:
+                    contour_points = self.contour_points[row[:2].astype(int)]
+                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                        self.dict_area_coarse_neumann_points[point_num] = row[2:]
+        else:
+            for point_num, point_coords in enumerate(self.area_coarse_points_coords):
+                for index, row in enumerate(self.dirichlet_conditions):
+                    if index in [0, 1]:
+                        radius, displacement = row[0], row[1]
+                        if np.isclose(np.linalg.norm(point_coords), radius):
+                            self.dict_area_coarse_dirichlet_points[point_num] = point_coords * (displacement / radius)
+                    else:
+                        contour_points = self.contour_points[row[:2].astype(int)]
+                        if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                            if point_num in self.dict_area_coarse_dirichlet_points:
+                                template_nan = np.isnan(self.dict_area_coarse_dirichlet_points[point_num])
+                                self.dict_area_coarse_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
+                            else:
+                                self.dict_area_coarse_dirichlet_points[point_num] = np.copy(row)[2:]
+                for row in self.neumann_conditions:
+                    radius, pressure = row[0], row[1]
+                    if np.isclose(np.linalg.norm(point_coords), radius):
+                        self.dict_area_coarse_neumann_points[point_num] = pressure
+
 
         self.list_area_coarse_neumann_elements = []
         for index_element, element in enumerate(self.area_coarse_elements):

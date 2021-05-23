@@ -104,8 +104,8 @@ def get_simple_error_table(method, cur_area, cur_task):
     df_errors = pd.DataFrame.from_dict(df).T
     df_errors_rel = pd.DataFrame.from_dict(df_rel).T
 
-    df_errors.index.names = ['Шаг сетки h']
-    df_errors_rel.index.names = ['Шаг сетки h']
+    df_errors.index.names = ['step']
+    df_errors_rel.index.names = ['step']
 
     print(df_errors)
     print(df_errors_rel)
@@ -117,7 +117,7 @@ def get_simple_error_table(method, cur_area, cur_task):
     df_errors_rel.to_csv(route_rel, index = True)
 
 
-def get_iters_time_tables(method, cur_area, cur_task, bool_simplified):
+def get_iters_time_tables(method, cur_area, cur_task):
     if not os.path.exists(f'results/{cur_area}'):
         os.makedirs(f'results/{cur_area}')
 
@@ -135,7 +135,7 @@ def get_iters_time_tables(method, cur_area, cur_task, bool_simplified):
     list_mesh = [0.05, 0.025, 0.0125]
     list_amnt_subds = [2, 4, 8]
 
-    for cur_mesh in list_mesh:
+    for idx, cur_mesh in enumerate(list_mesh):
         dict_iters_temp = {}
         dict_time_temp = {}
         for cur_amnt_subds in list_amnt_subds:
@@ -145,7 +145,7 @@ def get_iters_time_tables(method, cur_area, cur_task, bool_simplified):
             'mesh':             cur_mesh,
             'amnt_subds':       cur_amnt_subds,
             'coef_convergence': 1e-5,
-            'coef_overlap':     0.3,
+            'coef_overlap':     0.35,
             'coef_alpha':       0.5,
             'coarse_mesh':      0.5
             }
@@ -157,22 +157,30 @@ def get_iters_time_tables(method, cur_area, cur_task, bool_simplified):
 
             dict_iters_temp[styled_amnt_subds] = f'{amnt_iters:.0f}'
             dict_time_temp[styled_amnt_subds] = f'{obj.time_getting_solution:.2f}'
-        
-        dict_iters[f"h={cur_mesh}"] = dict_iters_temp
-        dict_time[f"h={cur_mesh}"] = dict_time_temp
+
+            print(f'Ended {cur_mesh} : {cur_amnt_subds}!')
+
+        if idx == 0:
+            name_step = 'first'
+        elif idx == 1:
+            name_step = 'second'
+        elif idx == 2:
+            name_step = 'third'
+
+        dict_iters[name_step] = dict_iters_temp
+        dict_time[name_step] = dict_time_temp
     
     df_iters = pd.DataFrame.from_dict(dict_iters)
     df_time = pd.DataFrame.from_dict(dict_time)
 
-    df_iters.index.names = ['Количество подобластей']
-    df_time.index.names = ['Количество подобластей']
+    df_iters.index.names = ['amnt']
+    df_time.index.names = ['amnt']
 
     print(df_iters)
     print(df_time)
 
-    name_file = name + '_simplified' if bool_simplified and name == 'schwarz_additive_two_level' else name
-    route_iters = f'results/{cur_area}/{cur_task}/iterations/{name_file}.csv'
-    route_time = f'results/{cur_area}/{cur_task}/time/{name_file}.csv'
+    route_iters = f'results/{cur_area}/{cur_task}/iterations/{name}.csv'
+    route_time = f'results/{cur_area}/{cur_task}/time/{name}.csv'
 
     df_iters.to_csv(route_iters, index = True)
     df_time.to_csv(route_time, index = True)
@@ -181,15 +189,14 @@ def get_iters_time_tables(method, cur_area, cur_task, bool_simplified):
 if __name__ == "__main__":
     methods = [schwarz_multiplicative, schwarz_additive, schwarz_two_level_additive]
     tasks = {
-        'rectangle': ['3_bindings', '2_bindings'], 
+        'rectangle': ['3_fixes', '2_fixes'], 
         'thick_walled_cylinder': ['pressure_only', 'displacements_only']
     }
     cur_area = 'bearing'
     cur_task = 'pressure_only'
 
-    get_simple_error_table(basic_method, cur_area, cur_task)
-
-    # for cur_method in methods:
-    #     get_simple_error_table(cur_method, cur_area, cur_task)
-    #     get_special_error_table(cur_method, cur_area, cur_task)
-    #     print(f'Method {cur_method} finished!')
+    # get_simple_error_table(basic_method, cur_area, cur_task)
+    # get_iters_time_tables(schwarz_multiplicative, cur_area, cur_task)
+    for cur_method in methods:
+        get_iters_time_tables(cur_method, cur_area, cur_task)
+        print(f'Method {cur_method} finished!')

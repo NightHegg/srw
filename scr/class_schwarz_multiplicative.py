@@ -3,12 +3,8 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import math
 
-from itertools import combinations
 import numpy as np
-from scipy.sparse import linalg
-import matplotlib.pyplot as plt
 import time
-import scipy
 
 import scr.functions as base_func
 from scr._template_class import class_template
@@ -136,13 +132,11 @@ class schwarz_multiplicative(class_template):
                 function_condition_schwarz = self.get_condition_schwarz(K, F, self.dict_subd_boundary_points[idv], dict_points_global_to_local)
                 self.set_condition_schwarz(function_condition_schwarz)
 
-                [*arg,] = self.solve_function(K.tocsr(), F)
-                u_subd = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
+                # [*arg,] = self.solve_function(K.tocsr(), F)
+                # u_subd = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
+                u_subd = self.conjugate_method(K, F).reshape(-1, 2)
+
                 self.u_current[np.array(list(self.dict_subd_points_local_to_global[idv].values()))] = u_subd.copy()
-                # print(np.array(list(self.dict_subd_points_local_to_global[idv].values())))
-                # print(np.count_nonzero(u_subd, axis = 0))
-                # print(np.count_nonzero(self.u_current, axis = 0))
-                # self.internal_plot_displacements(self.u_current * self.coef_u + self.area_points_coords, self.area_elements)
                 self.set_additional_calculations()
 
             self.amnt_iterations += 1

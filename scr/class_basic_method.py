@@ -24,7 +24,8 @@ class basic_method(class_template):
 
         self.set_condition_neumann(F, self.list_area_neumann_elements, self.area_points_coords, self.dict_area_neumann_points)
         self.set_condition_dirichlet(K, F, self.dict_area_dirichlet_points, self.dict_area_dirichlet_points.keys())
-        
+
+        # self.u = self.conjugate_method(K, F).reshape(-1, 2)
         *arg, = self.solve_function(K.tocsr(), F)
         self.u = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
 

@@ -22,14 +22,14 @@ class class_template:
         self.solve_function = linalg.spsolve
         temp_contour = []
 
-        with open(f'data/area_info.dat', 'r') as f:
+        with open(f'data/{self.data["area"]}/area_info.dat', 'r') as f:
             for _ in range(int(f.readline())):
                 temp_contour.append([float(x) for x in f.readline().split()])
             self.dim_task = int(f.readline())
             self.E, self.nyu = list(map(float, f.readline().split()))
             self.coef_u, self.coef_sigma = list(map(float, f.readline().split()))
 
-        mesh = meshio.read(f'data/meshes/fine/{self.data["area"]}/{self.data["mesh"]:.3e}.msh')
+        mesh = meshio.read(f'data/{self.data["area"]}/meshes_fine/{self.data["mesh"]:.3e}.msh')
         
         self.contour_points = np.append(np.array(temp_contour), [temp_contour[0]], axis = 0)
         self.area_points_coords = mesh.points
@@ -50,62 +50,82 @@ class class_template:
         self.dict_area_dirichlet_points = {}
         self.dict_area_neumann_points = {}
 
-        with open(f'data/tasks/{self.data["task"]}.dat', 'r') as f:
-            self.inner_radius = self.contour_points[0, 0]
-            self.outer_radius = self.contour_points[1, 0]
-
-            self.inner_displacement = float(f.readline())
-            self.outer_displacement = float(f.readline())
-            self.dirichlet_conditions.append([self.inner_radius, self.inner_displacement])
-            self.dirichlet_conditions.append([self.outer_radius, self.outer_displacement])
-
-            for _ in range(int(f.readline())):
-                self.dirichlet_conditions.append([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())])
-
-            self.inner_pressure = float(f.readline())
-            self.outer_pressure = float(f.readline())
-            self.neumann_conditions.append([self.inner_radius, self.inner_pressure])
-            self.neumann_conditions.append([self.outer_radius, self.outer_pressure])
-
-            self.inner_radius_points = np.isclose(self.inner_radius, np.linalg.norm(self.area_points_coords, axis = 1))
-            self.outer_radius_points = np.isclose(self.outer_radius, np.linalg.norm(self.area_points_coords, axis = 1))
-
-        for ind, row in enumerate(self.dirichlet_conditions):
-            if ind in [0, 1]:
-                radius, displacement = row[0], row[1]
-                for point in self.area_points:
-                    point_coords = np.array(self.area_points_coords[point])
-                    if np.isclose(np.linalg.norm(point_coords), radius):
-                        self.dict_area_dirichlet_points[point] = point_coords * (displacement / radius)
+        with open(f'data/{self.data["area"]}/tasks/{self.data["task"]}.dat', 'r') as f:
+            if self.data["area"] == 'rectangle':
+                for _ in range(int(f.readline())):
+                    self.dirichlet_conditions.append(np.array([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())]))
+                for _ in range(int(f.readline())):
+                    self.neumann_conditions.append(np.array([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())]))
             else:
-                b, a = np.array(self.contour_points[row[0]]), np.array(self.contour_points[row[1]])
-                for point in self.area_points:
-                    point_coords = np.array(self.area_points_coords[point])
-                    if np.isclose(abs(np.cross(b-a, point_coords - a)), 0):
-                        if point in self.dict_area_dirichlet_points:
-                            if math.isnan(self.dict_area_dirichlet_points[point][0]) and math.isnan(self.dict_area_dirichlet_points[point][1]):
-                                self.dict_area_dirichlet_points[point] = [row[2], row[3]]
-                            else:
-                                if math.isnan(row[2]):
-                                    self.dict_area_dirichlet_points[point] = [self.dict_area_dirichlet_points[point][0], row[3]]
-                                elif math.isnan(row[3]):
-                                    self.dict_area_dirichlet_points[point] = [row[2], self.dict_area_dirichlet_points[point][1]]
+                self.inner_radius = self.contour_points[0, 0]
+                self.outer_radius = self.contour_points[1, 0]
+
+                self.inner_displacement = float(f.readline())
+                self.outer_displacement = float(f.readline())
+                self.dirichlet_conditions.append([self.inner_radius, self.inner_displacement])
+                self.dirichlet_conditions.append([self.outer_radius, self.outer_displacement])
+
+                for _ in range(int(f.readline())):
+                    self.dirichlet_conditions.append(np.array([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())]))
+
+                self.inner_pressure = float(f.readline())
+                self.outer_pressure = float(f.readline())
+                self.neumann_conditions.append(np.array([self.inner_radius, self.inner_pressure]))
+                self.neumann_conditions.append(np.array([self.outer_radius, self.outer_pressure]))
+
+                self.inner_radius_points = np.isclose(self.inner_radius, np.linalg.norm(self.area_points_coords, axis = 1))
+                self.outer_radius_points = np.isclose(self.outer_radius, np.linalg.norm(self.area_points_coords, axis = 1))
+
+        if self.data["area"] == 'rectangle':
+            for point_num, point_coords in enumerate(self.area_points_coords):
+                for row in self.dirichlet_conditions:
+                    contour_points = self.contour_points[row[:2].astype(int)]
+                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                        if point_num in self.dict_area_dirichlet_points:
+                            template_nan = np.isnan(self.dict_area_dirichlet_points[point_num])
+                            self.dict_area_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
                         else:
-                            self.dict_area_dirichlet_points[point] = [row[2], row[3]]
-        for row in self.neumann_conditions:
-            radius, pressure = row[0], row[1]
-            for point in self.area_points:
-                point_coords = np.array(self.area_points_coords[point])
-                if np.isclose(np.linalg.norm(point_coords), radius):
-                    self.dict_area_neumann_points[point] = pressure
+                            self.dict_area_dirichlet_points[point_num] = np.copy(row)[2:]
+                
+                for row in self.neumann_conditions:
+                    contour_points = self.contour_points[row[:2].astype(int)]
+                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                        self.dict_area_neumann_points[point_num] = row[2:]
+        else:
+            for point_num, point_coords in enumerate(self.area_points_coords):
+                for index, row in enumerate(self.dirichlet_conditions):
+                    if index in [0, 1]:
+                        radius, displacement = row[0], row[1]
+                        if np.isclose(np.linalg.norm(point_coords), radius):
+                            self.dict_area_dirichlet_points[point_num] = point_coords * (displacement / radius)
+                    else:
+                        contour_points = self.contour_points[row[:2].astype(int)]
+                        if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                            if point_num in self.dict_area_dirichlet_points:
+                                template_nan = np.isnan(self.dict_area_dirichlet_points[point_num])
+                                self.dict_area_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
+                            else:
+                                self.dict_area_dirichlet_points[point_num] = np.copy(row)[2:]
+                for row in self.neumann_conditions:
+                    radius, pressure = row[0], row[1]
+                    if np.isclose(np.linalg.norm(point_coords), radius):
+                        self.dict_area_neumann_points[point_num] = pressure
 
         self.list_area_neumann_elements = []
-        for element in self.area_elements:
-            if len(set(element) & set(self.area_points[self.inner_radius_points])) == 2:
-                self.list_area_neumann_elements.append(list(set(element) & set(self.area_points[self.inner_radius_points])))
-            elif len(set(element) & set(self.area_points[self.outer_radius_points])) == 2:
-                self.list_area_neumann_elements.append(list(set(element) & set(self.area_points[self.outer_radius_points])))
-        
+        if self.data["area"] == 'rectangle':
+            for element in self.area_elements:
+                points = list(set(element) & set(list(self.dict_area_neumann_points.keys())))
+                if len(points) == 2:
+                    self.list_area_neumann_elements.append(points)
+        else:
+            for element in self.area_elements:
+                inner_points = list(set(element) & set(self.area_points[self.inner_radius_points]))
+                outer_points = list(set(element) & set(self.area_points[self.outer_radius_points]))
+                if len(inner_points) == 2:
+                    self.list_area_neumann_elements.append(inner_points)
+                elif len(outer_points) == 2:
+                    self.list_area_neumann_elements.append(outer_points)
+
         self.list_area_of_elements = np.array([base_func.calculate_local_matrix_stiffness(i, self.area_points_coords, self.dim_task)[1] for i in self.area_elements])
 
         self.dict_elements_contain_point = {}
@@ -141,11 +161,17 @@ class class_template:
         for points in list_neumann_elements:
             points = np.array(points)
             len = np.linalg.norm(np.diff(area_points_coords[points], axis = 0))
-            value = np.flip(np.ravel(np.abs((np.diff(area_points_coords[points], axis = 0)))))
-            for point in points:
-                modified_point = modifier[point] if modifier else point
-                pressure = dict1[point]
-                F[modified_point * self.dim_task: (modified_point + 1) * self.dim_task] += value * (pressure / len) * len / 2
+            if self.data["area"] == 'rectangle':
+                for point in points:
+                    modified_point = modifier[point] if modifier else point
+                    pressure = dict1[point]
+                    F[modified_point * self.dim_task: (modified_point + 1) * self.dim_task] += pressure * len / 2
+            else:
+                value = np.flip(np.ravel(np.abs((np.diff(area_points_coords[points], axis = 0)))))
+                for point in points:
+                    modified_point = modifier[point] if modifier else point
+                    pressure = dict1[point]
+                    F[modified_point * self.dim_task: (modified_point + 1) * self.dim_task] += value * (pressure / len) * len / 2
 
 
     def calculate_eps(self):
@@ -296,19 +322,15 @@ class class_template:
         fig.set_facecolor('mintcream')
 
         plt.show()
-        return fig
 
 
     def plot_displacements(self, save_route = None):
-        fig = self.internal_plot_displacements(self.area_points_coords_modified, self.area_elements)
-        if save_route:
-            fig.savefig(save_route)
+        self.internal_plot_displacements(self.area_points_coords_modified, self.area_elements)
 
 
     def plot_init_mesh(self, save_route = None):
-        fig = self.internal_plot_displacements(self.area_points_coords, self.area_elements)
-        if save_route:
-            fig.savefig(save_route)
+        self.internal_plot_displacements(self.area_points_coords, self.area_elements)
+
 
     def plot_polar(self):
         plt.polar(self.u_polar[self.inner_radius_points, 1], self.u_polar[self.inner_radius_points, 0], 'o')
@@ -342,12 +364,39 @@ class class_template:
         self.construct_info()
         return sum(list(self.message.values()), [])
 
+
     def pcolormesh(self):
         triang = mtri.Triangulation(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements)
         plt.tricontourf(triang, np.linalg.norm(self.u, axis = 1) * self.coef_u)
         plt.colorbar()
         plt.axis('equal')
         plt.show()
+
+
+    def conjugate_method(self, A, b, x = None):
+        n = len(b)
+        if not x:
+            x = np.ones(n)
+        
+        r = b - A.dot(x)
+        if np.linalg.norm(r) < 1e-8:
+            return x
+        z = r
+        for i in range(2*n):
+            r_previous_norm = np.dot(r, r)
+            alpha = r_previous_norm / np.dot(A.dot(z), z)
+            x += alpha * z
+            r -= alpha * A.dot(z)
+            coef_convergence = np.linalg.norm(r) / np.linalg.norm(b)
+            if coef_convergence < 1e-8:
+                # print(f'Amount of iterations: {i}\nN: {n}')
+                break
+            else:
+                r_current_norm = np.dot(r, r)
+                beta = r_current_norm / r_previous_norm
+                z = r + beta * z
+                # print(f'{coef_convergence:.3e}')
+        return x
 
 if __name__ == "__main__":
     pass
