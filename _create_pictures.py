@@ -23,19 +23,29 @@ def test_task(method, fine_area, coarse_area, fine_mesh, course_mesh, cur_task):
         'coef_alpha':       0.5
     }
     obj = method(example_data)
-    obj.get_solution()
-    obj.plot_pressure_distribution(True)
+    # obj.get_solution()
+    obj.plot_area_coarse(True)
 
 
 if __name__ == "__main__":
     areas = ["rectangle", "thick_walled_cylinder", "simplified_cylinder", "bearing"]
     tasks = ["3_fixes", "2_fixes", "pressure_only"]
-    
-    fine_area = 'bearing'
+
+    area = {
+        'rectangle' : ['3_fixes', '2_fixes'],
+        'thick_walled_cylinder' : ['pressure_only'],
+        'bearing' : ['pressure_only']
+    }
+
+    fine_area = 'rectangle'
     course_area = 'rectangle'
 
-    fine_mesh = 0.0125
+    fine_mesh = 0.125
     course_mesh = 1
 
-    cur_task = 'pressure_only'
-    test_task(basic_method, fine_area, course_area, fine_mesh, course_mesh, cur_task)
+    cur_task = '3_fixes'
+    test_task(schwarz_two_level_additive, fine_area, course_area, fine_mesh, course_mesh, cur_task)
+    # for fine_area, tasks in area.items():
+    #     for task in tasks:
+    #         test_task(basic_method, fine_area, course_area, fine_mesh, course_mesh, task)
+    #         print(f'Ended {task}: {fine_area}')

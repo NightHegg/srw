@@ -133,11 +133,10 @@ class class_visualisation:
 
         ax.set_xlabel('$x$', fontsize = 20)
         ax.set_ylabel('$y$', fontsize = 20)
-        ax.set_xticklabels([])
-        ax.set_yticklabels([])
+        ax.tick_params(labelsize = 14)
 
-        fig.set_figwidth(10)
-        fig.set_figheight(10)
+        fig.set_figwidth(9)
+        fig.set_figheight(6)
 
         if save:
             route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/area_coarse_{self.data["coarse_area"]}.png'
@@ -157,16 +156,18 @@ class class_visualisation:
             ax_plt = ax.tricontourf(triang, self.u[:, 1] * self.coef_u)
             cbar = plt.colorbar(ax_plt)
             cbar.set_label(f'$u_y, м$', fontsize = 20)
-            fig.set_figwidth(8)
-            fig.set_figheight(5)
+            fig.set_figwidth(9)
+            fig.set_figheight(6)
         else:
             ax_plt = ax.tricontourf(triang, self.u_polar[:, 0] * self.coef_u)
             cbar = plt.colorbar(ax_plt)
             cbar.set_label(f'$u_r, м$', fontsize = 20)
-            fig.set_figwidth(10)
-            fig.set_figheight(8)
+            fig.set_figwidth(11)
+            fig.set_figheight(9)
 
         ax = self.plot_contour(ax)
+        cbar.ax.tick_params(labelsize = 14)
+        ax.tick_params(labelsize = 14)
 
         if save:
             route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/displacement_distribution.png'
@@ -189,22 +190,27 @@ class class_visualisation:
         triang = mtri.Triangulation(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements)
 
         if self.data['fine_area'] == 'rectangle':
-            ax_plt = ax.tricontourf(triang, self.sigma_points[:, 1])
-            cbar = plt.colorbar(ax_plt)
-            cbar.set_label(f'$\sigma_y$, м', fontsize = 20)
-            fig.set_figwidth(8)
-            fig.set_figheight(5)
+            type = 1
+            ax_plt = ax.tricontourf(triang, self.sigma_points[:, type])
+            name = "_x" if type == 0 else "_y"
+            special_name = name
+            fig.set_figwidth(9)
+            fig.set_figheight(6)
         else:
-            ax_plt = ax.tricontourf(triang, self.sigma_points_polar[:, 0] * self.coef_sigma)
-            cbar = plt.colorbar(ax_plt)
-            cbar.set_label(f'$\sigma_r$, м', fontsize = 20)
-            fig.set_figwidth(10)
-            fig.set_figheight(8)
+            type = 1
+            ax_plt = ax.tricontourf(triang, self.sigma_points_polar[:, type] * self.coef_sigma)
+            name = "_r" if type == 0 else "_phi"
+            special_name = "_r" if type == 0 else "_{phi}"
+            fig.set_figwidth(11)
+            fig.set_figheight(9)
 
+        cbar = plt.colorbar(ax_plt)
+        cbar.set_label(f'$\sigma{special_name}$, МПа', fontsize = 20)
+        cbar.ax.tick_params(labelsize = 14)
         ax = self.plot_contour(ax)
-
+        ax.tick_params(labelsize = 14)
         if save:
-            route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/pressure_distribution.png'
+            route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/pressure_distribution{name}.png'
             plt.savefig(route)
         else:
             plt.show()

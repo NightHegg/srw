@@ -207,8 +207,8 @@ def create_table_overlap(fine_area, coarse_area, amnt_subds, task):
             example_data = {
                 'fine_area':        fine_area,
                 'coarse_area':      coarse_area,
-                'fine_mesh':        0.05,
-                'coarse_mesh':      0.5,
+                'fine_mesh':        0.0125,
+                'coarse_mesh':      0.125,
                 'task':             task,
                 'amnt_subds':       amnt_subds,
                 'coef_convergence': 1e-5,
@@ -216,7 +216,6 @@ def create_table_overlap(fine_area, coarse_area, amnt_subds, task):
                 'coef_alpha':       0.5
             }
             obj = method(example_data)
-            name = obj.name_method
             table_name = obj.table_name
             obj.get_solution()
             amnt_iters = obj.amnt_iterations
@@ -310,18 +309,18 @@ if __name__ == "__main__":
     #         for coarse_area in data["coarse"]:
     #             create_table_iters_coarse(fine_area, coarse_area, task, bool_save=True)
     #             print('Finished:', coarse_area, task, fine_area)
-
-    for cur_method in methods:
-        for fine_area, data in area_simple.items():
-            for task in data["tasks"]:
-                create_table_iters_time(cur_method, fine_area, data["coarse"], task, bool_save=True)
-        print(f'Method {cur_method} finished!')
+    # create_table_iters_time(schwarz_two_level_additive, 'rectangle', 'rectangle', '3_fixes', bool_save=True)
+    # for cur_method in methods:
+    #     for fine_area, data in area_simple.items():
+    #         for task in data["tasks"]:
+    #             create_table_iters_time(cur_method, fine_area, data["coarse"], task, bool_save=True)
+    #     print(f'Method {cur_method} finished!')
 
     # for fine_area, data in area_coarse.items():
     #     for task in data["tasks"]:
     #         for coarse_area in data["coarse"]:
     #             get_iters_time_tables(schwarz_two_level_additive, fine_area, coarse_area, task)
-
+    create_table_overlap('rectangle', 'rectangle', 4, '3_fixes')
     # for fine_area, data in area_coarse.items():
     #     for task in data["tasks"]:
     #         for coarse_area in data["coarse"]:
