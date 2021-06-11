@@ -83,7 +83,7 @@ class schwarz_two_level_additive(schwarz_additive):
                     if np.isclose(np.linalg.norm(point_coords), radius):
                         self.dict_area_coarse_neumann_points[point_num] = pressure
 
-
+        print('check')
         self.list_area_coarse_neumann_elements = []
         for index_element, element in enumerate(self.area_coarse_elements):
             if len(set(element) & set(self.dict_area_coarse_neumann_points.keys())) == 2:
@@ -94,14 +94,14 @@ class schwarz_two_level_additive(schwarz_additive):
 
         self.set_condition_neumann(self.F_special, self.list_area_neumann_elements, self.area_points_coords, self.dict_area_neumann_points)
         self.set_condition_dirichlet(self.K_special, self.F_special, self.dict_area_dirichlet_points, self.dict_area_dirichlet_points.keys())
-
+        print('check2')
         self.K_coarse_special = base_func.calculate_sparse_matrix_stiffness(self.area_coarse_elements, self.area_coarse_points_coords, self.area_coarse_points.size, self.D, self.dim_task)
         self.F_coarse_special = np.zeros(self.area_coarse_points_coords.size)
 
         self.barycentric_coords_for_coarse_elements = {}
         for num_element, coarse_element in enumerate(self.area_coarse_elements):
             self.barycentric_coords_for_coarse_elements[num_element] = base_func.create_barycentric_coords(coarse_element, self.area_coarse_points_coords)
-
+        print('check3')
         self.dict_point_in_coarse_elements = {}
         for num_point, point_coords in enumerate(self.area_points_coords):
             bool_check = check_point_in_elements(point_coords)
@@ -115,6 +115,7 @@ class schwarz_two_level_additive(schwarz_additive):
                 caution_check = caution_check_point_in_elements(point_coords)
                 dict_caution = {caution_check(elem, self.area_coarse_points_coords): num for num, elem in enumerate(self.area_coarse_elements)}
                 self.dict_point_in_coarse_elements[num_point] = dict_caution[min(dict_caution)]
+        print('check4')
         # test_dict = {}
         # for key, value in self.dict_point_in_coarse_elements.items():
         #     if value in test_dict.keys():
@@ -122,7 +123,7 @@ class schwarz_two_level_additive(schwarz_additive):
         #     else:
         #         test_dict[value] = [key]
         # for key, value in test_dict.items():
-        #     self.internal_plot_displacements_coarse(self.area_points_coords[value], self.area_coarse_points_coords, self.area_coarse_elements)
+        #     self.internal_plot_displacement_coarse(self.area_points_coords[value], self.area_coarse_points_coords, self.area_coarse_elements)
         self.time_init = time.time() - init_time
 
 

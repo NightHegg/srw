@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import pygmsh
+import meshio
 
 class Task:
     def __init__(self, area, contour, dim_task, E, nyu, coef_u, coef_sigma):
@@ -53,7 +54,7 @@ class Task:
 
         with pygmsh.occ.Geometry() as geom:
             geom.characteristic_length_min = edge_size
-            geom.characteristic_length_max = edge_size
+            # geom.characteristic_length_max = edge_size
             if self.cur_area == 'rectangle':
                 x_size, y_size = self.contour[2]
                 geom.add_rectangle([0.0, 0.0, 0.0], x_size, y_size)
@@ -106,7 +107,7 @@ class Task:
                     ring = geom.boolean_union([outer_ring_full, inner_ring_full, list_balls])
                     geom.boolean_difference(ring, geom.boolean_union([polygon_1, polygon_2]))
 
-            geom.generate_mesh()
+            mesh = geom.generate_mesh()
             pygmsh.write(f'data/{self.cur_area}/{mesh_type}/{edge_size:.3e}.msh')
 
 
@@ -186,8 +187,8 @@ if __name__ == "__main__":
             "meshes_fine": []
         },
         'bearing': {
-            "meshes_coarse": [],
-            "meshes_fine": [0.5, 0.25, 0.125, 0.05, 0.025, 0.0125, 0.00625]
+            "meshes_coarse": [0.2926354830241924],
+            "meshes_fine": [0.2926354830241924]
         }
     }
 

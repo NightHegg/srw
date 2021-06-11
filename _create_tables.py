@@ -9,6 +9,36 @@ from scr.class_schwarz_additive import schwarz_additive
 from scr.class_schwarz_two_level_additive import schwarz_two_level_additive
 
 
+def create_table_rectangle_error(task):
+    dct = {}
+    mesh = [0.05, 0.025, 0.0125, 0.00625]
+    for cur_mesh in mesh:
+        example_data = {
+            'fine_area':        'rectangle',
+            'coarse_area':      '',
+            'fine_mesh':        cur_mesh,
+            'coarse_mesh':      0.5,
+            'task':             task,
+            'amnt_subds':       2,
+            'coef_convergence': 1e-5,
+            'coef_overlap':     0.3,
+            'coef_alpha':       0.5
+        }
+        obj = basic_method(example_data)
+        obj.get_solution()
+        dct[cur_mesh] = {
+            'sigmay': f'{(np.amax(np.abs(obj.sigma[:, 1]), axis = 0) - 2e+7) / (2e+7):.2e}'
+        }
+        print(f'Ended {cur_mesh}')
+    df = pd.DataFrame.from_dict(dct).T
+
+    df.index.names = ['step']
+    print(df)
+
+    route = f'results/rectangle/{task}/core/errors.csv'
+    df.to_csv(route, index = True)
+
+
 def create_table_special_error(method, fine_area, coarse_area, task):
     dct = {}
     list_coef_convergence = [1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
@@ -144,7 +174,7 @@ def create_table_iters_coarse(fine_area, coarse_area, task, bool_save = False):
 def create_table_iters_time(method, fine_area, coarse_area, task, bool_save = False):
     dict_iters = {}
     dict_time = {}
-    list_mesh = [0.05, 0.025, 0.0125, 0.00625]
+    list_mesh = [0.05]
     list_amnt_subds = [2, 4, 8]
 
     for idx, cur_mesh in enumerate(list_mesh):
@@ -155,7 +185,7 @@ def create_table_iters_time(method, fine_area, coarse_area, task, bool_save = Fa
                 'fine_area':        fine_area,
                 'coarse_area':      coarse_area,
                 'fine_mesh':        cur_mesh,
-                'coarse_mesh':      0.125,
+                'coarse_mesh':      0.2926354830241924,
                 'task':             task,
                 'amnt_subds':       cur_amnt_subds,
                 'coef_convergence': 1e-5,
@@ -320,7 +350,9 @@ if __name__ == "__main__":
     #     for task in data["tasks"]:
     #         for coarse_area in data["coarse"]:
     #             get_iters_time_tables(schwarz_two_level_additive, fine_area, coarse_area, task)
-    create_table_overlap('rectangle', 'rectangle', 4, '3_fixes')
+    # create_table_overlap('rectangle', 'rectangle', 4, '3_fixes')
+    create_table_iters_time(schwarz_two_level_additive, 'bearing', 'bearing', 'pressure_only', False)
+    # create_table_rectangle_error('3_fixes')
     # for fine_area, data in area_coarse.items():
     #     for task in data["tasks"]:
     #         for coarse_area in data["coarse"]:

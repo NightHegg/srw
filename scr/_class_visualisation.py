@@ -66,8 +66,6 @@ class class_visualisation:
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
 
-        ax.set_xlabel('$x$', fontsize = 20)
-        ax.set_ylabel('$y$', fontsize = 20)
         return ax
 
 
@@ -105,14 +103,16 @@ class class_visualisation:
             ax[idx].triplot(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements[value], color = 'grey', alpha = 0.5)
 
             ax[idx] = self.plot_contour(ax[idx])
-
             ax[idx].set_xlabel('$x$', fontsize = 20)
             ax[idx].set_ylabel('$y$', fontsize = 20)
-            ax[idx].set_xticklabels([])
-            ax[idx].set_yticklabels([])
-        
-        fig.set_figwidth(5)
-        fig.set_figheight(10)
+            ax[idx].tick_params(labelsize = 14)
+
+        if self.data['fine_area'] == 'rectangle':
+            fig.set_figwidth(7)
+            fig.set_figheight(10)
+        else:
+            fig.set_figwidth(7)
+            fig.set_figheight(14)
 
         if save:
             route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/area_decomposition.png'

@@ -299,6 +299,7 @@ class class_template(class_visual.class_visualisation):
                 beta = r_current_norm / r_previous_norm
                 z = r + beta * z
                 amnt_iters_cg += 1
+                print(coef_convergence)
         return x, amnt_iters_cg
 
 

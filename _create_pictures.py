@@ -24,7 +24,7 @@ def test_task(method, fine_area, coarse_area, fine_mesh, course_mesh, cur_task):
     }
     obj = method(example_data)
     # obj.get_solution()
-    obj.plot_area_coarse(True)
+    obj.plot_area_decomposition(True)
 
 
 if __name__ == "__main__":
@@ -37,14 +37,14 @@ if __name__ == "__main__":
         'bearing' : ['pressure_only']
     }
 
-    fine_area = 'rectangle'
-    course_area = 'rectangle'
+    fine_area = 'bearing'
+    course_area = 'simplified_cylinder'
 
     fine_mesh = 0.125
     course_mesh = 1
 
-    cur_task = '3_fixes'
-    test_task(schwarz_two_level_additive, fine_area, course_area, fine_mesh, course_mesh, cur_task)
+    cur_task = 'pressure_only'
+    test_task(schwarz_multiplicative, fine_area, course_area, fine_mesh, course_mesh, cur_task)
     # for fine_area, tasks in area.items():
     #     for task in tasks:
     #         test_task(basic_method, fine_area, course_area, fine_mesh, course_mesh, task)

@@ -17,10 +17,8 @@ def test_task(method, fine_area, coarse_area, fine_mesh, course_mesh, cur_task):
         'coef_alpha':       0.5
     }
     obj = method(example_data)
-    # obj.plot_init_mesh()
-    obj.get_solution()
-    print()
-    print(obj.amnt_iterations)
+    obj.plot_area_init_mesh()
+    # obj.get_solution()
     obj.plot_displacement()
 
 
@@ -30,10 +28,10 @@ if __name__ == "__main__":
 
     cur_task = 'pressure_only'
 
-    fine_area = 'thick_walled_cylinder'
-    course_area = 'rectangle'
+    fine_area = 'bearing'
+    course_area = 'bearing'
 
-    fine_mesh = 0.05
-    course_mesh = 0.5
+    fine_mesh = 0.2926354830241924
+    course_mesh = 0.2926354830241924
     
-    test_task(schwarz_multiplicative, fine_area, course_area, fine_mesh, course_mesh, cur_task)
+    test_task(basic_method, fine_area, course_area, fine_mesh, course_mesh, cur_task)
