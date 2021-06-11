@@ -1,16 +1,10 @@
 import os
 import sys
-import math
-
-from scipy.sparse.linalg import dsolve
+import time
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-import matplotlib.pyplot as plt
-from itertools import combinations
 import numpy as np
-from scipy.sparse import linalg
 import meshio
-import time
 
 import scr.functions as base_func
 from scr.class_schwarz_additive import schwarz_additive
@@ -41,11 +35,10 @@ class schwarz_two_level_additive(schwarz_additive):
         init_time = time.time()
         super().__init__(data)
 
-        self.name_method = "schwarz_additive_two_level"
+        self.name_method = "schwarz_two_level_additive"
+        self.table_name = '$\\text{Двухуровневый аддитивный МДО}$'
         
-        coarse_area = "simplified_cylinder"
-        # coarse_area = data["area"]
-        coarse_mesh = meshio.read(f'data/{coarse_area}/meshes_coarse/{self.data["coarse_mesh"]:.3e}.msh')
+        coarse_mesh = meshio.read(f'data/{data["coarse_area"]}/meshes_coarse/{self.data["coarse_mesh"]:.3e}.msh')
 
         self.area_coarse_points_coords = coarse_mesh.points
         self.area_coarse_points_coords = np.delete(self.area_coarse_points_coords, -1, axis = 1)
@@ -55,7 +48,7 @@ class schwarz_two_level_additive(schwarz_additive):
         self.dict_area_coarse_dirichlet_points = {}
         self.dict_area_coarse_neumann_points = {}
 
-        if self.data["area"] == 'rectangle':
+        if self.data["coarse_area"] == 'rectangle':
             for point_num, point_coords in enumerate(self.area_coarse_points_coords):
                 for row in self.dirichlet_conditions:
                     contour_points = self.contour_points[row[:2].astype(int)]
@@ -164,7 +157,8 @@ class schwarz_two_level_additive(schwarz_additive):
 
         self.u = self.u_previous.copy() + (self.coef_alpha * self.u_sum.copy()) + (self.coef_alpha * u_special.reshape(-1, 2))
 
-    def plot_init_coarse_mesh(self):
+
+    def plot_area_init_coarse_mesh(self):
         self.internal_plot_displacements(self.area_coarse_points_coords, self.area_coarse_elements)
 
 if __name__ == "__main__":

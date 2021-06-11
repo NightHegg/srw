@@ -23,7 +23,7 @@
  
 \begin{document} % начало документа
  
-\section{Математическая постановка задачи}
+\section{Математическая модель}
 
 Для решения общей задачи по нахождению деформаций и напряжений в деформируемом теле, занимающем область $G$ с границей $\partial \, G$, необходимо использовать следующие соотношения:
 
@@ -115,66 +115,481 @@ u^{n+1} = u^{n} + \alpha \sum_{i=1}^{M} (u_i^{n+1} - u^{n}),
 
 \newpage
 
+\section{Численная модель}
+
+\newpage
+
+\section{Краткое описание программы}
+
+\newpage
+
 \section{Результаты численных расчётов}
 
 В данном разделе будут приведены расчёты четырёх тестовых задач с использованием четырёх методов. Для каждой из задач для базового случая будут приведены графики распределения напряжений вдоль поверхности, к которой приложено давление, а также графики распределения перемещений на всей расчётной области.
 
 Для методов декомпозиции области расчётные области будут разбиты на заданное количество секторов без перекрытия $\Omega_1, \ldots, \Omega_M$ в зависимости от задачи, где M - число подобластей. Также стоит заметить, что каждая подобласть $\Omega_i$ ($i = 1,\ldots,M$) в зависимости от задачи обладает своими размерными характеристиками. Подобласть $G_i$ соответствует объединению подобласти $\Omega_i$ и дополнительных участков соседних подобластей $\Omega_{i-1}$ и $\Omega_{i+1}$. Размеры этих дополнительных участков зависят от относительного коэффициента перекрытия (отношение размера перекрытия к размеру подобласти $\Omega_i$).
 
-Итерационный процесс для мультипликативного, аддитивного и двухуровневого аддитивного методов продолжался до тех пор, пока не выполнялось условие критерия останова:
+Итерационный процесс для мультипликативного, аддитивного и двухуровневого аддитивного методов продолжается до тех пор, пока не выполнится условие критерия останова $u_{err}$ для перемещений:
 
-\begin{equation}
-u_error = \sqrt{\frac{\sum_{k = 1}^{N_{p}} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{m}}{u_{k}^{m+1}} \right)^2}{\sum_{k = 1}^{N_{p}} s_k}} < \varepsilon_0,
-\end{equation}
+\begin{equation*}
+u_{err} = \sqrt{\left(\sum_{k = 1}^{N_p} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{m}}{u_{k}^{m+1}} \right)^2\right) / \left(\sum_{k = 1}^{N_{p}} s_k\right)} < \varepsilon_0,
+\end{equation*}
 где $s_k$ - суммарная площадь элементов сетки, в которые входит $k$-й узел, разделённая на количество узлов в элементе, $N_{elem}$ - количество узлов сетки, $u_{k}^{m+1}$ - решение на текущей итерации, $u_{k}^{m}$ - решение на предыдущей итерации.
 
 Дополнительно для каждой из задач для методов декомпозиции будут приведены таблицы зависимости количества итераций от относительного коэффициента перекрытия.
 
+\newpage
+
 \subsection{Первая тестовая задача}
 
-Расчётная область - тело, закреплённое с левой и правой стороны по оси OX и с нижней стороны по оси OY. Сверху действует распределённая нагрузка $p = 50$ МПа. Ширина тела $a = 2$ см, высота тела $b = 1$ см. 
+На рис. \ref{fig:task_01_scheme} представлена расчётная область для первой тестовой задачи - прямоугольник, закреплённый с левой и правой стороны по оси OX и с нижней стороны по оси OY. Сверху действует распределённая нагрузка $p = 50$ МПа. Ширина тела $a = 2$ см, высота тела $b = 1$ см.
 
 \begin{figure}[h]
-\center{\includegraphics[scale=0.2]{img/task_01_scheme.jpg}}
-\caption{Схема расчётной области первой тестовой задачи (заглушка)}
+\center{\includegraphics[scale=0.9]{../results/rectangle/3_fixes/core/area_diagram.png}}
+\caption{Схема расчётной области}
 \label{fig:task_01_scheme}
 \end{figure}
 
 Для решения поставленной задачи примем, что материал тела имеет следующие параметры: модуль Юнга $E = 70$ ГПа, коэффициент Пуассона $\mu = 0.34$. 
 
-Для исследования зависимости сходимости метода от размерности итоговой системы линейных уравнений рассмотрены три расчётные сетки с шагами $h = 0.05$ (количество узлов - 994), $h = 0.025$ (количество узлов - 3812), $h = 0.0125$ (количество узлов - 15006). Для аддитивного метода Шварца итерационный параметр $\alpha = 0.5$.
+Для исследования зависимости сходимости метода от размерности итоговой системы линейных уравнений рассмотрены три расчётные сетки с шагами $h = 0.05$ (количество узлов - 994), $h = 0.025$ (количество узлов - 3812), $h = 0.0125$ (количество узлов - 15006).
 
-Для данной задачи известны аналитические решения для компонент тензора напряжений и для перемещений. В таблице 1 представлены нормы ошибок вычислений перемещений, радиального и окружного напряжений, полученные при решении задачи без декомпозиции для различных сеток, в таблице 2 - отношения норм ошибок.
+Для аддитивного метода Шварца итерационный параметр $\alpha = 0.5$.
+
+\newpage
+
+Для решения задачи методами декомпозиции области расчётная область разбивается по оси OX на заданное количество прямоугольных областей без перекрытия $\Omega_1, \ldots, \Omega_M$. Характерные размеры каждой подобласти: ширина подобласти $a_M = a / M$, высота подобласти совпадает с высотой тела $b_M = b$. На рис. \ref{fig:task_01_decomposition} представлена расчётная область первой тестовой задачи, разбитая на две подобласти.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.75]{../results/rectangle/3_fixes/core/area_decomposition.png}}
+\caption{Схема декомпозиции расчётной области (M = 2)}
+\label{fig:task_01_decomposition}
+\end{figure}
+
+\newpage
+
+На рис. \ref{fig:task_01_basic_displacement_distribution} приведено распределение перемещений, полученных при решении задачи во всей расчётной области без МДО, на рис. \ref{fig:task_01_basic_pressure_distribution} - распределение напряжений вблизи области приложения давления.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.75]{../results/rectangle/3_fixes/basic_method/displacement_distribution.png}}
+\caption{Распределение перемещений во всей расчётной области}
+\label{fig:task_01_basic_displacement_distribution}
+\end{figure}
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.2]{../results/rectangle/3_fixes/basic_method/pressure_distribution.png}}
+\caption{Распределение напряжений вблизи области приложения давления}
+\label{fig:task_01_basic_pressure_distribution}
+\end{figure}
+
+\newpage
+
+\subsubsection{Мультипликативный метод Шварца}
+
+В таблице \ref{table:task_01_mult_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании мультипликативного метода Шварца для первой тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций увеличивается (при увеличении количества подобластей количество итераций увеличивается примерно в $M^2$ раз);
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки}
+\csvloop{
+	file = ../results/rectangle/3_fixes/schwarz_multiplicative/iters_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей (M) & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_01_mult_iters}
+\end{table}
+
+\newpage
+
+\subsubsection{Аддитивный метод Шварца}
+
+В таблице \ref{table:task_01_add_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании аддитивного метода Шварца для первой тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций несильно зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций увеличивается (при увеличении количества подобластей количество итераций увеличивается примерно в $M^2$ раз);
+\item количество итераций по сравнению со случаем применения мультипликативного метода Шварца выросло почти в 4 раза;
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки}
+\csvloop{
+	file = ../results/rectangle/3_fixes/schwarz_additive/iters_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_01_add_iters}
+\end{table}
+
+\newpage
+
+\subsubsection{Двухуровневый аддитивный метод Шварца}
+Для двухуровневого аддитивного метода кроме основной сетки в расчётной области зададим грубую сетку, удовлетворяющую условиям включения всех узлов мелкой сетки в элементы грубой сетки и соответствия размеров областей. На рис. \ref{} изображена расчётная область с точками из мелкой сетки и элементами из грубой сетки.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.9]{../results/rectangle/3_fixes/core/area_diagram.png}}
+\caption{Схема расчётной области}
+\label{fig:task_01_scheme}
+\end{figure}
+
+В таблице \ref{table:task_01_add2_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца для первой тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций не меняется;
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для двухуровневого аддитивного метода Шварца}
+\csvloop{
+	file = ../results/rectangle/3_fixes/schwarz_two_level_additive/iters_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_01_add2_iters}
+\end{table}
+
+В таблице \ref{table:task_01_iters_overlap} рассмотрена зависимость количества итераций от различных вариантов МДО и коэффициента относительного захлёста для случая M = 4 и шага сетки $h = 0.025$. Из таблицы видно, что при росте коэффициента относительного захлёста количество итераций уменьшается.
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от метода декомпозиции области и коэффициента относительного захлёста для случая $M = 4$ и $h = 0.025$}
+\csvloop{
+	file = ../results/rectangle/3_fixes/core/overlap_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c |
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Коэффициент относительного захлёста & 0.2 & 0.3 & 0.4 \\\hline,
+	command = \method & \0 & \1 & \2,
+	late after line = \\\hline
+}
+\label{table:task_01_iters_overlap}
+\end{table}
+
+\newpage
+
+\subsection{Вторая тестовая задача}
+
+На рис. \ref{fig:task_02_scheme} представлена расчётная область для второй тестовой задачи - прямоугольник, закреплённый с левой стороны по оси OX и с нижней стороны по оси OY. Сверху действует распределённая нагрузка $p = 50$ МПа. Ширина тела $a = 2$ см, высота тела $b = 1$ см.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.9]{../results/rectangle/2_fixes/core/area_diagram.png}}
+\caption{Схема расчётной области}
+\label{fig:task_02_scheme}
+\end{figure}
+
+Для решения поставленной задачи примем, что материал тела имеет следующие параметры: модуль Юнга $E = 70$ ГПа, коэффициент Пуассона $\mu = 0.34$. 
+
+Для исследования зависимости сходимости метода от размерности итоговой системы линейных уравнений рассмотрены три расчётные сетки с шагами $h = 0.05$ (количество узлов - 994), $h = 0.025$ (количество узлов - 3812), $h = 0.0125$ (количество узлов - 15006).
+
+Для аддитивного метода Шварца итерационный параметр $\alpha = 0.5$.
+
+\newpage
+
+Для решения задачи методами декомпозиции области расчётная область разбивается по оси OX на заданное количество прямоугольных областей без перекрытия $\Omega_1, \ldots, \Omega_M$. Характерные размеры каждой подобласти: ширина подобласти $a_M = a / M$, высота подобласти совпадает с высотой тела $b_M = b$. На рис. \ref{fig:task_02_decomposition} представлена расчётная область вторая тестовой задачи, разбитая на две подобласти.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.75]{../results/rectangle/2_fixes/core/area_decomposition.png}}
+\caption{Схема декомпозиции расчётной области (M = 2)}
+\label{fig:task_02_decomposition}
+\end{figure}
+
+\newpage
+
+На рис. \ref{fig:task_02_basic_displacement_distribution} приведено распределение перемещений, полученных при решении задачи во всей расчётной области без МДО, на рис. \ref{fig:task_02_basic_pressure_distribution} - распределение напряжений вблизи области приложения давления.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.75]{../results/rectangle/2_fixes/basic_method/displacement_distribution.png}}
+\caption{Распределение перемещений во всей расчётной области}
+\label{fig:task_02_basic_displacement_distribution}
+\end{figure}
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.2]{../results/rectangle/2_fixes/basic_method/pressure_distribution.png}}
+\caption{Распределение напряжений вблизи области приложения давления}
+\label{fig:task_02_basic_pressure_distribution}
+\end{figure}
+
+\newpage
+
+\subsubsection{Мультипликативный метод Шварца}
+
+В таблице \ref{table:task_02_mult_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании мультипликативного метода Шварца для второй тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций увеличивается (при увеличении количества подобластей количество итераций увеличивается примерно в $M^2$ раз);
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки}
+\csvloop{
+	file = ../results/rectangle/2_fixes/schwarz_multiplicative/iters_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей (M) & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_02_mult_iters}
+\end{table}
+
+\newpage
+
+\subsubsection{Аддитивный метод Шварца}
+
+В таблице \ref{table:task_02_add_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании аддитивного метода Шварца для второй тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций несильно зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций увеличивается (при увеличении количества подобластей количество итераций увеличивается примерно в $M^2$ раз);
+\item количество итераций по сравнению со случаем применения мультипликативного метода Шварца выросло почти в 4 раза;
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки}
+\csvloop{
+	file = ../results/rectangle/3_fixes/schwarz_additive/iters_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_02_add_iters}
+\end{table}
+
+\newpage
+
+\subsubsection{Двухуровневый аддитивный метод Шварца}
+
+В таблице \ref{table:task_02_add2_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца для первой тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций не меняется;
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для двухуровневого аддитивного метода Шварца}
+\csvloop{
+	file = ../results/rectangle/3_fixes/schwarz_two_level_additive/iters_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_02_add2_iters}
+\end{table}
+
+В таблице \ref{table:task_02_iters_overlap} рассмотрена зависимость количества итераций от различных вариантов МДО и коэффициента относительного захлёста для случая M = 4 и шага сетки $h = 0.025$. Из таблицы видно, что при росте коэффициента относительного захлёста количество итераций уменьшается.
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от метода декомпозиции области и коэффициента относительного захлёста для случая $M = 4$ и $h = 0.025$}
+\csvloop{
+	file = ../results/rectangle/2_fixes/core/overlap_rectangle.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c |
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Коэффициент относительного захлёста & 0.2 & 0.3 & 0.4 \\\hline,
+	command = \method & \0 & \1 & \2,
+	late after line = \\\hline
+}
+\label{table:task_02_iters_overlap}
+\end{table}
 
 \newpage
 
 \subsection{Третья тестовая задача}
 
-Расчётная область - сектор поперечного сечения толстостенной трубы, основные размерные характеристики трубы - внутренний радиус $r_1 = 1$ см, внешний радиус $r_2 = 2$ см. К внутреннему торцу приложено давление $p_1 = 5$ МПа, к внешнему торцу также приложено давление $p_2 = 10$ МПа.
+На рис. \ref{fig:task_03_scheme} представлена расчётная область для второй тестовой задачи - сектор поперечного сечения толстостенной трубы, нагруженной внешним давлением $p = 5$ МПа. Внутренний радиус $p_a = 1$ см, внешний радиус $p_b = 2 $ см.
 
 \begin{figure}[h]
-\center{\includegraphics[scale=0.2]{img/task_04_scheme.jpg}}
-\caption{Схема расчётной области четвёртой тестовой задачи (заглушка)}
-\label{fig:task_04_scheme}
+\center{\includegraphics[scale=0.9]{../results/thick_walled_cylinder/pressure_only/core/area_diagram.png}}
+\caption{Схема расчётной области третьей тестовой задачи}
+\label{fig:task_03_scheme}
 \end{figure}
 
-Для применения методов декомпозиции области исходная область разбивалась на заданное количество секторов без перекрытия $\Omega_1, \ldots, \Omega_M$, где M - число подобластей. Размеры участков, а именно центральный угол каждого из них, задавался заранее выбранным коэффициентом относительного перекрытия.
+Для решения поставленной задачи примем, что материал тела имеет следующие параметры: модуль Юнга $E = 70$ ГПа, коэффициент Пуассона $\mu = 0.34$. 
 
-Для решения поставленной задачи примем, что материал тела имеет следующие параметры: модуль Юнга $E = 70$ ГПа, коэффициент Пуассона $\mu = 0.34$. Для данной задачи известны аналитические решения для компонент тензора напряжений и для перемещений.
+Для исследования зависимости сходимости метода от размерности итоговой системы линейных уравнений рассмотрены три расчётные сетки с шагами $h = 0.05$ (количество узлов - 994), $h = 0.025$ (количество узлов - 3812), $h = 0.0125$ (количество узлов - 15006).
 
-Для аддитивного метода Шварца итерационный параметр $\alpha = 0.5$. Для исследования зависимости сходимости метода от размерности итоговой системы линейных уравнений рассмотрены три расчётные сетки с шагами $h = 0.05$ (количество узлов - 1334), $h = 0.025$ (количество узлов - 4571), $h = 0.0125$ (количество узлов - 16636).
+Для аддитивного метода Шварца итерационный параметр $\alpha = 0.5$.
+
+\newpage
+
+Для решения задачи методами декомпозиции области расчётная область разбивается на заданное количество секторов без перекрытия $\Omega_1, \ldots, \Omega_M$. 
+
+Характерные размеры каждой подобласти: угол каждого сектора - подобласти $\varphi_M = \pi / (2 \cdot M)$. На рис. \ref{fig:task_03_decomposition} представлена расчётная область третьей тестовой задачи, разбитая на две подобласти.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.75]{../results/thick_walled_cylinder/pressure_only/core/area_decomposition.png}}
+\caption{Схема декомпозиции расчётной области (M = 2)}
+\label{fig:task_03_decomposition}
+\end{figure}
+
+\newpage
+
+Для третьей тестовой задачи известно аналитическое решение для радиального перемещения и тензора напряженийю. Тогда аналитическое радиальное перемещение считаем по формуле:
+\begin{equation*}
+u_r = \frac{(1 + \mu) \cdot (1 - 2\mu)}{E}A \cdot r + \frac{(1 + \mu)}{E} \frac{B}{r},
+\end{equation*}
+где $A = (p_a \cdot r_a^2 - p_b \cdot r_b^2) / (r_b^2 - r_a^2)$, $B = (p_a - p_b) \cdot (r_a r_b)^2 / (r_b^2 - r_a^2)$.
+
+Вычисление аналитического радиального и окружного напряжений производится по формуле:
+\begin{equation*}
+\sigma_{r, \varphi} = A \mp \frac{B}{r^2}
+\end{equation*}
+
+В таблице \ref{table:task_03_basic_errors} представлены относительные ошибки для третьей тестовой задачи, полученные методом без применения МДО для трёх разных шагов сетки, а в таблице \ref{table:task_03_basic_errors_rel} - отношения ошибок. Относительные ошибки вычислялись по формуле:
+\begin{equation*}
+\sqrt{\left(\sum_{k = 1}^{N_{elem}} {\left(\frac{\sigma_k^{ex} - \sigma_k^{num}}{\sigma_k^{ex}}\right)^2}\right) / \left(\sum_{k=1}^{N_{elem}} {s_k}\right)},
+\end{equation*}
+
+где $\sigma_k^{ex}$ - точное значение рассматриваемой компоненты тензора напряжений в центре k-ого элемента, $\sigma_k^{num}$ - полученное численное значение аналогичной величины, $s_k$ - площадь k-го элемента сетки. 
+
+Из таблицы \ref{table:task_03_basic_errors_rel} видно, что для напряжений наблюдается линейная скорость сходимости численного решения к аналитическому при измельчении сетки, для перемещений - квадратичная.
+\begin{table}[h]
+\caption{Ошибки численного решения в зависимости от шага сетки}
+\csvloop{
+	file = ../results/thick_walled_cylinder/pressure_only/basic_method/errors.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Шаг сетки & \text{$u_r$} & \text{$\sigma_r$} & \text{$\sigma_\varphi$} \\\hline,
+	command = \step & \ur & \sigmar & \sigmaphi,
+	late after line = \\\hline
+}
+\label{table:task_03_basic_errors}
+\end{table}
+
+\begin{table}[h]
+\caption{Отношение ошибок численного решения}
+\csvloop{
+	file = ../results/thick_walled_cylinder/pressure_only/basic_method/errors_rel.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Шаг сетки & \text{$u_r$} & \text{$\sigma_r$} & \text{$\sigma_\varphi$} \\\hline,
+	command = \step & \ur & \sigmar & \sigmaphi,
+	late after line = \\\hline
+}
+\label{table:task_03_basic_errors_rel}
+\end{table}
+
+\newpage
+
+На рис. \ref{fig:task_03_basic_displacement_distribution} приведено распределение перемещений, полученных при решении задачи без методов декомпозиции области, на рис. \ref{fig:task_03_basic_pressure_distribution} - распределение напряжений вблизи области приложения давления.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.7]{../results/thick_walled_cylinder/pressure_only/basic_method/displacement_distribution.png}}
+\caption{Распределение перемещений во всей расчётной области}
+\label{fig:task_03_basic_displacement_distribution}
+\end{figure}
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.65]{../results/thick_walled_cylinder/pressure_only/basic_method/pressure_distribution.png}}
+\caption{Распределение напряжений в расчётной области третьей тестовой задачи}
+\label{fig:task_03_basic_pressure_distribution}
+\end{figure}
+
+\newpage
 
 \subsubsection{Мультипликативный метод Шварца}
 
-В таблице (\ref{table:task_3_mult_iters}) представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании мультипликативного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+В таблице \ref{table:task_03_mult_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании мультипликативного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
 \begin{itemize}
+\item количество итераций не зависит от шага сетки;
 \item при увеличении числа подобластей количество итераций увеличивается;
 \end{itemize}
 
 \begin{table}[h]
-\caption{Количество итераций в зависимости от количества подобластей}
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для мультипликативного метода Шварца}
 \csvloop{
-	file = ../results/thick_walled_cylinder/pressure_only/iterations/schwarz_multiplicative.csv,
+	file = ../results/thick_walled_cylinder/pressure_only/schwarz_multiplicative/iters_thick_walled_cylinder.csv,
 	head to column names,
 	before reading = \centering\sisetup{table-number-alignment=center},
 	tabular = {
@@ -185,24 +600,53 @@ u_error = \sqrt{\frac{\sum_{k = 1}^{N_{p}} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{
 		c |
 		@{}
 	},
-	table head = \hline Количество подобластей & \text{h = 0.5} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
 	command = \amnt & \first & \second & \third,
 	late after line = \\\hline
 }
-\label{table:task_3_mult_iters}
+\label{table:task_03_mult_iters}
 \end{table}
+
+В таблице \ref{table:task_03_mult_iters} представлено количество итераций и ошибки численного решения в зависимости от коэффициента сходимости при шаге сетки $h = 0.0125$ и количестве подобластей $M = 8$ (коэффициент захлёста равен 0.3).
+
+
+\begin{table}[h]
+\caption{Количество итераций и ошибки численного решения в зависимости от коэффициента сходимости}
+\csvloop{
+	file = ../results/thick_walled_cylinder/pressure_only/schwarz_multiplicative/errors_special.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline \text{$\varepsilon_0$} & \text{Количество итераций} & $\sigma_r$ & $\sigma_{\varphi}$ \\\hline,
+	command = \coefconv & \amnt & \sigmar & \sigmaphi,
+	late after line = \\\hline
+}
+\label{table:task_03_mult_errors_special}
+\end{table}
+
+При сравнении таблиц \ref{table:task_03_basic_errors} и \ref{table:task_03_mult_errors_special} можем наблюдать, что ошибки, полученные мультипликативным МДО для $\varepsilon_0 = 10^{-6}$ не отличаются от ошибок, полученных при решении задачи на всей области без применения методов МДО. 
+
+\newpage
 
 \subsubsection{Аддитивный метод Шварца}
 
-В таблице (\ref{table:task_3_add_iters}) представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+В таблице \ref{table:task_03_add_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
 \begin{itemize}
-\item при увеличении числа подобластей количество итераций существенно возрастает;
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций увеличивается;
 \end{itemize}
 
 \begin{table}[h]
-\caption{Количество итераций в зависимости от количества подобластей}
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для аддитивного метода Шварца}
 \csvloop{
-	file = ../results/thick_walled_cylinder/pressure_only/iterations/schwarz_additive.csv,
+	file = ../results/thick_walled_cylinder/pressure_only/schwarz_additive/iters_thick_walled_cylinder.csv,
 	head to column names,
 	before reading = \centering\sisetup{table-number-alignment=center},
 	tabular = {
@@ -213,25 +657,52 @@ u_error = \sqrt{\frac{\sum_{k = 1}^{N_{p}} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{
 		c |
 		@{}
 	},
-	table head = \hline Количество подобластей & \text{h = 0.5} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
 	command = \amnt & \first & \second & \third,
 	late after line = \\\hline
 }
-\label{table:task_3_add_iters}
+\label{table:task_03_add_iters}
 \end{table}
+
+В таблице \ref{table:task_03_add_iters} представлено количество итераций и ошибки численного решения в зависимости от коэффициента сходимости при шаге сетки $h = 0.0125$ и количестве подобластей $M = 8$ (коэффициент захлёста равен 0.3).
+
+\begin{table}[h]
+\caption{Количество итераций и ошибки численного решения в зависимости от коэффициента сходимости}
+\csvloop{
+	file = ../results/thick_walled_cylinder/pressure_only/schwarz_additive/errors_special.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline \text{$\varepsilon_0$} & \text{Количество итераций} & $\sigma_r$ & $\sigma_{\varphi}$ \\\hline,
+	command = \coefconv & \amnt & \sigmar & \sigmaphi,
+	late after line = \\\hline
+}
+\label{table:task_03_add_errors_special}
+\end{table}
+
+При сравнении таблиц \ref{table:task_03_basic_errors} и \ref{table:task_03_add_errors_special} можем наблюдать, что ошибки, полученные мультипликативным МДО для $\varepsilon_0 = 10^{-6}$ не отличаются от ошибок, полученных при решении задачи на всей области без применения методов МДО. 
+
+\newpage
 
 \subsubsection{Двухуровневый аддитивный метод Шварца}
 
-В таблице (\ref{table:task_3_2add_iters}) представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+В таблице \ref{table:task_03_add2_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
 \begin{itemize}
-\item количество итераций несильно зависит от шага сетки;
-\item при увеличении числа подобластей количество итераций меняется, но не так сильно по сравнению с применением аддитивного метода Шварца;
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций не меняется;
 \end{itemize}
 
 \begin{table}[h]
-\caption{Количество итераций в зависимости от количества подобластей}
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для двухуровневого аддитивного метода Шварца}
 \csvloop{
-	file = ../results/thick_walled_cylinder/pressure_only/iterations/schwarz_additive_two_level.csv,
+	file = ../results/thick_walled_cylinder/pressure_only/schwarz_two_level_additive/iters_thick_walled_cylinder.csv,
 	head to column names,
 	before reading = \centering\sisetup{table-number-alignment=center},
 	tabular = {
@@ -242,45 +713,164 @@ u_error = \sqrt{\frac{\sum_{k = 1}^{N_{p}} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{
 		c |
 		@{}
 	},
-	table head = \hline Количество подобластей & \text{h = 0.5} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
 	command = \amnt & \first & \second & \third,
 	late after line = \\\hline
 }
-\label{table:task_3_2add_iters}
+\label{table:task_03_add2_iters}
+\end{table}
+
+В таблице \ref{table:task_03_iters_overlap} рассмотрена зависимость количества итераций для различных вариантов методов декомпозиции области от коэффициента относительного перекрытия для случая 4 подобластей и шага сетки $h = 0.025$. Анализ полученных результатов показал, что:
+\begin{itemize}
+\item при росте коэффициента относительного захлёста количество итераций уменьшается
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от метода декомпозиции области и коэффициента относительного захлёста для случая $M = 4$ и $h = 0.025$}
+\csvloop{
+	file = ../results/thick_walled_cylinder/pressure_only/core/overlap_thick_walled_cylinder.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c |
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Коэффициент относительного захлёста & 0.2 & 0.3 & 0.4 \\\hline,
+	command = \method & \0 & \1 & \2,
+	late after line = \\\hline
+}
+\label{table:task_03_iters_overlap}
+\end{table}
+
+\newpage
+
+Для улучшения ситуации решения третьей тестовой задачи двухуровневым аддитивным методом можно использовать в качестве грубой сетки сектор поперечного сечения цилиндра. Радиус цилиндра совпадает с внешним радиусом толстостенной трубы.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.6]{../results/thick_walled_cylinder/pressure_only/core/area_coarse_simplified_cylinder.png}}
+\caption{Схема грубой расчётной области для третьей тестовой задачи}
+\label{fig:task_03_area_coarse_1}
+\end{figure}
+
+\newpage
+
+В таблице \ref{table:task_03_add2_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций не меняется;
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для двухуровневого аддитивного метода Шварца}
+\csvloop{
+	file = ../results/thick_walled_cylinder/pressure_only/schwarz_two_level_additive/iters_simplified_cylinder.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_03_add2_iters_coarse_1}
+\end{table}
+
+В таблице \ref{table:task_03_iters_overlap} рассмотрена зависимость количества итераций для различных вариантов методов декомпозиции области от коэффициента относительного перекрытия для случая 4 подобластей и шага сетки $h = 0.025$. Анализ полученных результатов показал, что:
+\begin{itemize}
+\item при росте коэффициента относительного захлёста количество итераций уменьшается
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от метода декомпозиции области и коэффициента относительного захлёста для случая $M = 4$ и $h = 0.025$}
+\csvloop{
+	file = ../results/thick_walled_cylinder/pressure_only/core/overlap_simplified_cylinder.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c |
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Коэффициент относительного захлёста & 0.2 & 0.3 & 0.4 \\\hline,
+	command = \method & \0 & \1 & \2,
+	late after line = \\\hline
+}
+\label{table:task_03_iters_overlap_coarse_1}
 \end{table}
 
 \newpage
 
 \subsection{Четвёртая тестовая задача}
 
-Расчётная область - сектор поперечного сечения подшипника, основные размерные характеристики подшипника - центральный угол - $90^{\circ}$, внутренний радиус внутреннего кольца $r_{in}^a$ = 1.0 см, внешний радиус внешнего кольца $r_{out}^b$ = 2.0 см. Прочие характеристики, а именно внешний радиус внутреннего кольца $r_{out}^a$, внутренний радиус внешнего кольца $r_{in}^b$ и радиус шарика в полости, зависят от количества шариков в полости между кольцами.
-
-(Тут нужно расписать, как выбирается параметр для оставшихся характеристик)
+На рис. \ref{fig:task_04_scheme} представлена расчётная область для четвёртой тестовой задачи - сектор поперечного сечения модели подшипника, нагруженной внешним давлением $p = 5$ МПа. Внутренний радиус $p_a = 1$ см, внешний радиус $p_b = 2 $ см.
 
 \begin{figure}[h]
-\center{\includegraphics[scale=0.2]{img/task_04_scheme.jpg}}
-\caption{Схема расчётной области четвёртой тестовой задачи (заглушка)}
+\center{\includegraphics[scale=0.9]{../results/bearing/pressure_only/core/area_diagram.png}}
+\caption{Схема расчётной области третьей тестовой задачи}
 \label{fig:task_04_scheme}
 \end{figure}
 
-Для применения методов декомпозиции области исходная область разбивалась на заданное количество секторов без перекрытия $\Omega_1, \ldots, \Omega_M$, где M - число подобластей. Размеры участков, а именно центральный угол каждого из них, задавался заранее выбранным коэффициентом относительного перекрытия.
+Для решения поставленной задачи примем, что материал тела имеет следующие параметры: модуль Юнга $E = 70$ ГПа, коэффициент Пуассона $\mu = 0.34$. 
 
-Для решения поставленной задачи примем, что материал тела имеет следующие параметры: модуль Юнга $E = 210$ ГПа, коэффициент Пуассона $\mu = 0.25$. Для данной задачи неизвестны аналитические решения для компонент тензора напряжений и для перемещений.
+Для исследования зависимости сходимости метода от размерности итоговой системы линейных уравнений рассмотрены три расчётные сетки с шагами $h = 0.05$ (количество узлов - 994), $h = 0.025$ (количество узлов - 3812), $h = 0.0125$ (количество узлов - 15006).
 
-Для аддитивного метода Шварца итерационный параметр $\alpha = 0.5$. Для исследования зависимости сходимости метода от размерности итоговой системы линейных уравнений рассмотрены три расчётные сетки с шагами $h = 0.05$ (количество узлов - 1334), $h = 0.025$ (количество узлов - 4571), $h = 0.0125$ (количество узлов - 16636).
+Для аддитивного метода Шварца итерационный параметр $\alpha = 0.5$.
 
+\newpage
+
+Для решения задачи методами декомпозиции области расчётная область разбивается на заданное количество секторов без перекрытия $\Omega_1, \ldots, \Omega_M$. 
+
+Характерные размеры каждой подобласти: угол каждого сектора-подобласти $\varphi_M = \pi / (2 \cdot M)$. На рис. \ref{fig:task_04_decomposition} представлена расчётная область третьей тестовой задачи, разбитая на две подобласти.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.75]{../results/bearing/pressure_only/core/area_decomposition.png}}
+\caption{Схема декомпозиции расчётной области третьей тестовой задачи}
+\label{fig:task_04_decomposition}
+\end{figure}
+
+\newpage
+
+Для четвёртой тестовой задачи известно аналитическое решение для компонент вектора перемещений и тензора напряжений. На рис. \ref{fig:task_04_basic_displacement_distribution} приведено распределение перемещений, полученных при решении задачи без методов декомпозиции области, на рис. \ref{fig:task_04_basic_pressure_distribution} - распределение напряжений вблизи области приложения давления.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.7]{../results/bearing/pressure_only/basic_method/displacement_distribution.png}}
+\caption{Распределение перемещений во всей расчётной области}
+\label{fig:task_04_basic_displacement_distribution}
+\end{figure}
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.65]{../results/bearing/pressure_only/basic_method/pressure_distribution.png}}
+\caption{Распределение напряжений вблизи области приложения давления}
+\label{fig:task_04_basic_pressure_distribution}
+\end{figure}
+
+\newpage
 
 \subsubsection{Мультипликативный метод Шварца}
 
-В таблице (\ref{table:task_4_mult_iters}) представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании мультипликативного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+В таблице \ref{table:task_04_mult_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании мультипликативного метода Шварца для второй тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
 \begin{itemize}
+\item количество итераций не зависит от шага сетки;
 \item при увеличении числа подобластей количество итераций увеличивается;
 \end{itemize}
 
 \begin{table}[h]
-\caption{Количество итераций в зависимости от количества подобластей}
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для мультипликативного метода Шварца}
 \csvloop{
-	file = ../results/bearing/pressure_only/iterations/schwarz_multiplicative.csv,
+	file = ../results/bearing/pressure_only/schwarz_multiplicative/iters_bearing.csv,
 	head to column names,
 	before reading = \centering\sisetup{table-number-alignment=center},
 	tabular = {
@@ -291,24 +881,25 @@ u_error = \sqrt{\frac{\sum_{k = 1}^{N_{p}} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{
 		c |
 		@{}
 	},
-	table head = \hline Количество подобластей & \text{h = 0.5} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
 	command = \amnt & \first & \second & \third,
 	late after line = \\\hline
 }
-\label{table:task_4_mult_iters}
+\label{table:task_04_mult_iters}
 \end{table}
 
 \subsubsection{Аддитивный метод Шварца}
 
-В таблице (\ref{table:task_4_add_iters}) представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+В таблице \ref{table:task_04_add_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании аддитивного метода Шварца для второй тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
 \begin{itemize}
-\item при увеличении числа подобластей количество итераций существенно возрастает;
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций увеличивается;
 \end{itemize}
 
 \begin{table}[h]
-\caption{Количество итераций в зависимости от количества подобластей}
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для аддитивного метода Шварца}
 \csvloop{
-	file = ../results/thick_walled_cylinder/pressure_only/iterations/schwarz_additive.csv,
+	file = ../results/bearing/pressure_only/schwarz_additive/iters_bearing.csv,
 	head to column names,
 	before reading = \centering\sisetup{table-number-alignment=center},
 	tabular = {
@@ -319,25 +910,27 @@ u_error = \sqrt{\frac{\sum_{k = 1}^{N_{p}} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{
 		c |
 		@{}
 	},
-	table head = \hline Количество подобластей & \text{h = 0.5} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
 	command = \amnt & \first & \second & \third,
 	late after line = \\\hline
 }
-\label{table:task_4_add_iters}
+\label{table:task_04_add_iters}
 \end{table}
+
+\newpage
 
 \subsubsection{Двухуровневый аддитивный метод Шварца}
 
-В таблице (\ref{table:task_4_2add_iters}) представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+В таблице \ref{table:task_04_add2_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца для первой тестовой задачи (коэффициент захлёста для подобластей равен 0.3). Анализ полученных результатов показал, что:
 \begin{itemize}
-\item количество итераций несильно зависит от шага сетки;
-\item при увеличении числа подобластей количество итераций меняется, но не так сильно по сравнению с применением аддитивного метода Шварца;
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций не меняется;
 \end{itemize}
 
 \begin{table}[h]
-\caption{Количество итераций в зависимости от количества подобластей}
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для двухуровневого аддитивного метода Шварца}
 \csvloop{
-	file = ../results/bearing/pressure_only/iterations/schwarz_additive_two_level.csv,
+	file = ../results/bearing/pressure_only/schwarz_two_level_additive/iters_thick_walled_cylinder.csv,
 	head to column names,
 	before reading = \centering\sisetup{table-number-alignment=center},
 	tabular = {
@@ -348,31 +941,102 @@ u_error = \sqrt{\frac{\sum_{k = 1}^{N_{p}} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{
 		c |
 		@{}
 	},
-	table head = \hline Количество подобластей & \text{h = 0.5} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
 	command = \amnt & \first & \second & \third,
 	late after line = \\\hline
 }
-\label{table:task_4_2add_iters}
+\label{table:task_04_add2_iters}
 \end{table}
 
-% \csvloop{
-%	file = ../results/bearing/pressure_only/iterations/schwarz_additive.csv,
-%	head to column names,
-%	before reading = \centering\sisetup{table-number-alignment=center},
-%	tabular = {
-%		@{} |
-%		c |
-%		c | 
-%		c |
-%		c |
-%		@{}
-%	},
-%	table head = \hline Количество подобластей & \text{h = 0.5} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
-%	command = \amnt & \first & \second & \third,
-%	late after line = \\\hline
-% }
+В таблице \ref{table:task_04_iters_overlap} рассмотрена зависимость количества итераций для различных вариантов методов декомпозиции области от коэффициента относительного перекрытия для случая 4 подобластей и шага сетки $h = 0.025$. Анализ полученных результатов показал, что:
+\begin{itemize}
+\item при росте коэффициента относительного захлёста количество итераций уменьшается
+\end{itemize}
 
+\begin{table}[h]
+\caption{Количество итераций в зависимости от метода декомпозиции области и коэффициента относительного захлёста для случая $M = 4$ и $h = 0.025$}
+\csvloop{
+	file = ../results/bearing/pressure_only/core/overlap_thick_walled_cylinder.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c |
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Коэффициент относительного захлёста & 0.2 & 0.3 & 0.4 \\\hline,
+	command = \method & \0 & \1 & \2,
+	late after line = \\\hline
+}
+\label{table:task_04_iters_overlap}
+\end{table}
 
+\newpage
 
+Для улучшения ситуации решения третьей тестовой задачи двухуровневым аддитивным методом можно использовать в качестве грубой сетки сектор поперечного сечения цилиндра. Радиус цилиндра совпадает с внешним радиусом толстостенной трубы.
+
+\begin{figure}[h]
+\center{\includegraphics[scale=0.6]{../results/bearing/pressure_only/core/area_coarse_simplified_cylinder.png}}
+\caption{Схема грубой расчётной области для третьей тестовой задачи}
+\label{fig:task_04_area_coarse_1}
+\end{figure}
+
+\newpage
+
+В таблице \ref{table:task_04_add2_iters} представлено количество итераций в зависимости от количества подобластей и шага сетки при использовании двухуровневого аддитивного метода Шварца в случае фиксированного относительного перекрытия подобластей (данный коэффициент равен 0.3). Анализ полученных результатов показал, что:
+\begin{itemize}
+\item количество итераций не зависит от шага сетки;
+\item при увеличении числа подобластей количество итераций не меняется;
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от количества подобластей и шага сетки для двухуровневого аддитивного метода Шварца}
+\csvloop{
+	file = ../results/bearing/pressure_only/schwarz_two_level_additive/iters_simplified_cylinder.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c | 
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Количество подобластей & \text{h = 0.05} & \text{h = 0.025} & \text{h = 0.0125} \\\hline,
+	command = \amnt & \first & \second & \third,
+	late after line = \\\hline
+}
+\label{table:task_04_add2_iters_coarse_1}
+\end{table}
+
+В таблице \ref{table:task_04_iters_overlap} рассмотрена зависимость количества итераций для различных вариантов методов декомпозиции области от коэффициента относительного перекрытия для случая 4 подобластей и шага сетки $h = 0.025$. Анализ полученных результатов показал, что:
+\begin{itemize}
+\item при росте коэффициента относительного захлёста количество итераций уменьшается
+\end{itemize}
+
+\begin{table}[h]
+\caption{Количество итераций в зависимости от метода декомпозиции области и коэффициента относительного захлёста для случая $M = 4$ и $h = 0.025$}
+\csvloop{
+	file = ../results/bearing/pressure_only/core/overlap_simplified_cylinder.csv,
+	head to column names,
+	before reading = \centering\sisetup{table-number-alignment=center},
+	tabular = {
+		@{} |
+		c |
+		c |
+		c |
+		c |
+		@{}
+	},
+	table head = \hline Коэффициент относительного захлёста & 0.2 & 0.3 & 0.4 \\\hline,
+	command = \method & \0 & \1 & \2,
+	late after line = \\\hline
+}
+\label{table:task_04_iters_overlap_coarse_1}
+\end{table}
 
 \end{document}

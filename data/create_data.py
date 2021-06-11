@@ -78,6 +78,7 @@ class Task:
                 elif self.cur_area == 'bearing':
                     amnt_balls = 3
                     check = True
+                    
                     ball_center_point = inner_radius + (outer_radius - inner_radius) / 2.0
                     if check:
                         ball_radius = np.sin(np.pi / (4 * (amnt_balls + 1))) * ball_center_point
@@ -86,13 +87,13 @@ class Task:
                         ball_radius = (outer_radius - inner_radius) / 4.0
                         dist = 0
                     
-                    outer_ring_hole = geom.add_disk([0.0, 0.0], inner_radius + 3 * (outer_radius - inner_radius) / 4 + dist)
-                    outer_ring = geom.add_disk([0.0, 0.0], outer_radius)
-                    outer_ring_full = geom.boolean_difference(outer_ring, outer_ring_hole)
-
                     inner_ring_hole = geom.add_disk([0.0, 0.0], inner_radius)
                     inner_ring = geom.add_disk([0.0, 0.0], inner_radius + (outer_radius - inner_radius) / 4 - dist)
                     inner_ring_full = geom.boolean_difference(inner_ring, inner_ring_hole)
+
+                    outer_ring_hole = geom.add_disk([0.0, 0.0], inner_radius + 3 * (outer_radius - inner_radius) / 4 + dist)
+                    outer_ring = geom.add_disk([0.0, 0.0], outer_radius)
+                    outer_ring_full = geom.boolean_difference(outer_ring, outer_ring_hole)
 
                     list_balls = []
                     for i in range(4):
@@ -133,11 +134,11 @@ if __name__ == "__main__":
         'rectangle': {
             '3_fixes': {
                 'dirichlet_conditions': [[0, 1, math.nan, 0], [1, 2, 0, math.nan], [3, 0, 0, math.nan]],
-                'neumann_conditions': [[2, 3, 0, -5e+7]]
+                'neumann_conditions': [[2, 3, 0, -2e+7]]
             },
             '2_fixes': {
                 'dirichlet_conditions': [[0, 1, math.nan, 0], [3, 0, 0, math.nan]],
-                'neumann_conditions': [[2, 3, 0, -5e+7]]
+                'neumann_conditions': [[2, 3, 0, -2e+7]]
             }
         },
         'thick_walled_cylinder': {
@@ -173,20 +174,20 @@ if __name__ == "__main__":
 
     meshes = {
         'rectangle': {
-            "meshes_coarse": [1, 0.5, 0.1],
-            "meshes_fine": [0.05, 0.025, 0.0125]
+            "meshes_coarse": [1, 0.5, 0.25, 0.125, 0.0625],
+            "meshes_fine": [0.5, 0.25, 0.125, 0.05, 0.025, 0.0125, 0.00625]
         },
         'thick_walled_cylinder': {
-            "meshes_coarse": [1, 0.5, 0.1],
-            "meshes_fine": [0.05, 0.025, 0.0125]
+            "meshes_coarse": [1, 0.5, 0.25, 0.125, 0.0625],
+            "meshes_fine": [1, 0.5, 0.25, 0.125, 0.05, 0.025, 0.0125, 0.00625]
         },
         'simplified_cylinder': {
-            "meshes_coarse": [1, 0.5, 0.1],
+            "meshes_coarse": [1, 0.5, 0.25, 0.125, 0.0625],
             "meshes_fine": []
         },
         'bearing': {
             "meshes_coarse": [],
-            "meshes_fine": [0.05, 0.025, 0.0125]
+            "meshes_fine": [0.5, 0.25, 0.125, 0.05, 0.025, 0.0125, 0.00625]
         }
     }
 
@@ -195,6 +196,6 @@ if __name__ == "__main__":
     for task_name, params in tasks[cur_area].items():
         obj.create_task(task_name, params)
 
-    # for mesh_type, list_edge_size in meshes[cur_area].items():
-    #     for cur_edge_size in list_edge_size:
-    #         obj.create_and_write_mesh(mesh_type, cur_edge_size)
+    for mesh_type, list_edge_size in meshes[cur_area].items():
+        for cur_edge_size in list_edge_size:
+            obj.create_and_write_mesh(mesh_type, cur_edge_size)

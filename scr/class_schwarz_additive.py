@@ -18,6 +18,7 @@ class schwarz_additive(schwarz_multiplicative):
         init_time = time.time()
         super().__init__(data)
         self.name_method = "schwarz_additive"
+        self.table_name = '$\\text{Аддитивный МДО}$'
         self.coef_alpha = self.data['coef_alpha']
         self.time_init = time.time() - init_time
 

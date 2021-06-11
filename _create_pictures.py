@@ -10,27 +10,32 @@ from scr.class_schwarz_additive import schwarz_additive
 from scr.class_schwarz_two_level_additive import schwarz_two_level_additive
 
 
-def test_task(method, cur_area, cur_task):
+def test_task(method, fine_area, coarse_area, fine_mesh, course_mesh, cur_task):
     example_data = {
-        'area':             cur_area,
+        'fine_area':        fine_area,
+        'coarse_area':      coarse_area,
+        'fine_mesh':        fine_mesh,
+        'coarse_mesh':      course_mesh,
         'task':             cur_task,
-        'mesh':             0.05,
         'amnt_subds':       2,
-        'coef_convergence': 1e-4,
-        'coef_overlap':     0.35,
-        'coef_alpha':       0.5,
-        'coarse_mesh':      0.5
+        'coef_convergence': 1e-5,
+        'coef_overlap':     0.3,
+        'coef_alpha':       0.5
     }
     obj = method(example_data)
-    save_route = f'srw_text/img/bearing_init'
-    obj.plot_init_mesh(save_route)
+    obj.get_solution()
+    obj.plot_pressure_distribution(True)
 
 
 if __name__ == "__main__":
-    tasks = {
-        'rectangle': ['3_bindings', '2_bindings'], 
-        'thick_walled_cylinder': ['pressure_only', 'displacements_only']
-    }
-    cur_area = 'bearing'
+    areas = ["rectangle", "thick_walled_cylinder", "simplified_cylinder", "bearing"]
+    tasks = ["3_fixes", "2_fixes", "pressure_only"]
+    
+    fine_area = 'bearing'
+    course_area = 'rectangle'
+
+    fine_mesh = 0.0125
+    course_mesh = 1
+
     cur_task = 'pressure_only'
-    test_task(basic_method, cur_area, cur_task)
+    test_task(basic_method, fine_area, course_area, fine_mesh, course_mesh, cur_task)

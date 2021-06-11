@@ -4,28 +4,36 @@ from scr.class_schwarz_additive import schwarz_additive
 from scr.class_schwarz_two_level_additive import schwarz_two_level_additive
 
 
-def test_task(method, cur_area, cur_task):
+def test_task(method, fine_area, coarse_area, fine_mesh, course_mesh, cur_task):
     example_data = {
-        'area':             cur_area,
-        'coarse_area':      'cur_area',
+        'fine_area':        fine_area,
+        'coarse_area':      coarse_area,
+        'fine_mesh':        fine_mesh,
+        'coarse_mesh':      course_mesh,
         'task':             cur_task,
-        'mesh':             0.05,
         'amnt_subds':       2,
-        'coef_convergence': 1e-4,
+        'coef_convergence': 1e-5,
         'coef_overlap':     0.35,
-        'coef_alpha':       0.5,
-        'coarse_mesh':      0.5
+        'coef_alpha':       0.5
     }
     obj = method(example_data)
     # obj.plot_init_mesh()
     obj.get_solution()
-    obj.pcolormesh()
-    obj.plot_displacements()
+    print()
+    print(obj.amnt_iterations)
+    obj.plot_displacement()
 
 
 if __name__ == "__main__":
     areas = ['rectangle', 'thick_walled_cylinder', 'simplified_cylinder', 'bearing']
     tasks = ['3_fixes', '2_fixes', 'pressure_only']
-    cur_area = 'thick_walled_cylinder'
+
     cur_task = 'pressure_only'
-    test_task(schwarz_multiplicative, cur_area, cur_task)
+
+    fine_area = 'thick_walled_cylinder'
+    course_area = 'rectangle'
+
+    fine_mesh = 0.05
+    course_mesh = 0.5
+    
+    test_task(schwarz_multiplicative, fine_area, course_area, fine_mesh, course_mesh, cur_task)
