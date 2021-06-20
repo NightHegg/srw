@@ -26,9 +26,11 @@ class basic_method(class_template):
         self.set_condition_neumann(F, self.list_area_neumann_elements, self.area_points_coords, self.dict_area_neumann_points)
         self.set_condition_dirichlet(K, F, self.dict_area_dirichlet_points, self.dict_area_dirichlet_points.keys())
 
-        result, amnt_iters_cg = self.conjugate_method(K, F)
+        result, amnt_iters_cg, self.time_cg = self.conjugate_method(K.tocsr(), F)
         self.u = result.reshape(-1, 2)
+        
         self.amnt_iters_cg = amnt_iters_cg
+        self.N = self.area_points_coords.size
 
 
 if __name__ == "__main__":

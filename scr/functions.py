@@ -3,11 +3,8 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-import time
-from itertools import groupby
 import numpy as np
-import scipy
-from scipy.sparse import coo_matrix, lil_matrix
+from scipy.sparse import coo_matrix
 import math
 
 def create_barycentric_coords(element, points):

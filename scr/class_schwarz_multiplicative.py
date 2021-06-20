@@ -121,6 +121,7 @@ class schwarz_multiplicative(class_template):
 
 
     def calculate_u(self):
+        lst_iters_cg = []
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
         while True:
@@ -137,8 +138,10 @@ class schwarz_multiplicative(class_template):
                 function_condition_schwarz = self.get_condition_schwarz(K, F, self.dict_subd_boundary_points[idv], dict_points_global_to_local)
                 self.set_condition_schwarz(function_condition_schwarz)
 
-                [*arg,] = self.solve_function(K.tocsr(), F)
-                u_subd = np.array(arg[0]).reshape(-1, 2) if len(arg) == 2 else np.reshape(arg, (-1, 2))
+                init_u = self.u_previous[np.array(list(self.dict_subd_points_local_to_global[idv].values()))].reshape(-1)
+                result, amnt_iters_cg, _ = self.conjugate_method(K.tocsr(), F, init_u)
+                u_subd = result.reshape(-1, 2)
+                lst_iters_cg.append(amnt_iters_cg)
 
                 self.u_current[np.array(list(self.dict_subd_points_local_to_global[idv].values()))] = u_subd.copy()
                 self.set_additional_calculations()
@@ -149,7 +152,14 @@ class schwarz_multiplicative(class_template):
             crit_convergence = self.calculate_error(self.u, self.u_previous, 'point')
             print(f"{crit_convergence:.3e}", end = "\r")
             if crit_convergence < self.coef_convergence:
+                self.amnt_iters_cg = sum(lst_iters_cg)
+                print()
                 break
+            # elif previous_crit_convergence < crit_convergence and self.amnt_iterations > 5:
+            #     print()
+            #     print("Error: growing coef_convergence")
+            #     self.amnt_iterations = -1
+            #     break
 
 
 if __name__ == "__main__":

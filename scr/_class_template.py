@@ -28,7 +28,7 @@ class class_template(class_visual.class_visualisation):
             self.coef_u, self.coef_sigma = list(map(float, f.readline().split()))
 
         mesh = meshio.read(f'data/{self.data["fine_area"]}/meshes_fine/{self.data["fine_mesh"]:.3e}.msh')
-        
+
         self.contour_points = np.append(np.array(temp_contour), [temp_contour[0]], axis = 0)
         self.area_points_coords = mesh.points
         self.area_points_coords = np.delete(self.area_points_coords, -1, axis = 1)
@@ -54,6 +54,7 @@ class class_template(class_visual.class_visualisation):
                     self.dirichlet_conditions.append(np.array([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())]))
                 for _ in range(int(f.readline())):
                     self.neumann_conditions.append(np.array([int(val) if ind in [0, 1] else float(val) for ind, val in enumerate(f.readline().split())]))
+                self.table_pressure = self.neumann_conditions[-1][-1]
             else:
                 self.inner_radius = self.contour_points[0, 0]
                 self.outer_radius = self.contour_points[1, 0]
@@ -242,9 +243,9 @@ class class_template(class_visual.class_visualisation):
         self.calculate_eps()
         self.calculate_sigma()
 
-        if not self.data['fine_area'] == 'rectangle':
-            self.calculate_exact_variables()
-            self.calculate_polar_variables()
+        # if not self.data['fine_area'] == 'rectangle':
+        #     self.calculate_exact_variables()
+        #     self.calculate_polar_variables()
         
         self.time_eps_sigma = time.time() - init_time
         self.time_getting_solution = time.time() - init_global
@@ -277,30 +278,34 @@ class class_template(class_visual.class_visualisation):
 
 
     def conjugate_method(self, A, b, x = None):
+        init_time = time.time()
         amnt_iters_cg = 0
         n = len(b)
-        if not x:
+        if x is None:
             x = np.ones(n)
 
         r = b - A.dot(x)
-        if np.linalg.norm(r) < 1e-8:
+        norm_b = np.linalg.norm(b)
+        if np.linalg.norm(r) < 1e-10:
             return x
         z = r
         while True:
+            mult = A.dot(z)
             r_previous_norm = np.dot(r, r)
-            alpha = r_previous_norm / np.dot(A.dot(z), z)
+            alpha = r_previous_norm / np.dot(mult, z)
+
             x += alpha * z
-            r -= alpha * A.dot(z)
-            coef_convergence = np.linalg.norm(r) / np.linalg.norm(b)
+            r -= alpha * mult
+            coef_convergence = np.linalg.norm(r) / norm_b
             if coef_convergence < 1e-8:
+                time_cg = time.time() - init_time
                 break
             else:
                 r_current_norm = np.dot(r, r)
                 beta = r_current_norm / r_previous_norm
                 z = r + beta * z
                 amnt_iters_cg += 1
-                print(coef_convergence)
-        return x, amnt_iters_cg
+        return x, amnt_iters_cg, time_cg
 
 
     def plot_displacement(self):
@@ -309,6 +314,19 @@ class class_template(class_visual.class_visualisation):
 
     def plot_area_init_mesh(self):
         self.internal_plot_displacement(self.area_points_coords, self.area_elements)
+
+    
+    def analysis_time(self):
+        print(f'Initialization: {self.time_init:.3f}')
+        print(f'Time 1: {self.time_1:.3f} {self.time_1 / self.time_init:.2%}')
+        print(f'Time 2: {self.time_2:.3f} {self.time_2 / self.time_init:.2%}')
+        print(f'Time 3: {self.time_3:.3f} {self.time_3 / self.time_init:.2%}')
+        print(f'Time 4: {self.time_4:.3f} {self.time_4 / self.time_init:.2%}')
+        print(f'Time 5: {self.time_5:.3f} {self.time_5 / self.time_init:.2%}')
+        print(f'Time 6: {self.time_6:.3f} {self.time_6 / self.time_init:.2%}')
+        print(f'Time 7: {self.time_7:.3f} {self.time_7 / self.time_init:.2%}')
+        print(f'Time 8: {self.time_8:.3f} {self.time_8 / self.time_init:.2%}')
+        # print(f'Time 9: {self.time_9} {self.time_9 / self.time_init:.2%}')
 
 
 if __name__ == "__main__":

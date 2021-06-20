@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 import pygmsh
-import meshio
+import optimesh
 
 class Task:
     def __init__(self, area, contour, dim_task, E, nyu, coef_u, coef_sigma):
@@ -53,8 +53,6 @@ class Task:
             os.makedirs(f'data/{self.cur_area}/{mesh_type}')
 
         with pygmsh.occ.Geometry() as geom:
-            geom.characteristic_length_min = edge_size
-            # geom.characteristic_length_max = edge_size
             if self.cur_area == 'rectangle':
                 x_size, y_size = self.contour[2]
                 geom.add_rectangle([0.0, 0.0, 0.0], x_size, y_size)
@@ -106,8 +104,9 @@ class Task:
 
                     ring = geom.boolean_union([outer_ring_full, inner_ring_full, list_balls])
                     geom.boolean_difference(ring, geom.boolean_union([polygon_1, polygon_2]))
-
-            mesh = geom.generate_mesh()
+            geom.characteristic_length_min = edge_size
+            geom.characteristic_length_max = edge_size
+            geom.generate_mesh()
             pygmsh.write(f'data/{self.cur_area}/{mesh_type}/{edge_size:.3e}.msh')
 
 
@@ -116,7 +115,7 @@ if __name__ == "__main__":
     inner_radius, outer_radius = 1.0, 2.0
     x_size, y_size = 2.0, 1.0
 
-    cur_area = area_names[3]
+    cur_area = area_names[1]
     contour = [[0, 0], [x_size, 0], [x_size, y_size], [0, y_size]] if cur_area == 'rectangle' else [[inner_radius, 0], [outer_radius, 0], [0, outer_radius], [0, inner_radius]]
     cur_E = 210e+9 if cur_area == "bearing" else 70e+9
     cur_nyu = 0.25 if cur_area == "bearing" else 0.34
@@ -135,11 +134,11 @@ if __name__ == "__main__":
         'rectangle': {
             '3_fixes': {
                 'dirichlet_conditions': [[0, 1, math.nan, 0], [1, 2, 0, math.nan], [3, 0, 0, math.nan]],
-                'neumann_conditions': [[2, 3, 0, -2e+7]]
+                'neumann_conditions': [[2, 3, 0, -5e+6]]
             },
             '2_fixes': {
                 'dirichlet_conditions': [[0, 1, math.nan, 0], [3, 0, 0, math.nan]],
-                'neumann_conditions': [[2, 3, 0, -2e+7]]
+                'neumann_conditions': [[2, 3, 0, -5e+6]]
             }
         },
         'thick_walled_cylinder': {
@@ -150,8 +149,8 @@ if __name__ == "__main__":
                     'other': [[0, 1, math.nan, 0], [2, 3, 0, math.nan]]
                 },
                 'neumann_conditions': {
-                    'inner_side': 5e+6,
-                    'outer_side': -1e+7
+                    'inner_side': 5e+5,
+                    'outer_side': -1e+6
                 }
             }
         },
@@ -167,7 +166,7 @@ if __name__ == "__main__":
                 },
                 'neumann_conditions': {
                     'inner_side': 0,
-                    'outer_side': -1e+6
+                    'outer_side': -5e+5
                 }
             }
         }    
@@ -176,19 +175,19 @@ if __name__ == "__main__":
     meshes = {
         'rectangle': {
             "meshes_coarse": [1, 0.5, 0.25, 0.125, 0.0625],
-            "meshes_fine": [0.5, 0.25, 0.125, 0.05, 0.025, 0.0125, 0.00625]
+            "meshes_fine": [0.5, 0.25, 0.125, 0.1, 0.05, 0.025, 0.0125, 0.00625]
         },
         'thick_walled_cylinder': {
             "meshes_coarse": [1, 0.5, 0.25, 0.125, 0.0625],
-            "meshes_fine": [1, 0.5, 0.25, 0.125, 0.05, 0.025, 0.0125, 0.00625]
+            "meshes_fine": [1, 0.5, 0.25, 0.125, 0.1, 0.05, 0.025, 0.0125, 0.00625]
         },
         'simplified_cylinder': {
             "meshes_coarse": [1, 0.5, 0.25, 0.125, 0.0625],
-            "meshes_fine": []
+            "meshes_fine": [0.1]
         },
         'bearing': {
-            "meshes_coarse": [0.2926354830241924],
-            "meshes_fine": [0.2926354830241924]
+            "meshes_coarse": [0.125, 0.25, 0.2926354830241924, 0.5, 1],
+            "meshes_fine": [0.1]
         }
     }
 
@@ -197,6 +196,6 @@ if __name__ == "__main__":
     for task_name, params in tasks[cur_area].items():
         obj.create_task(task_name, params)
 
-    for mesh_type, list_edge_size in meshes[cur_area].items():
-        for cur_edge_size in list_edge_size:
-            obj.create_and_write_mesh(mesh_type, cur_edge_size)
+    # for mesh_type, list_edge_size in meshes[cur_area].items():
+    #     for cur_edge_size in list_edge_size:
+    #         obj.create_and_write_mesh(mesh_type, cur_edge_size)

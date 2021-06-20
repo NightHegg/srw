@@ -135,8 +135,12 @@ class class_visualisation:
         ax.set_ylabel('$y$', fontsize = 20)
         ax.tick_params(labelsize = 14)
 
-        fig.set_figwidth(9)
-        fig.set_figheight(6)
+        if self.data['fine_area'] == 'rectangle':
+            fig.set_figwidth(9)
+            fig.set_figheight(6)
+        else:
+            fig.set_figwidth(9)
+            fig.set_figheight(9)
 
         if save:
             route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/area_coarse_{self.data["coarse_area"]}.png'
@@ -155,19 +159,22 @@ class class_visualisation:
         if self.data['fine_area'] == 'rectangle':
             ax_plt = ax.tricontourf(triang, self.u[:, 1] * self.coef_u)
             cbar = plt.colorbar(ax_plt)
-            cbar.set_label(f'$u_y, м$', fontsize = 20)
+            cbar.set_label(f'$u_y, мм$', fontsize = 20)
             fig.set_figwidth(9)
             fig.set_figheight(6)
         else:
             ax_plt = ax.tricontourf(triang, self.u_polar[:, 0] * self.coef_u)
             cbar = plt.colorbar(ax_plt)
-            cbar.set_label(f'$u_r, м$', fontsize = 20)
+            cbar.set_label(f'$u_r, мм$', fontsize = 20)
             fig.set_figwidth(11)
             fig.set_figheight(9)
 
         ax = self.plot_contour(ax)
-        cbar.ax.tick_params(labelsize = 14)
+        ax.set_xlabel('$x$', fontsize = 20)
+        ax.set_ylabel('$y$', fontsize = 20)
         ax.tick_params(labelsize = 14)
+
+        cbar.ax.tick_params(labelsize = 14)
 
         if save:
             route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/displacement_distribution.png'
@@ -188,29 +195,49 @@ class class_visualisation:
 
         fig, ax = plt.subplots()
         triang = mtri.Triangulation(self.area_points_coords[:, 0], self.area_points_coords[:, 1], self.area_elements)
-
+        type = 1
         if self.data['fine_area'] == 'rectangle':
-            type = 1
             ax_plt = ax.tricontourf(triang, self.sigma_points[:, type])
-            name = "_x" if type == 0 else "_y"
-            special_name = name
+            name = "x" if type == 0 else "y"
+
+            cbar = plt.colorbar(ax_plt)
+            cbar.set_label(f'$\Delta\sigma_{name}$, Па', fontsize = 20)
+            cbar.ax.set_yticklabels([f'{i - self.table_pressure:.2f}' for i in cbar.get_ticks()])
+
             fig.set_figwidth(9)
             fig.set_figheight(6)
-        else:
-            type = 1
+        elif self.data['fine_area'] == 'thick_walled_cylinder':
             ax_plt = ax.tricontourf(triang, self.sigma_points_polar[:, type] * self.coef_sigma)
-            name = "_r" if type == 0 else "_phi"
-            special_name = "_r" if type == 0 else "_{phi}"
+            name = "r" if type == 0 else "phi"
+            special_name = "r" if type == 0 else "\\varphi"
+            
+            cbar = plt.colorbar(ax_plt)
+            cbar.set_label(f'$\sigma_{{{special_name}}}$, МПа', fontsize = 20)
+            if type == 0:
+                cbar.ax.set_yticklabels(np.round(np.linspace(self.outer_pressure * self.coef_sigma, self.inner_pressure * self.coef_sigma, num = 8), 2))
+
+            fig.set_figwidth(11)
+            fig.set_figheight(9)
+        elif self.data['fine_area'] == 'bearing':
+            ax_plt = ax.tricontourf(triang, self.sigma_points_polar[:, type] * self.coef_sigma)
+            name = "r" if type == 0 else "phi"
+            special_name = "r" if type == 0 else "\\varphi"
+
+            cbar = plt.colorbar(ax_plt)
+            cbar.set_label(f'$\sigma_{{{special_name}}}$, МПа', fontsize = 20)
+
             fig.set_figwidth(11)
             fig.set_figheight(9)
 
-        cbar = plt.colorbar(ax_plt)
-        cbar.set_label(f'$\sigma{special_name}$, МПа', fontsize = 20)
         cbar.ax.tick_params(labelsize = 14)
+
         ax = self.plot_contour(ax)
         ax.tick_params(labelsize = 14)
+        ax.set_xlabel('$x$', fontsize = 20)
+        ax.set_ylabel('$y$', fontsize = 20)
+
         if save:
-            route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/pressure_distribution{name}.png'
+            route = f'results/{self.data["fine_area"]}/{self.data["task"]}/core/pressure_distribution_{name}.png'
             plt.savefig(route)
         else:
             plt.show()
