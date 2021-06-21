@@ -298,6 +298,19 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
             'coef_overlap':     0.3,
             'coef_alpha':       0.5
         }
+
+        example_data_3 = {
+            'fine_area':        fine_area,
+            'coarse_area':      coarse_area,
+            'fine_mesh':        cur_mesh,
+            'coarse_mesh':      0.125,
+            'task':             task,
+            'amnt_subds':       4,
+            'coef_convergence': 1e-5,
+            'coef_overlap':     0.3,
+            'coef_alpha':       0.5
+        }
+
         obj = basic_method(example_data)
         obj.get_solution()
         amnt_iters = obj.amnt_iters_cg
@@ -306,7 +319,7 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
         obj1 = schwarz_two_level_additive(example_data)
         obj1.get_solution()
         amnt_iters_sc8 = obj1.amnt_iters_cg
-        time_sc8 = obj1.time_u + obj1.time_init
+        time_sc8 = obj1.time_u
 
         if idx == 0:
             check_N = obj.N
@@ -314,13 +327,19 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
             obj2 = schwarz_two_level_additive(example_data_2)
             obj2.get_solution()
             amnt_iters_sc2 = obj2.amnt_iters_cg
-            time_sc2 = obj2.time_u + obj2.time_init
+            time_sc2 = obj2.time_u
+
+            obj3 = schwarz_two_level_additive(example_data_3)
+            obj3.get_solution()
+            amnt_iters_sc4 = obj3.amnt_iters_cg
+            time_sc4 = obj3.time_u
 
             dct[obj.N] = {
                 'N': obj.N,
                 'theory': obj.N**(1/2),
                 'basic': amnt_iters,
                 '2': amnt_iters_sc2,
+                '4': amnt_iters_sc4,
                 '8': amnt_iters_sc8
             }
             dct_time[obj.N] = {
@@ -328,6 +347,7 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
                 'theory': obj.N**(3/2),
                 'basic': time,
                 '2': time_sc2,
+                '4': time_sc4,
                 '8': time_sc8
             }
         else:
@@ -401,6 +421,7 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
     ax.plot(df_rel["N"].astype('float64'), df_rel["basic"].astype('float64'), "x", ms = 14, label = "Базовый метод без МДО")
     if fine_area == 'bearing':
         ax.plot(df_rel["N"].astype('float64'), df_rel["2"].astype('float64'), "s", ms = 10, label = "Двухуровневый аддитивный МДО (M = 2)", mfc = 'r')
+        ax.plot(df_rel["N"].astype('float64'), df_rel["4"].astype('float64'), "D", ms = 10, label = "Двухуровневый аддитивный МДО (M = 4)", mfc = 'c')
     ax.plot(df_rel["N"].astype('float64'), df_rel["8"].astype('float64'), "o", ms = 10, label = "Двухуровневый аддитивный МДО (M = 8)", mfc = 'g')
 
     ax.legend(loc = 'best', prop={'size': 15})
@@ -428,6 +449,7 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
     ax1.plot(df_time_rel['N'].astype('float64'), df_time_rel["basic"].astype('float64'), "x", ms = 14, label = "Базовый метод")
     if fine_area == 'bearing':
         ax1.plot(df_time_rel["N"].astype('float64'), df_time_rel["2"].astype('float64'), "s", ms = 10, label = "Двухуровневый аддитивный МДО (M = 2)", mfc = 'r')
+        ax1.plot(df_time_rel["N"].astype('float64'), df_time_rel["4"].astype('float64'), "D", ms = 10, label = "Двухуровневый аддитивный МДО (M = 4)", mfc = 'c')
     ax1.plot(df_time_rel["N"].astype('float64'), df_time_rel["8"].astype('float64'), "o", ms = 10, label = "Двухуровневый аддитивный МДО (M = 8)", mfc = 'g')
 
     ax1.legend(loc = 'best', prop={'size': 15})
@@ -484,17 +506,17 @@ if __name__ == "__main__":
             'coarse': 'bearing'
         }
     }
-    # create_table_cg('rectangle', 'rectangle', '3_fixes', table_save=False, pic_save=False)
+    create_table_cg('bearing', 'bearing', 'pressure_only', table_save=True, pic_save=True)
     # create_table_iters_coarse('thick_walled_cylinder', 'thick_walled_cylinder', 'pressure_only', bool_save=True)
     # create_table_iters_coarse('bearing', 'bearing', 'pressure_only', bool_save=True)
 
     # create_table_overlap('thick_walled_cylinder', 'thick_walled_cylinder', 4, 'pressure_only')
     # create_table_overlap('bearing', 'bearing', 4, 'pressure_only')
 
-    for fine_area, data in area_simple.items():
-        for task in data["tasks"]:
-            create_table_cg(fine_area, data["coarse"], task, table_save=True, pic_save=True)
-        print('Finished:', fine_area)
+    # for fine_area, data in area_simple.items():
+    #     for task in data["tasks"]:
+    #         create_table_cg(fine_area, data["coarse"], task, table_save=True, pic_save=True)
+    #     print('Finished:', fine_area)
 
     # create_table_iters_coarse('bearing', 'bearing', 'pressure_only', True)
     # create_table_special_error(schwarz_multiplicative, 'thick_walled_cylinder', 'rectangle', 'pressure_only')
