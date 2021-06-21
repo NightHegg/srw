@@ -283,9 +283,9 @@ class class_template(class_visual.class_visualisation):
         n = len(b)
         if x is None:
             x = np.ones(n)
-
+        
         r = b - A.dot(x)
-        norm_b = np.linalg.norm(b)
+        r_0_norm = np.linalg.norm(b)
         if np.linalg.norm(r) < 1e-10:
             return x
         z = r
@@ -296,7 +296,7 @@ class class_template(class_visual.class_visualisation):
 
             x += alpha * z
             r -= alpha * mult
-            coef_convergence = np.linalg.norm(r) / norm_b
+            coef_convergence = np.linalg.norm(r) / r_0_norm
             if coef_convergence < 1e-8:
                 time_cg = time.time() - init_time
                 break

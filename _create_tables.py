@@ -506,7 +506,7 @@ if __name__ == "__main__":
             'coarse': 'bearing'
         }
     }
-    create_table_cg('bearing', 'bearing', 'pressure_only', table_save=True, pic_save=True)
+    # create_table_cg('bearing', 'bearing', 'pressure_only', table_save=True, pic_save=True)
     # create_table_iters_coarse('thick_walled_cylinder', 'thick_walled_cylinder', 'pressure_only', bool_save=True)
     # create_table_iters_coarse('bearing', 'bearing', 'pressure_only', bool_save=True)
 
