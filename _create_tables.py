@@ -273,7 +273,7 @@ def create_table_overlap(fine_area, coarse_area, amnt_subds, task):
 def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save = False):
     dct = {}
     dct_time = {}
-    mesh = [0.05, 0.025, 0.0125, 0.00625]
+    mesh = [0.05, 0.025, 0.0125, 0.00625, 0.003125]
     check_N = 0
     for idx, cur_mesh in enumerate(mesh):
         example_data = {
@@ -287,52 +287,40 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
             'coef_overlap':     0.3,
             'coef_alpha':       0.5
         }
-        example_data_2 = {
-            'fine_area':        fine_area,
-            'coarse_area':      coarse_area,
-            'fine_mesh':        cur_mesh,
-            'coarse_mesh':      0.125,
-            'task':             task,
-            'amnt_subds':       2,
-            'coef_convergence': 1e-5,
-            'coef_overlap':     0.3,
-            'coef_alpha':       0.5
-        }
-
-        example_data_3 = {
-            'fine_area':        fine_area,
-            'coarse_area':      coarse_area,
-            'fine_mesh':        cur_mesh,
-            'coarse_mesh':      0.125,
-            'task':             task,
-            'amnt_subds':       4,
-            'coef_convergence': 1e-5,
-            'coef_overlap':     0.3,
-            'coef_alpha':       0.5
-        }
 
         obj = basic_method(example_data)
         obj.get_solution()
         amnt_iters = obj.amnt_iters_cg
-        time = obj.time_u + obj.time_init
+        time = obj.time_test
 
-        obj1 = schwarz_two_level_additive(example_data)
-        obj1.get_solution()
-        amnt_iters_sc8 = obj1.amnt_iters_cg
-        time_sc8 = obj1.time_u
+        obj = schwarz_two_level_additive(example_data)
+        obj.get_solution()
+        amnt_iters_sc8 = obj.amnt_iters_cg
+        time_sc8 = obj.time_test
 
         if idx == 0:
             check_N = obj.N
         if fine_area == 'bearing':
-            obj2 = schwarz_two_level_additive(example_data_2)
-            obj2.get_solution()
-            amnt_iters_sc2 = obj2.amnt_iters_cg
-            time_sc2 = obj2.time_u
+            example_data.update(amnt_subds=2)
 
-            obj3 = schwarz_two_level_additive(example_data_3)
-            obj3.get_solution()
-            amnt_iters_sc4 = obj3.amnt_iters_cg
-            time_sc4 = obj3.time_u
+            obj = schwarz_two_level_additive(example_data)
+            obj.get_solution()
+            amnt_iters_sc2 = obj.amnt_iters_cg
+            time_sc2 = obj.time_test
+
+            example_data.update(amnt_subds=4)
+
+            obj = schwarz_two_level_additive(example_data)
+            obj.get_solution()
+            amnt_iters_sc4 = obj.amnt_iters_cg
+            time_sc4 = obj.time_test
+
+            example_data.update(amnt_subds=16)
+
+            obj = schwarz_two_level_additive(example_data)
+            obj.get_solution()
+            amnt_iters_sc16 = obj.amnt_iters_cg
+            time_sc16 = obj.time_test
 
             dct[obj.N] = {
                 'N': obj.N,
@@ -340,7 +328,8 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
                 'basic': amnt_iters,
                 '2': amnt_iters_sc2,
                 '4': amnt_iters_sc4,
-                '8': amnt_iters_sc8
+                '8': amnt_iters_sc8,
+                '16': amnt_iters_sc16,
             }
             dct_time[obj.N] = {
                 'N': obj.N,
@@ -348,7 +337,8 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
                 'basic': time,
                 '2': time_sc2,
                 '4': time_sc4,
-                '8': time_sc8
+                '8': time_sc8,
+                '16': time_sc16,
             }
         else:
             dct[obj.N] = {
@@ -422,6 +412,7 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
     if fine_area == 'bearing':
         ax.plot(df_rel["N"].astype('float64'), df_rel["2"].astype('float64'), "s", ms = 10, label = "Двухуровневый аддитивный МДО (M = 2)", mfc = 'r')
         ax.plot(df_rel["N"].astype('float64'), df_rel["4"].astype('float64'), "D", ms = 10, label = "Двухуровневый аддитивный МДО (M = 4)", mfc = 'c')
+        ax.plot(df_rel["N"].astype('float64'), df_rel["16"].astype('float64'), "*", ms = 10, label = "Двухуровневый аддитивный МДО (M = 16)", mfc = 'm')
     ax.plot(df_rel["N"].astype('float64'), df_rel["8"].astype('float64'), "o", ms = 10, label = "Двухуровневый аддитивный МДО (M = 8)", mfc = 'g')
 
     ax.legend(loc = 'best', prop={'size': 15})
@@ -450,6 +441,7 @@ def create_table_cg(fine_area, coarse_area, task, table_save = False, pic_save =
     if fine_area == 'bearing':
         ax1.plot(df_time_rel["N"].astype('float64'), df_time_rel["2"].astype('float64'), "s", ms = 10, label = "Двухуровневый аддитивный МДО (M = 2)", mfc = 'r')
         ax1.plot(df_time_rel["N"].astype('float64'), df_time_rel["4"].astype('float64'), "D", ms = 10, label = "Двухуровневый аддитивный МДО (M = 4)", mfc = 'c')
+        ax1.plot(df_time_rel["N"].astype('float64'), df_time_rel["16"].astype('float64'), "*", ms = 10, label = "Двухуровневый аддитивный МДО (M = 16)", mfc = 'm')
     ax1.plot(df_time_rel["N"].astype('float64'), df_time_rel["8"].astype('float64'), "o", ms = 10, label = "Двухуровневый аддитивный МДО (M = 8)", mfc = 'g')
 
     ax1.legend(loc = 'best', prop={'size': 15})
@@ -506,6 +498,72 @@ if __name__ == "__main__":
             'coarse': 'bearing'
         }
     }
+    dct = {
+        9142: {
+            'rel': 1,
+            'theory': 1,
+            'basic': 1,
+            '2': 1,
+            '4': 1,
+            '8': 1,
+            '16': 1
+        },
+        33272: {
+            'rel': 3.63,
+            'theory': 6.91,
+            'basic': 4.44,
+            '2': 4.21,
+            '4': 4.14,
+            '8': 4.04,
+            '16': 3.49
+        },
+        127674: {
+            'rel': 13.96,
+            'theory': 52.15,
+            'basic': 32,
+            '2': 25.62,
+            '4': 20.04,
+            '8': 19.05,
+            '16': 14.23
+        },
+        497796: {
+            'rel': 54.45,
+            'theory': 401.78,
+            'basic': 275.05,
+            '2': 219.5,
+            '4': 171.93,
+            '8': 97.81,
+            '16': 62.6
+        }    
+    }
+    df = pd.DataFrame.from_dict(dct).T
+    # print(df)
+
+    fig, ax = plt.subplots()
+
+    ax.plot(df["rel"].astype('float64'), df["theory"].astype('float64'), label = 'Теория')
+    ax.plot(df["rel"].astype('float64'), df["basic"].astype('float64'), "x", ms = 14, label = "Базовый метод без МДО")
+    ax.plot(df["rel"].astype('float64'), df["2"].astype('float64'), "s", ms = 10, label = "Двухуровневый аддитивный МДО (M = 2)", mfc = 'r')
+    ax.plot(df["rel"].astype('float64'), df["4"].astype('float64'), "D", ms = 10, label = "Двухуровневый аддитивный МДО (M = 4)", mfc = 'c')
+    ax.plot(df["rel"].astype('float64'), df["8"].astype('float64'), "o", ms = 10, label = "Двухуровневый аддитивный МДО (M = 8)", mfc = 'g')
+    ax.plot(df["rel"].astype('float64'), df["16"].astype('float64'), "*", ms = 10, label = "Двухуровневый аддитивный МДО (M = 16)", mfc = 'm')
+
+    ax.legend(loc = 'best', prop={'size': 15})
+
+    fig.set_figwidth(10)
+    fig.set_figheight(8)
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    ax.tick_params(labelsize = 14)
+
+    ax.set_xlabel('$\\frac{n}{n_1}$', fontsize = 22)
+    ax.set_ylabel('$\\frac{t}{t_1}$', fontsize = 22)
+
+    # plt.show()
+    route = f'results/bearing/pressure_only/core/time_cg.png'
+    plt.savefig(route)
     # create_table_cg('bearing', 'bearing', 'pressure_only', table_save=True, pic_save=True)
     # create_table_iters_coarse('thick_walled_cylinder', 'thick_walled_cylinder', 'pressure_only', bool_save=True)
     # create_table_iters_coarse('bearing', 'bearing', 'pressure_only', bool_save=True)

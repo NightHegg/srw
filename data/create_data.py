@@ -115,7 +115,7 @@ if __name__ == "__main__":
     inner_radius, outer_radius = 1.0, 2.0
     x_size, y_size = 2.0, 1.0
 
-    cur_area = area_names[1]
+    cur_area = area_names[3]
     contour = [[0, 0], [x_size, 0], [x_size, y_size], [0, y_size]] if cur_area == 'rectangle' else [[inner_radius, 0], [outer_radius, 0], [0, outer_radius], [0, inner_radius]]
     cur_E = 210e+9 if cur_area == "bearing" else 70e+9
     cur_nyu = 0.25 if cur_area == "bearing" else 0.34
@@ -186,8 +186,8 @@ if __name__ == "__main__":
             "meshes_fine": [0.1]
         },
         'bearing': {
-            "meshes_coarse": [0.125, 0.25, 0.2926354830241924, 0.5, 1],
-            "meshes_fine": [0.1]
+            "meshes_coarse": [],
+            "meshes_fine": [0.003125]
         }
     }
 
@@ -196,6 +196,6 @@ if __name__ == "__main__":
     for task_name, params in tasks[cur_area].items():
         obj.create_task(task_name, params)
 
-    # for mesh_type, list_edge_size in meshes[cur_area].items():
-    #     for cur_edge_size in list_edge_size:
-    #         obj.create_and_write_mesh(mesh_type, cur_edge_size)
+    for mesh_type, list_edge_size in meshes[cur_area].items():
+        for cur_edge_size in list_edge_size:
+            obj.create_and_write_mesh(mesh_type, cur_edge_size)

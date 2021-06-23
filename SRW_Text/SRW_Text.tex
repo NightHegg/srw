@@ -146,7 +146,7 @@
 
 \item уравнение равновесия
 \begin{equation}
-L \mathbf{u} = - \triangledown \bm{\sigma(u)} = \mathbf{f(x)}
+L \mathbf{u} = - \triangledown \bm{\sigma(u)} = \mathbf{f(x)}, \ x \in G,
 \end{equation}
 
 \item кинематические граничные условия
@@ -161,7 +161,7 @@ L \mathbf{u} = - \triangledown \bm{\sigma(u)} = \mathbf{f(x)}
 
 \item соотношение Коши для тензора полных деформаций
 \begin{equation}
-\bm{\varepsilon(u)}=\dfrac{1}{2}(\nabla u + (\nabla u)^T,
+\bm{\varepsilon(u)}=\dfrac{1}{2}(\nabla u + (\nabla u)^T),
 \end{equation}
 
 \item уравнение для тензора напряжений
@@ -181,7 +181,7 @@ L \mathbf{u} = - \triangledown \bm{\sigma(u)} = \mathbf{f(x)}
 Рассмотрим классическую задачу метода Шварца для двух подобластей $\left[3\right]$: имеется сложная область $\Omega$, состоящая из объединения двух простых областей (круга $\Omega_1$ и прямоугольника $\Omega_2$) \cite{2}. Рассмотрим уравнение, цель которого найти перемещения $u: \Omega \rightarrow \mathbb{R}$ при условии, что
 \begin{equation*}
 \begin{array}{rl}
--\bigtriangleup \!(u) = f, & u \in \Omega \\
+L \!(u) = f, & u \in \Omega \\
 u = 0, & u \in \partial \Omega
 \end{array}
 \end{equation*}
@@ -194,15 +194,17 @@ u = 0, & u \in \partial \Omega
 
 Классический метод Шварца это итерационный метод, основанный на решении задач меньшего масштаба в подобластях $\Omega_1$ и $\Omega_2$ \cite{3}. Один шаг итерационного процесса обновления результатов $u^n \rightarrow u^{n+1}$:
 \begin{eqnarray*}
--\bigtriangleup \! (u^{n+1}) = f, & u \in \Omega_1 \\
+L \! (u^{n+1}) = f, & u \in \Omega_1 \\
 u^{n+1} = 0, & u \in \partial \Omega_1 \cap \partial \Omega \\
 u^{n+1} = u^n, & u \in \partial \Omega_1 \cap \bar{\Omega_2}
 \end{eqnarray*}
 \begin{eqnarray*}
--\bigtriangleup \! (u^{n+1}) = f, & u \in \Omega_2 \\
+L \! (u^{n+1}) = f, & u \in \Omega_2 \\
 u^{n+1} = 0, & u \in \partial \Omega_2 \cap \partial \Omega \\
 u^{n+1} = u^n, & u \in \partial \Omega_2 \cap \bar{\Omega_1}
 \end{eqnarray*}
+
+Основные формулы для мультипликативного метода Шварца с учётом 
 
 Рассмотрим случай для произвольной области и произвольного числа подобластей, представим область $G$ в виде объединения конечного числа подобластей $G = \bigcup_{i=1}^{M} G_i$ с конечным числом границ $\partial G_1, \ldots, \partial G_M$, где M - число подобластей. Данные подобласти пересекаются, что требует ввода дополнительных обозначений для границ, возникающих после декомпозиции областей: $\Gamma = \bigcup_{i=1}^{M} \Gamma_i$ \cite{4}. 
 
@@ -1088,7 +1090,7 @@ u_{err} = \sqrt{\left(\sum_{k = 1}^{N_p} s_k \left(\frac{u_{k}^{m+1} - u_{k}^{m}
 \begin{equation*}
 u_r = \frac{(1 + \mu) \cdot (1 - 2\mu)}{E}A \cdot r + \frac{(1 + \mu)}{E} \frac{B}{r},
 \end{equation*}
-где $A = (p_a \cdot r_a^2 - p_b \cdot r_b^2) / (r_b^2 - r_a^2)$, $B = (p_a - p_b) \cdot (r_a r_b)^2 / (r_b^2 - r_a^2)$.
+где $A = (p_a \cdot r_a^2 - p_b \cdot r_b^2) / (r_b^2 - r_a^2)$, $B = (p_a - p_b) \cdot (r_a - r_b)^2 / (r_b^2 - r_a^2)$.
 
 Вычисление аналитического радиального и окружного напряжений производится по формуле:
 \begin{equation*}

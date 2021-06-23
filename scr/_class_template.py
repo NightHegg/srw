@@ -35,6 +35,8 @@ class class_template(class_visual.class_visualisation):
         self.area_points = np.array([num for num, _ in enumerate(self.area_points_coords)])
         self.area_elements = mesh.cells_dict["triangle"]
 
+        self.N = self.area_points_coords.size
+
         self.D = np.array(
             [
                 [1, self.nyu/(1 - self.nyu), 0],
@@ -277,7 +279,12 @@ class class_template(class_visual.class_visualisation):
         return value
 
 
-    def conjugate_method(self, A, b, x = None):
+    def conjugate_method(self, A, b, crit_convergence = 1e-5, x = None):
+        if crit_convergence >= 1:
+            local_crit = 1e-3
+        else:
+            local_crit = crit_convergence * 1e-3
+
         init_time = time.time()
         amnt_iters_cg = 0
         n = len(b)
@@ -297,7 +304,7 @@ class class_template(class_visual.class_visualisation):
             x += alpha * z
             r -= alpha * mult
             coef_convergence = np.linalg.norm(r) / r_0_norm
-            if coef_convergence < 1e-8:
+            if coef_convergence < local_crit:
                 time_cg = time.time() - init_time
                 break
             else:

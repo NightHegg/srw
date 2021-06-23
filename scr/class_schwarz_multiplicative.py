@@ -20,7 +20,6 @@ class schwarz_multiplicative(class_template):
         self.coef_convergence = data['coef_convergence']
         self.coef_overlap = data['coef_overlap']
 
-        self.init_subd_params()
         self.time_init = time.time() - init_time
     
 
@@ -121,8 +120,13 @@ class schwarz_multiplicative(class_template):
 
 
     def calculate_u(self):
+        init_time = time.time()
+        self.init_subd_params()
+        self.time_test = time.time() - init_time
+
         lst_iters_cg = []
         lst_time_cg = []
+        self.cur_crit_convergence = 1
         self.amnt_iterations = 0
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
         while True:
@@ -133,6 +137,8 @@ class schwarz_multiplicative(class_template):
                 K = self.K_array[idv].copy()
                 F = np.zeros(self.dict_subd_points[idv].size * self.dim_task)
 
+                init_time = time.time()
+
                 self.set_condition_neumann(F, self.dict_subd_neumann_elements[idv], self.area_points_coords, self.dict_area_neumann_points, dict_points_global_to_local)
                 self.set_condition_dirichlet(K, F, self.dict_area_dirichlet_points, self.dict_subd_diriclet_points[idv], dict_points_global_to_local)
 
@@ -140,16 +146,22 @@ class schwarz_multiplicative(class_template):
                 self.set_condition_schwarz(function_condition_schwarz)
 
                 init_u = self.u_previous[np.array(list(self.dict_subd_points_local_to_global[idv].values()))].reshape(-1)
-                result, amnt_iters_cg, amnt_time_cg = self.conjugate_method(K.tocsr(), F, init_u)
+                result, amnt_iters_cg, amnt_time_cg = self.conjugate_method(K.tocsr(), F, self.cur_crit_convergence, init_u)
                 u_subd = result.reshape(-1, 2)
                 lst_iters_cg.append(amnt_iters_cg)
                 lst_time_cg.append(amnt_time_cg)
 
+                self.time_test += time.time() - init_time
+
                 self.u_current[np.array(list(self.dict_subd_points_local_to_global[idv].values()))] = u_subd.copy()
                 self.set_additional_calculations()
 
+            init_time = time.time()
+
             self.amnt_iterations += 1
             self.get_displacements()
+
+            self.time_test += time.time() - init_time
 
             crit_convergence = self.calculate_error(self.u, self.u_previous, 'point')
             print(f"{crit_convergence:.3e}", end = "\r")
@@ -158,6 +170,7 @@ class schwarz_multiplicative(class_template):
                 self.amnt_iters_cg = sum(lst_iters_cg)
                 print()
                 break
+            self.cur_crit_convergence = crit_convergence
             # elif previous_crit_convergence < crit_convergence and self.amnt_iterations > 5:
             #     print()
             #     print("Error: growing coef_convergence")

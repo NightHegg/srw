@@ -20,6 +20,8 @@ class basic_method(class_template):
 
 
     def calculate_u(self):
+        init_time = time.time()
+        
         K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.area_points.size, self.D, self.dim_task)
         F = np.zeros(self.area_points_coords.size)
 
@@ -28,9 +30,10 @@ class basic_method(class_template):
 
         result, amnt_iters_cg, self.time_cg = self.conjugate_method(K.tocsr(), F)
         self.u = result.reshape(-1, 2)
+
+        self.time_test = time.time() - init_time
         
         self.amnt_iters_cg = amnt_iters_cg
-        self.N = self.area_points_coords.size
 
 
 if __name__ == "__main__":
