@@ -231,7 +231,7 @@ class schwarz_two_level_additive(schwarz_additive):
             self.barycentric_coords_for_coarse_elements[num_element] = base_func.create_barycentric_coords(coarse_element, self.area_coarse_points_coords)
 
         self.element_centroid_points_coords_coarse = np.array(list(map(lambda x: np.mean(self.area_coarse_points_coords[x], axis = 0), self.area_coarse_elements)))
-        self.list_area_of_coarse_elements = np.array([base_func.calculate_local_matrix_stiffness(i, self.area_coarse_points_coords, self.dim_task)[1] for i in self.area_coarse_elements])
+        self.list_area_of_coarse_elements = np.array([base_func.calculate_local_matrix_stiffness(i, self.area_coarse_points_coords)[1] for i in self.area_coarse_elements])
         self.dict_point_in_coarse_elements = {}
         for num_point, point_coords in enumerate(self.area_points_coords):
             bool_check = check_point_in_elements(point_coords)

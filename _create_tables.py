@@ -179,7 +179,7 @@ def create_table_iters_time(method, fine_area, coarse_area, task, bool_save = Fa
     dict_iters = {}
     dict_time = {}
     list_mesh = [0.05, 0.025, 0.0125, 0.00625]
-    list_amnt_subds = [2, 4, 8]
+    list_amnt_subds = [2, 4, 8, 16]
 
     for idx, cur_mesh in enumerate(list_mesh):
         dict_iters_temp = {}
@@ -498,78 +498,78 @@ if __name__ == "__main__":
             'coarse': 'bearing'
         }
     }
-    dct = {
-        9142: {
-            'rel': 1,
-            'theory': 1,
-            'basic': 1,
-            '2': 1,
-            '4': 1,
-            '8': 1,
-            '16': 1
-        },
-        33272: {
-            'rel': 3.63,
-            'theory': 6.91,
-            'basic': 4.44,
-            '2': 4.21,
-            '4': 4.14,
-            '8': 4.04,
-            '16': 3.49
-        },
-        127674: {
-            'rel': 13.96,
-            'theory': 52.15,
-            'basic': 32,
-            '2': 25.62,
-            '4': 20.04,
-            '8': 19.05,
-            '16': 14.23
-        },
-        497796: {
-            'rel': 54.45,
-            'theory': 401.78,
-            'basic': 275.05,
-            '2': 219.5,
-            '4': 171.93,
-            '8': 97.81,
-            '16': 62.6
-        }    
-    }
-    df = pd.DataFrame.from_dict(dct).T
-    # print(df)
+    # dct = {
+    #     9142: {
+    #         'rel': 1,
+    #         'theory': 1,
+    #         'basic': 1,
+    #         '2': 1,
+    #         '4': 1,
+    #         '8': 1,
+    #         '16': 1
+    #     },
+    #     33272: {
+    #         'rel': 3.63,
+    #         'theory': 1.91,
+    #         'basic': 1.85,
+    #         '2': 1.92,
+    #         '4': 2.20,
+    #         '8': 2.47,
+    #         '16': 2.43
+    #     },
+    #     127674: {
+    #         'rel': 13.96,
+    #         'theory': 3.73,
+    #         'basic': 3.61,
+    #         '2': 3.87,
+    #         '4': 4.24,
+    #         '8': 5.28,
+    #         '16': 4.93
+    #     },
+    #     497796: {
+    #         'rel': 54.45,
+    #         'theory': 7.38,
+    #         'basic': 6.00,
+    #         '2': 6.28,
+    #         '4': 7.81,
+    #         '8': 8.03,
+    #         '16': 8.39
+    #     }    
+    # }
+    # df = pd.DataFrame.from_dict(dct).T
+    # # print(df)
 
-    fig, ax = plt.subplots()
+    # fig, ax = plt.subplots()
 
-    ax.plot(df["rel"].astype('float64'), df["theory"].astype('float64'), label = 'Теория')
-    ax.plot(df["rel"].astype('float64'), df["basic"].astype('float64'), "x", ms = 14, label = "Базовый метод без МДО")
-    ax.plot(df["rel"].astype('float64'), df["2"].astype('float64'), "s", ms = 10, label = "Двухуровневый аддитивный МДО (M = 2)", mfc = 'r')
-    ax.plot(df["rel"].astype('float64'), df["4"].astype('float64'), "D", ms = 10, label = "Двухуровневый аддитивный МДО (M = 4)", mfc = 'c')
-    ax.plot(df["rel"].astype('float64'), df["8"].astype('float64'), "o", ms = 10, label = "Двухуровневый аддитивный МДО (M = 8)", mfc = 'g')
-    ax.plot(df["rel"].astype('float64'), df["16"].astype('float64'), "*", ms = 10, label = "Двухуровневый аддитивный МДО (M = 16)", mfc = 'm')
+    # ax.plot(df["rel"].astype('float64'), df["theory"].astype('float64'), label = 'Теория')
+    # ax.plot(df["rel"].astype('float64'), df["basic"].astype('float64'), "x", ms = 14, label = "Базовый метод без МДО")
+    # ax.plot(df["rel"].astype('float64'), df["2"].astype('float64'), "s", ms = 10, label = "Двухуровневый аддитивный МДО (M = 2)", mfc = 'r')
+    # ax.plot(df["rel"].astype('float64'), df["4"].astype('float64'), "D", ms = 10, label = "Двухуровневый аддитивный МДО (M = 4)", mfc = 'c')
+    # ax.plot(df["rel"].astype('float64'), df["8"].astype('float64'), "o", ms = 10, label = "Двухуровневый аддитивный МДО (M = 8)", mfc = 'g')
+    # ax.plot(df["rel"].astype('float64'), df["16"].astype('float64'), "*", ms = 10, label = "Двухуровневый аддитивный МДО (M = 16)", mfc = 'm')
 
-    ax.legend(loc = 'best', prop={'size': 15})
+    # ax.legend(loc = 'best', prop={'size': 15})
 
-    fig.set_figwidth(10)
-    fig.set_figheight(8)
+    # fig.set_figwidth(10)
+    # fig.set_figheight(8)
 
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['right'].set_visible(False)
 
-    ax.tick_params(labelsize = 14)
+    # ax.tick_params(labelsize = 14)
 
-    ax.set_xlabel('$\\frac{n}{n_1}$', fontsize = 22)
-    ax.set_ylabel('$\\frac{t}{t_1}$', fontsize = 22)
+    # ax.set_xlabel('$\\frac{n}{n_1}$', fontsize = 22)
+    # ax.set_ylabel('$\\frac{m}{m_1}$', fontsize = 22)
 
-    # plt.show()
-    route = f'results/bearing/pressure_only/core/time_cg.png'
-    plt.savefig(route)
+    # # plt.show()
+    # route = f'results/bearing/pressure_only/core/iters_cg.png'
+    # plt.savefig(route)
     # create_table_cg('bearing', 'bearing', 'pressure_only', table_save=True, pic_save=True)
     # create_table_iters_coarse('thick_walled_cylinder', 'thick_walled_cylinder', 'pressure_only', bool_save=True)
     # create_table_iters_coarse('bearing', 'bearing', 'pressure_only', bool_save=True)
 
     # create_table_overlap('thick_walled_cylinder', 'thick_walled_cylinder', 4, 'pressure_only')
-    # create_table_overlap('bearing', 'bearing', 4, 'pressure_only')
+    create_table_iters_time(schwarz_two_level_additive, 'bearing', 'bearing', 'pressure_only', bool_save=True)
 
     # for fine_area, data in area_simple.items():
     #     for task in data["tasks"]:

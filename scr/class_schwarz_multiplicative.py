@@ -4,6 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import time
 
 import numpy as np
+import copy
 
 import scr.functions as base_func
 from scr._class_template import class_template
@@ -65,23 +66,34 @@ class schwarz_multiplicative(class_template):
             self.dict_subd_boundary_points[key] = t
 
         self.dict_subd_points = {i: np.unique(self.area_points[self.area_elements[self.dict_subd_elements[i]]]) for i in range(self.cur_amnt_subds)}
-        
+
         self.K_array = []
+        self.F_array = []
         self.dict_subd_points_local_to_global = {}
         self.dict_subd_diriclet_points = {}
         self.dict_subd_neumann_elements = {}
+        
         for idv in range(self.cur_amnt_subds):
             self.dict_subd_points_local_to_global[idv] = dict(zip(range(len(self.dict_subd_points[idv])), self.dict_subd_points[idv]))
             dict_points_global_to_local = {v: k for k, v in self.dict_subd_points_local_to_global[idv].items()}
 
-            self.K_array.append(base_func.calculate_sparse_matrix_stiffness(self.area_elements[self.dict_subd_elements[idv]], self.area_points_coords, self.dict_subd_points[idv].size, self.D, self.dim_task, dict_points_global_to_local))
-            
             self.dict_subd_diriclet_points[idv] = np.intersect1d(np.array(list(self.dict_area_dirichlet_points.keys())), self.dict_subd_points[idv])
             temp = []
             for element in self.dict_subd_elements[idv]:
                 if len(set(self.area_elements[element]) & set(self.dict_area_neumann_points.keys())) == 2:
                     temp.append(list(set(self.area_elements[element]) & set(self.dict_area_neumann_points.keys())))
             self.dict_subd_neumann_elements[idv] = temp
+
+            init_time = time.time()
+            temp_K = base_func.calculate_sparse_matrix_stiffness(self.area_elements[self.dict_subd_elements[idv]], self.area_points_coords, self.dict_subd_points[idv].size, self.D, self.dim_task, dict_points_global_to_local)
+            self.time9 += time.time() - init_time
+            temp_F = np.zeros(self.dict_subd_points[idv].size * self.dim_task)
+
+            self.set_condition_neumann(temp_F, self.dict_subd_neumann_elements[idv], self.area_points_coords, self.dict_area_neumann_points, dict_points_global_to_local)
+            self.set_condition_dirichlet(temp_K, temp_F, self.dict_area_dirichlet_points, self.dict_subd_diriclet_points[idv], dict_points_global_to_local)
+
+            self.K_array.append(temp_K)
+            self.F_array.append(temp_F)
 
 
     def get_condition_schwarz(self, K, F, list_schwarz_points, modifier):
@@ -122,60 +134,57 @@ class schwarz_multiplicative(class_template):
     def calculate_u(self):
         init_time = time.time()
         self.init_subd_params()
-        self.time_test = time.time() - init_time
 
-        lst_iters_cg = []
-        lst_time_cg = []
-        self.cur_crit_convergence = 1
+        lst_iters_cg = 0
+        lst_time_cg = 0
+
         self.amnt_iterations = 0
+        self.cur_crit_convergence = 1
         self.u = np.zeros((self.area_points_coords.shape[0], 2))
+        self.time1 = time.time() - init_time
         while True:
             self.set_initialization()
             for idv in range(self.cur_amnt_subds):
+                init_time = time.time()
                 dict_points_global_to_local = {v: k for k, v in self.dict_subd_points_local_to_global[idv].items()}
                 
                 K = self.K_array[idv].copy()
-                F = np.zeros(self.dict_subd_points[idv].size * self.dim_task)
+                F = self.F_array[idv].copy()
+                self.time2 += time.time() - init_time
 
                 init_time = time.time()
-
-                self.set_condition_neumann(F, self.dict_subd_neumann_elements[idv], self.area_points_coords, self.dict_area_neumann_points, dict_points_global_to_local)
-                self.set_condition_dirichlet(K, F, self.dict_area_dirichlet_points, self.dict_subd_diriclet_points[idv], dict_points_global_to_local)
-
                 function_condition_schwarz = self.get_condition_schwarz(K, F, self.dict_subd_boundary_points[idv], dict_points_global_to_local)
                 self.set_condition_schwarz(function_condition_schwarz)
+                self.time3 += time.time() - init_time
 
-                init_u = self.u_previous[np.array(list(self.dict_subd_points_local_to_global[idv].values()))].reshape(-1)
-                result, amnt_iters_cg, amnt_time_cg = self.conjugate_method(K.tocsr(), F, self.cur_crit_convergence, init_u)
-                u_subd = result.reshape(-1, 2)
-                lst_iters_cg.append(amnt_iters_cg)
-                lst_time_cg.append(amnt_time_cg)
+                init_time = time.time()
+                init_u = self.u_current[np.array(list(self.dict_subd_points_local_to_global[idv].values()))].reshape(-1)
+                u_subd, amnt_iters_cg, amnt_time_cg = self.conjugate_method(K.tocsr(), F, self.cur_crit_convergence, init_u)
+                lst_iters_cg += amnt_iters_cg
+                lst_time_cg += amnt_time_cg
+                
 
-                self.time_test += time.time() - init_time
+                self.u_current[np.array(list(self.dict_subd_points_local_to_global[idv].values()))] = u_subd.reshape(-1, 2)
 
-                self.u_current[np.array(list(self.dict_subd_points_local_to_global[idv].values()))] = u_subd.copy()
                 self.set_additional_calculations()
+                self.time4 += time.time() - init_time
 
             init_time = time.time()
 
             self.amnt_iterations += 1
             self.get_displacements()
 
-            self.time_test += time.time() - init_time
+            self.time5 += time.time() - init_time
 
+            init_time = time.time()
             crit_convergence = self.calculate_error(self.u, self.u_previous, 'point')
+            self.time6 += time.time() - init_time
             print(f"{crit_convergence:.3e}", end = "\r")
             if crit_convergence < self.coef_convergence:
-                self.time_cg = sum(lst_time_cg)
-                self.amnt_iters_cg = sum(lst_iters_cg)
                 print()
                 break
             self.cur_crit_convergence = crit_convergence
-            # elif previous_crit_convergence < crit_convergence and self.amnt_iterations > 5:
-            #     print()
-            #     print("Error: growing coef_convergence")
-            #     self.amnt_iterations = -1
-            #     break
+
 
 
 if __name__ == "__main__":

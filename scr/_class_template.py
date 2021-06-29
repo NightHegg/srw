@@ -1,6 +1,9 @@
+import enum
 import os
 import sys
 import time
+
+from ray.worker import init
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import numpy as np
@@ -14,6 +17,17 @@ import scr._class_visualisation as class_visual
 
 class class_template(class_visual.class_visualisation):
     def __init__(self, data):
+        self.time1 = 0
+        self.time2 = 0
+        self.time3 = 0
+        self.time4 = 0
+        self.time5 = 0
+        self.time6 = 0
+        self.time7 = 0
+        self.time8 = 0
+        self.time9 = 0
+        self.time10 = 0
+        self.time11 = 0
         self.message = {}
         self.data = data
 
@@ -127,8 +141,8 @@ class class_template(class_visual.class_visualisation):
                 elif len(outer_points) == 2:
                     self.list_area_neumann_elements.append(outer_points)
 
-        self.list_area_of_elements = np.array([base_func.calculate_local_matrix_stiffness(i, self.area_points_coords, self.dim_task)[1] for i in self.area_elements])
-
+        self.list_area_of_elements = np.array([base_func.calculate_local_matrix_stiffness(i, self.area_points_coords)[1] for i in self.area_elements])
+        
         self.dict_elements_contain_point = {}
         for element, list_element_points in enumerate(self.area_elements):
             for point in list_element_points:
@@ -137,6 +151,10 @@ class class_template(class_visual.class_visualisation):
                 else:
                     self.dict_elements_contain_point[point] = np.array([element])
         self.dict_elements_contain_point = dict(sorted(self.dict_elements_contain_point.items(), key=lambda x: x[0]))
+
+        self.special_area = []
+        for point in self.area_points:
+            self.special_area.append(sum(self.list_area_of_elements[self.dict_elements_contain_point[point]])/3)
 
         self.element_centroid_points_coords = np.array(list(map(lambda x: np.mean(self.area_points_coords[x], axis = 0), self.area_elements)))
         self.element_centroid_points_angles = np.array(list(map(lambda x: np.arctan2(x[1], x[0]), self.element_centroid_points_coords)))
@@ -178,7 +196,7 @@ class class_template(class_visual.class_visualisation):
     def calculate_eps(self):
         temp_array = []
         for element in self.area_elements:
-            B, _ = base_func.calculate_local_matrix_stiffness(element, self.area_points_coords, self.dim_task)
+            B, _ = base_func.calculate_local_matrix_stiffness(element, self.area_points_coords)
             result = np.dot(B, np.ravel(self.u[element]))
             temp_array.append(result)
 
@@ -255,14 +273,16 @@ class class_template(class_visual.class_visualisation):
 
 
     def calculate_error(self, exact_solution, num_solution, type_value):
-        dict_nonzero = {idx : value for idx, value in enumerate(exact_solution) if not np.all((np.isclose(value, np.zeros_like(value))))}
+        arr_nonzero = np.where(~np.all(np.isclose(exact_solution, np.zeros_like(exact_solution)), axis=1))[0]
+        vec = (np.linalg.norm(exact_solution[arr_nonzero] - num_solution[arr_nonzero], axis=1) / np.linalg.norm(exact_solution[arr_nonzero], axis=1)) ** 2
         divisible, divisor, relative_error = 0, 0, 0
-        for idx, value in dict_nonzero.items():
-            relative_error = (np.linalg.norm(value - num_solution[idx]) / np.linalg.norm(value)) ** 2
+        for idx in range(len(arr_nonzero)):
+            relative_error = vec[idx]
+
             if type_value == 'point':
-                area_value = np.sum(self.list_area_of_elements[self.dict_elements_contain_point[idx]]) / 3
+                area_value = self.special_area[arr_nonzero[idx]]
             elif type_value == 'element':
-                area_value = self.list_area_of_elements[idx]
+                area_value = self.list_area_of_elements[arr_nonzero[idx]]
 
             divisible += area_value * relative_error
             divisor += area_value
@@ -280,21 +300,15 @@ class class_template(class_visual.class_visualisation):
 
 
     def conjugate_method(self, A, b, crit_convergence = 1e-5, x = None):
-        if crit_convergence >= 1:
-            local_crit = 1e-3
-        else:
-            local_crit = crit_convergence * 1e-3
-
         init_time = time.time()
+        local_crit = 1e-3 if crit_convergence >= 1 else crit_convergence * 1e-3
+        
         amnt_iters_cg = 0
-        n = len(b)
         if x is None:
-            x = np.ones(n)
+            x = np.ones_like(b)
         
         r = b - A.dot(x)
         r_0_norm = np.linalg.norm(b)
-        if np.linalg.norm(r) < 1e-10:
-            return x
         z = r
         while True:
             mult = A.dot(z)
@@ -324,16 +338,17 @@ class class_template(class_visual.class_visualisation):
 
     
     def analysis_time(self):
-        print(f'Initialization: {self.time_init:.3f}')
-        print(f'Time 1: {self.time_1:.3f} {self.time_1 / self.time_init:.2%}')
-        print(f'Time 2: {self.time_2:.3f} {self.time_2 / self.time_init:.2%}')
-        print(f'Time 3: {self.time_3:.3f} {self.time_3 / self.time_init:.2%}')
-        print(f'Time 4: {self.time_4:.3f} {self.time_4 / self.time_init:.2%}')
-        print(f'Time 5: {self.time_5:.3f} {self.time_5 / self.time_init:.2%}')
-        print(f'Time 6: {self.time_6:.3f} {self.time_6 / self.time_init:.2%}')
-        print(f'Time 7: {self.time_7:.3f} {self.time_7 / self.time_init:.2%}')
-        print(f'Time 8: {self.time_8:.3f} {self.time_8 / self.time_init:.2%}')
-        # print(f'Time 9: {self.time_9} {self.time_9 / self.time_init:.2%}')
+        print(f'u: {self.time_u:.3f}')
+        print(f'Time 1: {self.time1:.3f} {self.time1 / self.time_u:.2%}')
+        print(f'Time 2: {self.time2:.3f} {self.time2 / self.time_u:.2%}')
+        print(f'Time 3: {self.time3:.3f} {self.time3 / self.time_u:.2%}')
+        print(f'Time 4: {self.time4:.3f} {self.time4 / self.time_u:.2%}')
+        print(f'Time 5: {self.time5:.3f} {self.time5 / self.time_u:.2%}')
+        print(f'Time 6: {self.time6:.3f} {self.time6 / self.time_u:.2%}')
+        print(f'Time 7: {self.time7:.3f} {self.time7 / self.time_u:.2%}')
+        print(f'Time 8: {self.time8:.3f} {self.time8 / self.time_u:.2%}')
+        print(f'Time 9: {self.time9:.3f} {self.time9 / self.time_u:.2%}')
+        print(f'Time 10: {self.time10:.3f} {self.time10 / self.time_u:.2%}')
 
 
 if __name__ == "__main__":
