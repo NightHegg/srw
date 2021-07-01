@@ -57,6 +57,7 @@ class schwarz_two_level_additive(schwarz_additive):
         self.area_coarse_points_coords = np.delete(self.area_coarse_points_coords, -1, axis = 1)
         self.area_coarse_points = np.array([num for num, _ in enumerate(self.area_coarse_points_coords)])
         self.area_coarse_elements = coarse_mesh.cells_dict["triangle"]
+        self.area_coarse_elements_indices = np.arange(self.area_coarse_elements.shape[0])
 
         self.dict_area_coarse_dirichlet_points = {}
         self.dict_area_coarse_neumann_points = {}
@@ -181,7 +182,7 @@ class schwarz_two_level_additive(schwarz_additive):
             for point_num, point_coords in enumerate(self.area_coarse_points_coords):
                 for row in self.dirichlet_conditions:
                     contour_points = self.contour_points[row[:2].astype(int)]
-                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                    if base_func.func(contour_points[0], contour_points[1], point_coords):
                         if point_num in self.dict_area_coarse_dirichlet_points:
                             template_nan = np.isnan(self.dict_area_coarse_dirichlet_points[point_num])
                             self.dict_area_coarse_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
@@ -190,7 +191,7 @@ class schwarz_two_level_additive(schwarz_additive):
                 
                 for row in self.neumann_conditions:
                     contour_points = self.contour_points[row[:2].astype(int)]
-                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                    if base_func.func(contour_points[0], contour_points[1], point_coords):
                         self.dict_area_coarse_neumann_points[point_num] = row[2:]
         else:
             for point_num, point_coords in enumerate(self.area_coarse_points_coords):
@@ -201,7 +202,7 @@ class schwarz_two_level_additive(schwarz_additive):
                             self.dict_area_coarse_dirichlet_points[point_num] = point_coords * (displacement / radius)
                     else:
                         contour_points = self.contour_points[row[:2].astype(int)]
-                        if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                        if base_func.func(contour_points[0], contour_points[1], point_coords):
                             if point_num in self.dict_area_coarse_dirichlet_points:
                                 template_nan = np.isnan(self.dict_area_coarse_dirichlet_points[point_num])
                                 self.dict_area_coarse_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
@@ -217,13 +218,15 @@ class schwarz_two_level_additive(schwarz_additive):
             if len(set(element) & set(self.dict_area_coarse_neumann_points.keys())) == 2:
                 self.list_area_coarse_neumann_elements.append(index_element)
 
-        self.K_special = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.area_points.size, self.D, self.dim_task)
+        self.K_special = self.calculate_sparse_matrix_stiffness(self.area_elements_indices, self.area_elements, self.lst_B, self.lst_A, self.area_points.size)
         self.F_special = np.zeros(self.area_points_coords.size)
 
         self.set_condition_neumann(self.F_special, self.list_area_neumann_elements, self.area_points_coords, self.dict_area_neumann_points)
         self.set_condition_dirichlet(self.K_special, self.F_special, self.dict_area_dirichlet_points, self.dict_area_dirichlet_points.keys())
 
-        self.K_coarse_special = base_func.calculate_sparse_matrix_stiffness(self.area_coarse_elements, self.area_coarse_points_coords, self.area_coarse_points.size, self.D, self.dim_task)
+        self.lst_B_coarse, self.lst_A_coarse = self.calculate_B_A(self.area_coarse_elements, self.area_coarse_points_coords)
+
+        self.K_coarse_special = self.calculate_sparse_matrix_stiffness(self.area_coarse_elements_indices, self.area_coarse_elements, self.lst_B_coarse, self.lst_A_coarse, self.area_coarse_points.size)
         self.F_coarse_special = np.zeros(self.area_coarse_points_coords.size)
 
         self.barycentric_coords_for_coarse_elements = {}
@@ -231,7 +234,7 @@ class schwarz_two_level_additive(schwarz_additive):
             self.barycentric_coords_for_coarse_elements[num_element] = base_func.create_barycentric_coords(coarse_element, self.area_coarse_points_coords)
 
         self.element_centroid_points_coords_coarse = np.array(list(map(lambda x: np.mean(self.area_coarse_points_coords[x], axis = 0), self.area_coarse_elements)))
-        self.list_area_of_coarse_elements = np.array([base_func.calculate_local_matrix_stiffness(i, self.area_coarse_points_coords)[1] for i in self.area_coarse_elements])
+    
         self.dict_point_in_coarse_elements = {}
         for num_point, point_coords in enumerate(self.area_points_coords):
             bool_check = check_point_in_elements(point_coords)
@@ -244,7 +247,7 @@ class schwarz_two_level_additive(schwarz_additive):
 
             dct_caution = {}
             for num in dct_elems_coarse[area_name]:
-                dct_caution[num] = bool_check(self.list_area_of_coarse_elements[num], self.area_coarse_elements[num], self.area_coarse_points_coords)
+                dct_caution[num] = bool_check(self.lst_A_coarse[num], self.area_coarse_elements[num], self.area_coarse_points_coords)
 
             min_triangle = min(list(dct_caution.values()))
             for key, value in dct_caution.items():

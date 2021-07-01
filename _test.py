@@ -30,12 +30,12 @@ if __name__ == "__main__":
     areas = ['rectangle', 'thick_walled_cylinder', 'simplified_cylinder', 'bearing']
     tasks = ['3_fixes', '2_fixes', 'pressure_only']
 
-    cur_task = '3_fixes'
+    cur_task = 'pressure_only'
 
-    fine_area = 'rectangle'
-    course_area = 'rectangle'
+    fine_area = 'thick_walled_cylinder'
+    course_area = 'thick_walled_cylinder'
 
-    fine_mesh = 0.025
-    course_mesh = 0.5
+    fine_mesh = 0.05
+    course_mesh = 0.125
     
     test_task(schwarz_multiplicative, fine_area, course_area, fine_mesh, course_mesh, cur_task)

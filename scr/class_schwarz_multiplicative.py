@@ -4,6 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import time
 
 import numpy as np
+import scipy
 import copy
 
 import scr.functions as base_func
@@ -55,10 +56,10 @@ class schwarz_multiplicative(class_template):
             dict_subd_elements_contain_point = {}
             for element in np.ravel(value):
                 for point in self.area_elements[element]:
-                    if point in dict_subd_elements_contain_point.keys():
-                        dict_subd_elements_contain_point[point].append(element)
-                    else:
-                        dict_subd_elements_contain_point[point] = [element]
+                    if point not in dict_subd_elements_contain_point.keys():
+                        dict_subd_elements_contain_point[point] = []
+                    dict_subd_elements_contain_point[point].append(element)
+                        
             t = []
             for point, elements in dict_subd_elements_contain_point.items():
                 if len(elements) != self.dict_elements_contain_point[point].size:
@@ -84,9 +85,7 @@ class schwarz_multiplicative(class_template):
                     temp.append(list(set(self.area_elements[element]) & set(self.dict_area_neumann_points.keys())))
             self.dict_subd_neumann_elements[idv] = temp
 
-            init_time = time.time()
-            temp_K = base_func.calculate_sparse_matrix_stiffness(self.area_elements[self.dict_subd_elements[idv]], self.area_points_coords, self.dict_subd_points[idv].size, self.D, self.dim_task, dict_points_global_to_local)
-            self.time9 += time.time() - init_time
+            temp_K = self.calculate_sparse_matrix_stiffness(self.dict_subd_elements[idv], self.area_elements, self.lst_B, self.lst_A, self.dict_subd_points[idv].size, dict_points_global_to_local)
             temp_F = np.zeros(self.dict_subd_points[idv].size * self.dim_task)
 
             self.set_condition_neumann(temp_F, self.dict_subd_neumann_elements[idv], self.area_points_coords, self.dict_area_neumann_points, dict_points_global_to_local)
@@ -162,7 +161,6 @@ class schwarz_multiplicative(class_template):
                 u_subd, amnt_iters_cg, amnt_time_cg = self.conjugate_method(K.tocsr(), F, self.cur_crit_convergence, init_u)
                 lst_iters_cg += amnt_iters_cg
                 lst_time_cg += amnt_time_cg
-                
 
                 self.u_current[np.array(list(self.dict_subd_points_local_to_global[idv].values()))] = u_subd.reshape(-1, 2)
 

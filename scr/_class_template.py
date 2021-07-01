@@ -8,6 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 import numpy as np
 from scipy.sparse import linalg
+from scipy.sparse import coo_matrix
 import meshio
 import math
 
@@ -28,6 +29,11 @@ class class_template(class_visual.class_visualisation):
         self.time9 = 0
         self.time10 = 0
         self.time11 = 0
+        self.time12 = 0
+        self.time13 = 0
+        self.time14 = 0
+        self.time15 = 0
+        self.time16 = 0
         self.message = {}
         self.data = data
 
@@ -48,6 +54,7 @@ class class_template(class_visual.class_visualisation):
         self.area_points_coords = np.delete(self.area_points_coords, -1, axis = 1)
         self.area_points = np.array([num for num, _ in enumerate(self.area_points_coords)])
         self.area_elements = mesh.cells_dict["triangle"]
+        self.area_elements_indices = np.arange(self.area_elements.shape[0])
 
         self.N = self.area_points_coords.size
 
@@ -91,21 +98,31 @@ class class_template(class_visual.class_visualisation):
                 self.inner_radius_points = np.isclose(self.inner_radius, np.linalg.norm(self.area_points_coords, axis = 1))
                 self.outer_radius_points = np.isclose(self.outer_radius, np.linalg.norm(self.area_points_coords, axis = 1))
 
+        init_time_2 = time.time()
+
         if self.data["fine_area"] == 'rectangle':
             for point_num, point_coords in enumerate(self.area_points_coords):
+                init_time = time.time()
+
                 for row in self.dirichlet_conditions:
                     contour_points = self.contour_points[row[:2].astype(int)]
-                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
-                        if point_num in self.dict_area_dirichlet_points:
+                    if base_func.func(contour_points[0], contour_points[1], point_coords):
+                        if point_num in self.dict_area_dirichlet_points:      
                             template_nan = np.isnan(self.dict_area_dirichlet_points[point_num])
-                            self.dict_area_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
+                            self.dict_area_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]  
                         else:
                             self.dict_area_dirichlet_points[point_num] = np.copy(row)[2:]
-                
+                        
+
+                self.time14 += time.time() - init_time
+                init_time = time.time()
+
                 for row in self.neumann_conditions:
                     contour_points = self.contour_points[row[:2].astype(int)]
-                    if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                    if base_func.func(contour_points[0], contour_points[1], point_coords):
                         self.dict_area_neumann_points[point_num] = row[2:]
+                self.time15 += time.time() - init_time
+
         else:
             for point_num, point_coords in enumerate(self.area_points_coords):
                 for index, row in enumerate(self.dirichlet_conditions):
@@ -115,7 +132,9 @@ class class_template(class_visual.class_visualisation):
                             self.dict_area_dirichlet_points[point_num] = point_coords * (displacement / radius)
                     else:
                         contour_points = self.contour_points[row[:2].astype(int)]
-                        if np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0):
+                        cond = np.isclose(abs(np.cross(np.diff(contour_points, axis = 0), point_coords - contour_points[0])), 0)
+                        # cond = base_func.func(contour_points[0], contour_points[1], point_coords)
+                        if cond:
                             if point_num in self.dict_area_dirichlet_points:
                                 template_nan = np.isnan(self.dict_area_dirichlet_points[point_num])
                                 self.dict_area_dirichlet_points[point_num][template_nan] = np.copy(row)[2:][template_nan]
@@ -125,6 +144,9 @@ class class_template(class_visual.class_visualisation):
                     radius, pressure = row[0], row[1]
                     if np.isclose(np.linalg.norm(point_coords), radius):
                         self.dict_area_neumann_points[point_num] = pressure
+
+        self.time7 = time.time() - init_time_2
+        init_time = time.time()
 
         self.list_area_neumann_elements = []
         if self.data["fine_area"] == 'rectangle':
@@ -141,23 +163,41 @@ class class_template(class_visual.class_visualisation):
                 elif len(outer_points) == 2:
                     self.list_area_neumann_elements.append(outer_points)
 
-        self.list_area_of_elements = np.array([base_func.calculate_local_matrix_stiffness(i, self.area_points_coords)[1] for i in self.area_elements])
-        
+        self.time8 = time.time() - init_time
+        init_time = time.time()
+
+        self.lst_B, self.lst_A = self.calculate_B_A(self.area_elements, self.area_points_coords)
+
+        self.time9 = time.time() - init_time
+        init_time = time.time()
+
         self.dict_elements_contain_point = {}
-        for element, list_element_points in enumerate(self.area_elements):
-            for point in list_element_points:
+        for index in range(self.area_elements.shape[0]):
+            for point in self.area_elements[index]:
                 if point in self.dict_elements_contain_point.keys():
-                    self.dict_elements_contain_point[point] = np.append(self.dict_elements_contain_point[point], element)
+                    self.dict_elements_contain_point[point] = np.append(self.dict_elements_contain_point[point], index)
                 else:
-                    self.dict_elements_contain_point[point] = np.array([element])
+                    self.dict_elements_contain_point[point] = np.array([index])
         self.dict_elements_contain_point = dict(sorted(self.dict_elements_contain_point.items(), key=lambda x: x[0]))
+
+        self.time10 = time.time() - init_time
+        init_time = time.time()
 
         self.special_area = []
         for point in self.area_points:
-            self.special_area.append(sum(self.list_area_of_elements[self.dict_elements_contain_point[point]])/3)
+            self.special_area.append(sum(self.lst_A[self.dict_elements_contain_point[point]])/3)
+
+        self.time11 = time.time() - init_time
+        init_time = time.time()
 
         self.element_centroid_points_coords = np.array(list(map(lambda x: np.mean(self.area_points_coords[x], axis = 0), self.area_elements)))
+
+        self.time12 = time.time() - init_time
+        init_time = time.time()
+
         self.element_centroid_points_angles = np.array(list(map(lambda x: np.arctan2(x[1], x[0]), self.element_centroid_points_coords)))
+
+        self.time13 = time.time() - init_time
 
 
     def set_condition_dirichlet(self, K, F, dict, list_dirichlet_points, modifier = {}):
@@ -195,8 +235,8 @@ class class_template(class_visual.class_visualisation):
 
     def calculate_eps(self):
         temp_array = []
-        for element in self.area_elements:
-            B, _ = base_func.calculate_local_matrix_stiffness(element, self.area_points_coords)
+        for index, element in enumerate(self.area_elements):
+            B = self.lst_B[index]
             result = np.dot(B, np.ravel(self.u[element]))
             temp_array.append(result)
 
@@ -336,19 +376,70 @@ class class_template(class_visual.class_visualisation):
     def plot_area_init_mesh(self):
         self.internal_plot_displacement(self.area_points_coords, self.area_elements)
 
+
+    def calculate_B_A(self, elements, points):
+        arr_B = []
+        arr_A = []
+        for element in elements:
+            M = np.hstack((np.ones((points[element].shape[0], 1)), points[element])).T
+            A = 0.5*np.linalg.det(M)
+            M_inv = np.linalg.inv(M)
+            a, b, c = M_inv[:, 0], M_inv[:, 1], M_inv[:, 2]
+            M_new = np.array([
+                [a[0], 0, a[1], 0, a[2], 0],
+                [b[0], 0, b[1], 0, b[2], 0],
+                [c[0], 0, c[1], 0, c[2], 0],
+                [0, a[0], 0, a[1], 0, a[2]],
+                [0, b[0], 0, b[1], 0, b[2]],
+                [0, c[0], 0, c[1], 0, c[2]]
+            ])
+            A_form = np.array([
+                [0, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 1],
+                [0, 0, 0.5, 0, 0.5, 0]
+            ])
+            B = np.dot(A_form, M_new)
+            arr_B.append(B)
+            arr_A.append(A)
+        return arr_B, np.array(arr_A)
+
+
+    def calculate_sparse_matrix_stiffness(self, indices_elements, area_elements, lst_B, lst_A, amnt_area_points, modifier = {}):
+        row, col, data = [], [], []
+        for index in indices_elements:
+            K_element = lst_B[index].T @ self.D @ lst_B[index] * lst_A[index]
+            for i in range(3):
+                for j in range(3):
+                    point_1 = modifier[area_elements[index][i]] if modifier else area_elements[index][i]
+                    point_2 = modifier[area_elements[index][j]] if modifier else area_elements[index][j]
+                    for k in range(self.dim_task):
+                        for z in range(self.dim_task):
+                            row.append(point_1 * self.dim_task + k)
+                            col.append(point_2 * self.dim_task + z)
+                            data.append(K_element[i * self.dim_task + k, j * self.dim_task + z])
+        return coo_matrix((data, (row, col)), shape = (amnt_area_points * self.dim_task, amnt_area_points * self.dim_task)).tolil()
+
     
     def analysis_time(self):
-        print(f'u: {self.time_u:.3f}')
+        print(f'u: {self.time_u:.3f} {self.time_u / (self.time_u + self.time_init):.2%}')
         print(f'Time 1: {self.time1:.3f} {self.time1 / self.time_u:.2%}')
         print(f'Time 2: {self.time2:.3f} {self.time2 / self.time_u:.2%}')
         print(f'Time 3: {self.time3:.3f} {self.time3 / self.time_u:.2%}')
         print(f'Time 4: {self.time4:.3f} {self.time4 / self.time_u:.2%}')
         print(f'Time 5: {self.time5:.3f} {self.time5 / self.time_u:.2%}')
         print(f'Time 6: {self.time6:.3f} {self.time6 / self.time_u:.2%}')
-        print(f'Time 7: {self.time7:.3f} {self.time7 / self.time_u:.2%}')
-        print(f'Time 8: {self.time8:.3f} {self.time8 / self.time_u:.2%}')
-        print(f'Time 9: {self.time9:.3f} {self.time9 / self.time_u:.2%}')
-        print(f'Time 10: {self.time10:.3f} {self.time10 / self.time_u:.2%}')
+        print()
+        print(f'Initialization: {self.time_init:.3f} {self.time_init / (self.time_u + self.time_init):.2%}')
+        print(f'Time 7: {self.time7:.3f} {self.time7 / self.time_init:.2%}')
+        print(f'Time 8: {self.time8:.3f} {self.time8 / self.time_init:.2%}')
+        print(f'Time 9: {self.time9:.3f} {self.time9 / self.time_init:.2%}')
+        print(f'Time 10: {self.time10:.3f} {self.time10 / self.time_init:.2%}')
+        print(f'Time 11: {self.time11:.3f} {self.time11 / self.time_init:.2%}')
+        print(f'Time 12: {self.time12:.3f} {self.time12 / self.time_init:.2%}')
+        print(f'Time 13: {self.time13:.3f} {self.time13 / self.time_init:.2%}')
+        print(f'Time 14: {self.time14:.3f} {self.time14 / self.time_init:.2%}')
+        print(f'Time 15: {self.time15:.3f} {self.time15 / self.time_init:.2%}')
+        print(f'Time 16: {self.time16:.3f} {self.time16 / self.time_init:.2%}')
 
 
 if __name__ == "__main__":

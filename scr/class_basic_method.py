@@ -22,7 +22,7 @@ class basic_method(class_template):
     def calculate_u(self):
         init_time = time.time()
         
-        K = base_func.calculate_sparse_matrix_stiffness(self.area_elements, self.area_points_coords, self.area_points.size, self.D, self.dim_task)
+        K = self.calculate_sparse_matrix_stiffness(self.area_elements_indices, self.area_elements, self.lst_B, self.lst_A, self.area_points.size)
         F = np.zeros(self.area_points_coords.size)
 
         self.set_condition_neumann(F, self.list_area_neumann_elements, self.area_points_coords, self.dict_area_neumann_points)

@@ -32,9 +32,6 @@ def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, amnt_ar
         A = 0.5*np.linalg.det(M)
         M_inv = np.linalg.inv(M)
         a, b, c = M_inv[:, 0], M_inv[:, 1], M_inv[:, 2]
-        # a, b, c = np.split(M_inv.flatten(order='F'), 3)
-
-        # B = np.hstack(list(map(lambda x, y, z: [[y, 0], [0, z], [z/2, y/2]], a, b, c)))
         test = np.array([
             [a[0], 0, a[1], 0, a[2], 0],
             [b[0], 0, b[1], 0, b[2], 0],
@@ -48,19 +45,8 @@ def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, amnt_ar
             [0, 0, 0, 0, 0, 1],
             [0, 0, 0.5, 0, 0.5, 0]
         ]) @ test
-        # B, A = calculate_local_matrix_stiffness(element, area_points_coords)
         
         K_element = B.T @ D @ B * A
-        # modifier_f = lambda x: modifier[x] * dim_task
-        # modified_element = modifier_f(element) if modifier else element
-        # modified_element = np.array(list(map(lambda x: modifier[x]*dim_task, element))) if modifier else element
-        # test_array = np.zeros(6).astype(np.int)
-        # test_array[::2], test_array[1::2] = modified_element, modified_element + 1
-        # arr_col, arr_row = np.meshgrid(test_array, test_array)
-        # for i in range(K_element.size):
-        #     row.append(arr_row.flat[i])
-        #     col.append(arr_col.flat[i])
-        #     data.append(K_element.flat[i])
         for i in range(3):
             for j in range(3):
                 point_1 = modifier[element[i]] if modifier else element[i]
@@ -73,6 +59,18 @@ def calculate_sparse_matrix_stiffness(area_elements, area_points_coords, amnt_ar
     # print(time_1, time_2, time_3, time_4, time_5, time_6)
     return coo_matrix((data, (row, col)), shape = (amnt_area_points * dim_task, amnt_area_points * dim_task)).tolil()        
 
+
+def func(a, b, c):
+    if (c[0] == a[0] and c[1] == a[1]) or (c[0] == b[0] and c[1] == b[1]):
+        on_and_between = True
+    elif (a[0] == b[0] == c[0]) or (a[0] == b[0]) or (c[0] == a[0]) or (b[0] == c[0]):
+        on_and_between = a[1] <= c[1] <= b[1]
+    else:
+        slope = (b[1] - a[1]) / (b[0] - a[0])
+        pt3_on = (c[1] - a[1]) == slope * (c[0] - a[0])
+        pt3_between = (min(a[0], b[0]) <= c[0] <= max(a[0], b[0])) and (min(a[1], b[1]) <= c[1] <= max(a[1], b[1]))
+        on_and_between = pt3_on and pt3_between
+    return on_and_between
 
 if __name__ == "__main__":
     pass
